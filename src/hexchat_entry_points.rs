@@ -15,23 +15,60 @@
 use backtrace::Backtrace;
 use libc::{c_int, c_char, c_void};
 use std::ffi::CString;
+use std::marker::PhantomPinned;
 use std::panic;
 use std::panic::{catch_unwind, UnwindSafe};
+use std::pin::Pin;
 use std::ptr::null;
+use std::ptr::NonNull;
 
 //use crate::{plugin_get_info, plugin_init, plugin_deinit};
 use crate::hexchat::Hexchat;
 use crate::utils::*;
 
+/// The signatures for the required functions a plugin needs to implement to
+/// create a loadable Hexchat plugin.
+pub type InitFn   = dyn FnOnce(&'static Hexchat) -> i32 + UnwindSafe;
+pub type DeinitFn = dyn FnOnce(&'static Hexchat) -> i32 + UnwindSafe;
+pub type InfoFn   = dyn FnOnce()                 -> Pin<Box<PluginInfo>>
+                                                        + UnwindSafe;
+
 /// Holds persistent client plugin info strings.
-static mut PLUGIN_INFO: Option<PluginInfo> = None;
+static mut PLUGIN_INFO: Option<Pin<Box<PluginInfo>>> = None;
 
 /// The global Hexchat pointer obtained from `hexchat_plugin_init()`.
 pub (crate)
 static mut HEXCHAT: *const Hexchat = null::<Hexchat>();
 
+/// Plugins using this API can use this macro to create the necessary
+/// DLL entry points for Hexchat to find while the DLL is being loaded.
+/// Normally implemented functions that have the required signatures can
+/// be passed to the macro like so:
+///
+/// ```dll_entry_points!( my_info_func, my_init_func, my_deinit_func )```
+///
+/// # The signatures for the functions are:
+/// * my_info_func  ()                 -> Pin<Box<PluginInfo>>;
+/// * my_init_func  (&'static Hexchat) -> i32;
+/// * my_deinit_func(&'static Hexchat) -> i32;
+///
+/// The info function creates an instance of `PluginInfo` by calling its
+/// constructor with the information about the plugin as parameters. The
+/// constructor returns a `Pin<Box<PluginInfo>>` instance - this can be
+/// returned as-is from `my_info_func()`.
+///
+/// The init function is usually where all the commands are registered using
+/// the hook commands provided by the `&Hexchat` reference provided as
+/// a paramter to the it function. The init function needs to return either 0
+/// (good) or 1 (error).
+///
+/// The deinit function gets called when the plugin is unloaded. It also returns
+/// 0 (good) or 1 (error). Any cleanup actions needed to be done ccan be done
+/// here. When  DLL is unloaded by Hexchat, all its hooked commands are unhooked
+/// automatically - so that doesn't need to be done by this function.
+///
 #[macro_export]
-macro_rules! blah {
+macro_rules! dll_entry_points {
  
     ( $info:ident, $init:ident, $deinit:ident ) => {
         #[no_mangle]
@@ -41,8 +78,10 @@ macro_rules! blah {
                                    version  : *mut *const i8,
                                    reserved : *mut *const i8) 
         {
-            println!("hexchat_plugin_get_info()");
-            hexchat_api::lib_get_info(name, desc, version, Box::new($info));
+            hexchat_api::lib_get_info(name,    
+                                      desc,
+                                      version,
+                                      Box::new($info));
         }
         #[no_mangle]
         pub extern "C"
@@ -52,40 +91,36 @@ macro_rules! blah {
                                version   : *mut *const i8
                               ) -> i32
         {
-            println!("hexchat_plugin_init()");
-            hexchat_api::lib_get_info(name, desc, version, Box::new($info));
             hexchat_api::lib_hexchat_plugin_init(hexchat, 
                                                  name,
                                                  desc,   
                                                  version,
                                                  Box::new($init),
-                                                 Box::new($info));
-            0
+                                                 Box::new($info))
         }
         #[no_mangle]
         pub extern "C"
         fn hexchat_plugin_deinit(hexchat : &'static Hexchat) -> i32
         {
-            println!("hexchat_plugin_deinit()");
-            hexchat_api::lib_hexchat_plugin_deinit(hexchat, Box::new($deinit));
-            0
+            hexchat_api::lib_hexchat_plugin_deinit(hexchat, Box::new($deinit))
         }
-
     }
-}
-
-
-pub fn foo(a: &str) {
 }
 
 /// Holds client plugin information strings.
 pub struct PluginInfo {
-    name        : CString,
-    version     : CString,
-    description : CString,
+    name         : CString,
+    version      : CString,
+    description  : CString,
+    pname        : NonNull<CString>,
+    pversion     : NonNull<CString>,
+    pdescription : NonNull<CString>,
+    _pin         : PhantomPinned,
 }
 impl PluginInfo {
-    /// Constructor.
+    /// Constructor. The plugin information provided in the parameters is used
+    /// to create persistent pinned buffers that are guaranteed to be valid
+    /// for Hexchat to read from while the plugin is loading.
     ///
     /// # Arguments
     /// * `name`        - The name of the plugin.
@@ -95,20 +130,32 @@ impl PluginInfo {
     /// # Returns
     /// A `PluginInfo` object initialized from the parameter data.
     ///
-    pub fn new(name: &str, version: &str, description: &str) -> Self 
+    pub fn new(name: &str, version: &str, description: &str) -> Pin<Box<Self>>
     {
-        PluginInfo {
-            name        : str2cstring(name),
-            version     : str2cstring(version),
-            description : str2cstring(description),
+        let pi = PluginInfo {
+            name         : str2cstring(name),
+            version      : str2cstring(version),
+            description  : str2cstring(description),
+            pname        : NonNull::dangling(),
+            pversion     : NonNull::dangling(),
+            pdescription : NonNull::dangling(),
+            _pin         : PhantomPinned,
+        };
+        let mut boxed    = Box::pin(pi);
+        let sname        = NonNull::from(&boxed.name);
+        let sversion     = NonNull::from(&boxed.version);
+        let sdescription = NonNull::from(&boxed.description);
+        
+        unsafe {
+            let mut_ref: Pin<&mut Self> = Pin::as_mut(&mut boxed);
+            let unchecked = Pin::get_unchecked_mut(mut_ref); 
+            unchecked.pname        = sname;
+            unchecked.pversion     = sversion;
+            unchecked.pdescription = sdescription;
         }
+        boxed
     }
 }
-
-pub type InitFn   = dyn FnOnce(&'static Hexchat) -> i32 + UnwindSafe;
-pub type DeinitFn = dyn FnOnce(&'static Hexchat) -> i32 + UnwindSafe;
-pub type InfoFn   = dyn FnOnce()                 -> PluginInfo + UnwindSafe;
-
 
 /// An exported function that Hexchat calls when loading the plugin.
 /// This function calls the client plugin's `plugin_get_info()` indirectly to
@@ -154,6 +201,7 @@ pub fn lib_hexchat_plugin_deinit(hexchat  : &'static Hexchat,
 
 
 /// Sets the parameter pointers to plugin info strings.
+#[inline]
 pub fn lib_get_info(name     : *mut *const c_char,
                     desc     : *mut *const c_char,
                     vers     : *mut *const c_char,
@@ -165,9 +213,9 @@ pub fn lib_get_info(name     : *mut *const c_char,
             PLUGIN_INFO = Some(pi);
         }
         if let Some(info) = &PLUGIN_INFO {
-            *name = info.name.as_ptr();
-            *vers = info.version.as_ptr();
-            *desc = info.description.as_ptr();
+            *name = info.pname.as_ref().as_ptr();
+            *vers = info.pversion.as_ref().as_ptr();
+            *desc = info.description.as_ref().as_ptr();
         }
     }
 }

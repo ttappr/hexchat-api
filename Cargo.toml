@@ -11,5 +11,5 @@ name = "hexchat_api"
 [dependencies]
 libc = "0.2.84"
 backtrace = "0.3"
-thread-id = "3.3"
+
 
