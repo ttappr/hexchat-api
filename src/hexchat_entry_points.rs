@@ -34,38 +34,47 @@ pub type InfoFn   = dyn FnOnce()                 -> Pin<Box<PluginInfo>>
                                                         + UnwindSafe;
 
 /// Holds persistent client plugin info strings.
+pub (crate)
 static mut PLUGIN_INFO: Option<Pin<Box<PluginInfo>>> = None;
 
 /// The global Hexchat pointer obtained from `hexchat_plugin_init()`.
 pub (crate)
 static mut HEXCHAT: *const Hexchat = null::<Hexchat>();
 
-/// Plugins using this API can use this macro to create the necessary
-/// DLL entry points for Hexchat to find while the DLL is being loaded.
-/// Normally implemented functions that have the required signatures can
-/// be passed to the macro like so:
+/// `dll_entry_points()` makes it very easy to set up your plugin's DLL
+/// interface required by the Hexchat loader. This macro generates the necessary
+/// DLL entry points that Hexchat looks for when a DLL is being loaded.
+/// Normal Rust functions having the required signatures can be passed to the
+/// macro like so:
 ///
 /// ```dll_entry_points!( my_info_func, my_init_func, my_deinit_func )```
 ///
+/// That's it. You don't need to worry about how to export your Rust functions
+/// to interface with the C environment of Hexchat. This macro does it all for
+/// you.
+///
 /// # The signatures for the functions are:
-/// * my_info_func  ()                 -> Pin<Box<PluginInfo>>;
-/// * my_init_func  (&'static Hexchat) -> i32;
-/// * my_deinit_func(&'static Hexchat) -> i32;
 ///
-/// The info function creates an instance of `PluginInfo` by calling its
-/// constructor with the information about the plugin as parameters. The
-/// constructor returns a `Pin<Box<PluginInfo>>` instance - this can be
-/// returned as-is from `my_info_func()`.
+/// * `my_info_func  ()                 -> Pin<Box<PluginInfo>>;`
+/// * `my_init_func  (&'static Hexchat) -> i32;`
+/// * `my_deinit_func(&'static Hexchat) -> i32;`
 ///
-/// The init function is usually where all the commands are registered using
-/// the hook commands provided by the `&Hexchat` reference provided as
-/// a paramter to the it function. The init function needs to return either 0
-/// (good) or 1 (error).
+/// The **info function** should create an instance of `PluginInfo` by calling
+/// its constructor with information about the plugin as parameters. The
+/// `PluginInfo` constructor returns a `Pin<Box<PluginInfo>>` instance which can
+/// be returned as-is from your `my_info_func()`.
 ///
-/// The deinit function gets called when the plugin is unloaded. It also returns
+/// The **init function** is typically where you'll want to register your
+/// plugin's commands. Hook commands are provided by the `&Hexchat` reference
+/// provided as a paramter when your init function is called by Hexchat. The
+/// init function needs to return either 0 (good) or 1 (error).
+///
+/// The **deinit function** gets called when your plugin is unloaded. Return a
 /// 0 (good) or 1 (error). Any cleanup actions needed to be done ccan be done
-/// here. When  DLL is unloaded by Hexchat, all its hooked commands are unhooked
-/// automatically - so that doesn't need to be done by this function.
+/// here. However, when your  DLL is unloaded by Hexchat, all its hooked
+/// commands are unhooked automatically - so you don't need to worry about
+/// managing the `Hook` objects returned by the hook commands unless you're
+/// plugin needs to fo some reason.
 ///
 #[macro_export]
 macro_rules! dll_entry_points {
@@ -157,7 +166,7 @@ impl PluginInfo {
     }
 }
 
-/// An exported function that Hexchat calls when loading the plugin.
+/// Called indirectly when a plugin is loaded to get info about it.
 /// This function calls the client plugin's `plugin_get_info()` indirectly to
 /// obtain the persistent plugin info strings that it sets the paramters to.
 pub fn lib_hexchat_plugin_get_info(name      : *mut *const i8,
@@ -169,8 +178,9 @@ pub fn lib_hexchat_plugin_get_info(name      : *mut *const i8,
     lib_get_info(name, desc, version, callback);
 }
 
-/// An exported function called by Hexchat when the plugin is loaded.
-/// This function calls the client plugin's `plugin_init()`.
+/// Called indirectly while a plugin is being loaded. This function will invoke
+/// The function that was registered for initialization by the
+/// `dll_entry_points()` macro.
 pub fn lib_hexchat_plugin_init(hexchat   : &'static Hexchat,
                                name      : *mut *const c_char,
                                desc      : *mut *const c_char,
@@ -190,8 +200,9 @@ pub fn lib_hexchat_plugin_init(hexchat   : &'static Hexchat,
     catch_unwind(|| { init_cb(hexchat) }).unwrap_or(0)
 }
 
-/// An exported function called by Hexchat when the plugin is unloaded.
-/// This function calls the client plugin's `plugin_deinit()`.
+/// Invoked indirectly while a plugin is being unloaded. This function will
+/// call the deinitialization function that was registered using the
+/// `dll_entry_points()` macro.
 pub fn lib_hexchat_plugin_deinit(hexchat  : &'static Hexchat, 
                                  callback : Box<DeinitFn>
                                 ) -> i32
@@ -200,7 +211,8 @@ pub fn lib_hexchat_plugin_deinit(hexchat  : &'static Hexchat,
 }
 
 
-/// Sets the parameter pointers to plugin info strings.
+/// This function sets Hexchat's character pointer pointer's to point at the
+/// pinned buffers holding info about a plugin.
 #[inline]
 pub fn lib_get_info(name     : *mut *const c_char,
                     desc     : *mut *const c_char,
@@ -228,7 +240,14 @@ fn set_panic_hook(hexchat: &'static Hexchat)
     panic::set_hook(Box::new(move |panic_info| {
         #[cfg(debug_assertions)]
         let mut loc = String::new();
-        
+        let plugin_name;
+        unsafe {
+            if let Some(plugin_info) = &PLUGIN_INFO {
+                plugin_name = plugin_info.name.to_str().unwrap();
+            } else {
+                plugin_name = "a Rust plugin";
+            }
+        }
         if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
             hexchat.print(&format!("\x0304<<Panicked!>>\t{:?}", s));
         } else {
@@ -236,7 +255,8 @@ fn set_panic_hook(hexchat: &'static Hexchat)
         }
         if let Some(location) = panic_info.location() {
             hexchat.print(
-                &format!("\x0313Panic occured in file '{}' at line {}.",
+                &format!("\x0313Panic occured in {} in file '{}' at line {}.",
+                         plugin_name,
                          location.file(),
                          location.line()
                         ));
