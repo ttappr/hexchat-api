@@ -30,7 +30,7 @@ use crate::utils::*;
 /// create a loadable Hexchat plugin.
 pub type InitFn   = dyn FnOnce(&'static Hexchat) -> i32 + UnwindSafe;
 pub type DeinitFn = dyn FnOnce(&'static Hexchat) -> i32 + UnwindSafe;
-pub type InfoFn   = dyn FnOnce()                 -> Pin<Box<PluginInfo>>
+pub type InfoFn   = dyn FnOnce()                 -> PinnedPluginInfo
                                                         + UnwindSafe;
 
 /// Holds persistent client plugin info strings.
@@ -55,7 +55,7 @@ static mut HEXCHAT: *const Hexchat = null::<Hexchat>();
 ///
 /// # The signatures for the functions are:
 ///
-/// * `my_info_func  ()                 -> Pin<Box<PluginInfo>>;`
+/// * `my_info_func  ()                 -> PinnedPluginInfo;`
 /// * `my_init_func  (&'static Hexchat) -> i32;`
 /// * `my_deinit_func(&'static Hexchat) -> i32;`
 ///
@@ -116,6 +116,8 @@ macro_rules! dll_entry_points {
     }
 }
 
+pub type PinnedPluginInfo = Pin<Box<PluginInfo>>;
+
 /// Holds client plugin information strings.
 pub struct PluginInfo {
     name         : CString,
@@ -139,7 +141,7 @@ impl PluginInfo {
     /// # Returns
     /// A `PluginInfo` object initialized from the parameter data.
     ///
-    pub fn new(name: &str, version: &str, description: &str) -> Pin<Box<Self>>
+    pub fn new(name: &str, version: &str, description: &str) -> PinnedPluginInfo
     {
         let pi = PluginInfo {
             name         : str2cstring(name),

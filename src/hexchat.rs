@@ -329,10 +329,10 @@ impl Hexchat {
                 if result > 0 {
                     Ok(())
                 } else {
-                    Err(CommandFailed(format!(".emit_print({}) failed. \
-                                                It\'s possible the event \
-                                                doesn\'t exist (?).",
-                                               event_name)))
+                    Err(CommandFailed(format!("`.emit_print(\"{}\", {:?})` \
+                                               failed. Check the event name \
+                                               and data for errors.",
+                                              event_name, var_args)))
                 }
             } else {
                 let result = (self.c_emit_print_attrs)(
@@ -344,10 +344,10 @@ impl Hexchat {
                 if result > 0 {
                     Ok(())
                 } else {
-                    Err(CommandFailed(format!(".emit_print_attrs({}) failed. \
-                                                It\'s possible the event \
-                                                doesn\'t exist (?).",
-                                               event_name)))
+                    Err(CommandFailed(format!("`.emit_print(\"{}\", {:?})` \
+                                               failed. Check the event name \
+                                               and data for errors.",
+                                              event_name, var_args)))
                 }
             }
         }

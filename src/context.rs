@@ -184,10 +184,10 @@ impl Context {
             if let Err(msg) = result {
                 // TODO - Should I put the original error inside this one?
                 //        There's a "source" error trait or something?
-                Err(OperationFailed(format!(".emit_print({}) failed. It's \
-                                              possible the event doesn't \
-                                              exist (?).",
-                                             event_name)))
+                Err(OperationFailed(format!("`.emit_print(\"{}\", {:?})` \
+                                             failed. Check the event name and \
+                                             data for errors.",
+                                             event_name, var_args)))
             } else {
                 Ok(())
             }
