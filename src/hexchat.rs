@@ -16,11 +16,15 @@ use std::str;
 
 use crate::callback_data::CallbackData;
 use crate::context::Context;
+use crate::context::ContextError;
+use crate::errors::*;
 use crate::hexchat_callbacks::*;
 use crate::hook::Hook;
 use crate::list_iterator::ListIterator;
 use crate::plugin::Plugin;
 use crate::utils::*;
+
+use crate::HexchatError::*;
 
 // Note the non-intuitive way macros from other files have to be accessed!
 use crate::cbuf;
@@ -80,7 +84,7 @@ impl Hexchat {
     /// The callback can be a static function, or a closure, that has the form:
     /// 
     /// ```
-    ///     FnMut(&Hexchat, &[String], &[String], &Option<Box<dyn Any>>) 
+    ///     FnMut(&Hexchat, &[String], &[String], &mut Option<Box<dyn Any>>) 
     ///     -> Eat
     /// ```
     ///
@@ -274,7 +278,9 @@ impl Hexchat {
     }
 
 
-    pub fn emit_print(&self, event_name: &str, var_args: &[&str]) -> i32 {
+    pub fn emit_print(&self, event_name: &str, var_args: &[&str])
+        -> Result<(), HexchatError>
+    {
         let event_attrs = EventAttrs { server_time_utc: 0 };
         self.emit_print_impl(0, &event_attrs, event_name, var_args)
     }
@@ -283,7 +289,7 @@ impl Hexchat {
                             event_attrs: &EventAttrs,
                             event_name: &str,
                             var_args: &[&str]
-                           ) -> i32
+                           ) -> Result<(), HexchatError>
     {
         self.emit_print_impl(1, event_attrs, event_name, var_args)
     }
@@ -293,7 +299,7 @@ impl Hexchat {
                        event_attrs: &EventAttrs,
                        event_name: &str,
                        var_args: &[&str]
-                      ) -> i32
+                      ) -> Result<(), HexchatError>
     {
         let emsg  = "Hexchat.emit_print() string conversion failed.";
         let empty = str2cstring("");
@@ -314,17 +320,35 @@ impl Hexchat {
         //        another vector containing pointers and pad with nulls.
         unsafe {
             if ver == 0 {
-                (self.c_emit_print)(self,
+                let result = (self.c_emit_print)(
+                                    self,
                                     name.as_ptr(), args[0].as_ptr(),
                                     args[1].as_ptr(), args[2].as_ptr(),
                                     args[3].as_ptr(), args[4].as_ptr(),
-                                    args[5].as_ptr(), null::<c_char>())
+                                    args[5].as_ptr(), null::<c_char>());
+                if result > 0 {
+                    Ok(())
+                } else {
+                    Err(CommandFailed(format!(".emit_print({}) failed. \
+                                                It\'s possible the event \
+                                                doesn\'t exist (?).",
+                                               event_name)))
+                }
             } else {
-                (self.c_emit_print_attrs)(self, event_attrs,
+                let result = (self.c_emit_print_attrs)(
+                                    self, event_attrs,
                                     name.as_ptr(), args[0].as_ptr(),
                                     args[1].as_ptr(), args[2].as_ptr(),
                                     args[3].as_ptr(), args[4].as_ptr(),
-                                    args[5].as_ptr(), null::<c_char>())
+                                    args[5].as_ptr(), null::<c_char>());
+                if result > 0 {
+                    Ok(())
+                } else {
+                    Err(CommandFailed(format!(".emit_print_attrs({}) failed. \
+                                                It\'s possible the event \
+                                                doesn\'t exist (?).",
+                                               event_name)))
+                }
             }
         }
     }
@@ -337,27 +361,27 @@ impl Hexchat {
         }
     }
 
-    pub fn set_context(&self, context: &Context) -> i32 {
+    pub fn set_context(&self, context: &Context) -> Result<(), ContextError> {
         context.set()
     }
 
-    pub fn find_context(&self, server: &str, channel: &str) -> Context {
+    pub fn find_context(&self, server: &str, channel: &str)
+        -> Option<Context>
+    {
         // TODO - Needs to return a Result<_> or Option<_>.
         Context::find(server, channel)
     }
 
-    pub fn get_context(&self) -> Context {
-        // TODO - Can this fail? Consider using Result<_> or Option<_>.
-        let server  = self.get_info("server");
-        let channel = self.get_info("channel");
-        Context::find(server.as_str(), channel.as_str())
+    pub fn get_context(&self) -> Option<Context> {
+        Context::get()
     }
 
-    pub fn get_info(&self, id: &str) -> String {
-        // TODO - Needs to return a Result<_> or Option<_>.
+    pub fn get_info(&self, id: &str) -> Option<String> {
         unsafe {
-            let c_id = str2cstring(id);
-            pchar2string((self.c_get_info)(self, c_id.as_ptr()))
+            let info = (self.c_get_info)(self, cbuf!(id));
+            if !info.is_null() {
+                Some(pchar2string(info))
+            } else { None }
         }
     }
 
@@ -369,12 +393,7 @@ impl Hexchat {
     }
 
     pub fn list_get(&self, name: &str) -> Option<ListIterator> {
-        // TODO - Consider using Result.
-        if let Ok(iter) = ListIterator::new(name) {
-            Some(iter)
-        } else {
-            None
-        }
+        ListIterator::new(name)
     }
 
     pub fn plugingui_add(&self,

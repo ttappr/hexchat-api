@@ -35,7 +35,9 @@ use ListError::*;
 /// The `ListIterator` wraps the list pointer and related functions of Hexchat. 
 /// It provides are more Rust OO interface. The iterator returns clones of 
 /// itself that can be used to access the current list item's fields through 
-/// `get_field()`.
+/// `get_field()`. The list iterator object is internally a smart pointer,
+/// among other things. You can clone it if you need multiple references to
+/// a list.
 #[derive(Clone)]
 pub struct ListIterator {
     field_names : Rc<Vec<String>>,
@@ -48,10 +50,10 @@ impl ListIterator {
     /// * `list_name` - The name of one of the Hexchat lists ('channels', 'dcc',
     ///                'ignore', 'notify', 'users').
     /// # Returns
-    /// * An `Option` where `None` means no such list of that name exists, and
-    ///   `Some` holds a `ListIterator` instance.
+    /// * An `Result` where `Err` means no such list of that name exists, and
+    ///   `Ok` holds a `ListIterator` instance.
     ///
-    pub fn new(list_name: &str) -> Result<Self, ListError> {
+    pub fn new(list_name: &str) -> Option<Self> {
         let name     = str2cstring(list_name);
         let hc       = unsafe { &*HEXCHAT };
         let list_ptr = unsafe { (hc.c_list_get)(hc, name.as_ptr()) };
@@ -79,7 +81,7 @@ impl ListIterator {
                 }
                 field_names.sort();
             }
-            Ok( ListIterator {
+            Some( ListIterator {
                     field_names: Rc::new(field_names),
                     data: Rc::new(
                         RefCell::new(
@@ -90,7 +92,7 @@ impl ListIterator {
                                 started: false,
                             }))})
         } else {
-            Err(UnknownList(list_name.to_owned()))
+            None
         }
     }
 

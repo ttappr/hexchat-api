@@ -93,3 +93,9 @@ fn argv2svec(pchar: *const *const c_char) -> Vec<String>
         svec
     }
 }
+
+/// ```&CString -> String``` creates a new String from a CString.
+pub (crate)
+fn cstring2string(cstring: &CString) -> String {
+    cstring.to_string_lossy().into_owned()
+}

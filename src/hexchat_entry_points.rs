@@ -258,8 +258,7 @@ fn set_panic_hook(hexchat: &'static Hexchat)
                 &format!("\x0313Panic occured in {} in file '{}' at line {}.",
                          plugin_name,
                          location.file(),
-                         location.line()
-                        ));
+                         location.line()));
                         
             #[cfg(debug_assertions)]
             {loc = format!("{}:{}", location.file(), location.line());}

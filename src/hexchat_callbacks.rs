@@ -5,7 +5,7 @@
 //! the parameters (word, word_eol, etc) for the Rust callbacks.
 
 use libc::{c_int, c_char, c_void};
-use std::ffi::{CStr, c_void};
+use std::ffi::{CStr};
 use std::panic::catch_unwind;
 
 use crate::callback_data::CallbackData;
@@ -13,7 +13,6 @@ use crate::hexchat::Eat;
 use crate::hexchat::EventAttrs;
 use crate::hexchat_entry_points::HEXCHAT;
 use crate::utils::*;
-use std::os::raw::c_int;
 
 /// An actual callback registered with Hexchat, which proxies for client plugin
 /// callbacks. It builds the `String` vectors passed to client callbacks.

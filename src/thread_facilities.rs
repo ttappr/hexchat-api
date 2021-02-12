@@ -54,8 +54,8 @@ impl<T: Clone + Send> AsyncResult<T> {
         let (mtx, _) = &*self.data;
         mtx.lock().unwrap().1
     }
-    // Blocking call to retrieve the return data from a callback on another
-    // thread.
+    /// Blocking call to retrieve the return data from a callback on another
+    /// thread.
     pub fn get(&self) -> T {
         let (mtx, cvar) = &*self.data;
         let mut guard   = mtx.lock().unwrap();
@@ -64,8 +64,8 @@ impl<T: Clone + Send> AsyncResult<T> {
         }
         (*guard).0.as_ref().unwrap().clone()
     }
-    // Sets the return data for the async result. This will unblock the receiver
-    // waiting on the result from `get()`.
+    /// Sets the return data for the async result. This will unblock the receiver
+    /// waiting on the result from `get()`.
     pub (crate)
     fn set(&self, result: T) {
         let (mtx, cvar) = &*self.data;
