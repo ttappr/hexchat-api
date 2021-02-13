@@ -24,9 +24,11 @@ use std::rc::Rc;
 use std::ptr::null;
 use std::ffi::{CString, CStr};
 
+use crate::context::*;
 use crate::hexchat::Hexchat;
 use crate::hexchat_entry_points::HEXCHAT;
 use crate::utils::*;
+use crate::cbuf;
 
 // Local types.
 use FieldValue::*;
@@ -86,6 +88,7 @@ impl ListIterator {
                     data: Rc::new(
                         RefCell::new(
                             ListIteratorData {
+                                list_name : list_name.to_string(),
                                 hc,
                                 field_types,
                                 list_ptr,
@@ -186,12 +189,27 @@ impl ListIterator {
                     Ok(IntVal(val))
                 },
                 112 /* 'p' (pointer) */ => {
-                    // TODO - This should return a Context object
-                    //        instead of a raw pointer.
-                    let val = (data.hc.c_list_str)(data.hc,
-                                                   data.list_ptr,
-                                                   c_name.as_ptr());
-                    Ok(PointerVal(val as *const c_void))
+                    if name.to_lowercase() == "context" {
+                        let network = (data.hc.c_list_str)(data.hc,
+                                                           data.list_ptr,
+                                                           cbuf!("network"));
+                        let channel = (data.hc.c_list_str)(data.hc,
+                                                           data.list_ptr,
+                                                           cbuf!("channel"));
+                        if !network.is_null() && !channel.is_null() {
+                            Ok(ContextVal(
+                                Context::find(&pchar2string(network),
+                                              &pchar2string(channel))
+                            ))
+                        } else {
+                            Ok(ContextVal(None))
+                        }
+                    } else {
+                        let ptr = (data.hc.c_list_str)(data.hc,
+                                                       data.list_ptr,
+                                                       c_name.as_ptr());
+                        Ok(PointerVal(ptr as *const c_void))
+                    }
                 },
                 116 /* 't' (time) */ => {
                     let val = (data.hc.c_list_time)(data.hc,
@@ -249,6 +267,7 @@ impl Iterator for &ListIterator {
 /// * `started`     - true if `next()` has aready been called on the Rust iter.
 ///
 struct ListIteratorData {
+    list_name   : String,
     field_types : Vec<(String, i8)>,
     hc          : &'static Hexchat,
     list_ptr    : *const c_void,
@@ -286,6 +305,7 @@ pub enum FieldValue {
     StringVal    (String),
     IntVal       (i32),
     PointerVal   (*const c_void),
+    ContextVal   (Option<Context>),
     TimeVal      (time_t),
 }
 

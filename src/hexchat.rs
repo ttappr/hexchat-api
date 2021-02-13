@@ -9,7 +9,10 @@
 
 use libc::{c_int, c_char, c_void, time_t};
 use std::any::Any;
+use std::convert::From;
 use std::ffi::{CString, CStr};
+use std::fmt;
+use std::ops::BitOr;
 use std::ops::FnMut;
 use std::ptr::null;
 use std::str;
@@ -54,7 +57,11 @@ pub enum FD {
     NotSocket   =    8,
 }
 
-
+pub enum StripFlags {
+    StripMIrcColors = 1,
+    StripTextAttributes = 2,
+    StripBoth = 3,
+}
 
 /// This is the rust-facing Hexchat API. Each method has a corresponding
 /// C function pointer which they wrap and marshal data/from.
@@ -354,11 +361,21 @@ impl Hexchat {
     }
 
     pub fn nickcmp(&self, s1: &str, s2: &str) -> i32 {
-        let s1 = str2cstring(s1);
-        let s2 = str2cstring(s2);
         unsafe {
-            (self.c_nickcmp)(self, s1.as_ptr(), s2.as_ptr())
+            (self.c_nickcmp)(self, cbuf!(s1), cbuf!(s2))
         }
+    }
+
+    pub fn strip(&self, text: &str, flags: StripFlags) -> Option<String> {
+        let length = text.len() as i32;
+        let result = unsafe {
+            (self.c_strip)(self, cbuf!(text), length, flags as i32)
+        };
+        if !result.is_null() {
+            let stripped = pchar2string(result);
+            unsafe { (self.c_free)(self, result as *const c_void); }
+            Some(stripped)
+        } else { None }
     }
 
     pub fn set_context(&self, context: &Context) -> Result<(), ContextError> {
@@ -368,7 +385,6 @@ impl Hexchat {
     pub fn find_context(&self, server: &str, channel: &str)
         -> Option<Context>
     {
-        // TODO - Needs to return a Result<_> or Option<_>.
         Context::find(server, channel)
     }
 
@@ -377,12 +393,10 @@ impl Hexchat {
     }
 
     pub fn get_info(&self, id: &str) -> Option<String> {
-        unsafe {
-            let info = (self.c_get_info)(self, cbuf!(id));
-            if !info.is_null() {
-                Some(pchar2string(info))
-            } else { None }
-        }
+        let info = unsafe { (self.c_get_info)(self, cbuf!(id)) };
+        if !info.is_null() {
+            Some(pchar2string(info))
+        } else { None }
     }
 
     pub fn get_prefs(&self, name: &str) -> Result<(), ()> {
@@ -450,6 +464,14 @@ type C_FDCallback    = extern "C"
 #[repr(C)]
 pub struct EventAttrs {
     pub server_time_utc : time_t
+}
+
+impl fmt::Debug for Hexchat {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Hexchat")
+            .field("raw_function_pointers", &"...")
+            .finish()
+    }
 }
 
 /// This struct mirrors the C Hexchat struct passed to the plugin from

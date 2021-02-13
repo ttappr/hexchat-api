@@ -9,7 +9,7 @@
 //! server strings are used internally to acquire context pointers, which
 //! are then used to switch context for a command operation and switch back
 //! to the previously active context. On each command a check is performed to
-//! ensure the `Context` is still valid. If that fails a `InvalidContext`
+//! ensure the `Context` is still valid. If that fails a `AcquisitionFailed`
 //! error is returned with the network/channel strings as data.
 
 use libc::{c_char, c_void};
@@ -22,44 +22,19 @@ use crate::hexchat_entry_points::HEXCHAT;
 use crate::list_iterator::{ListIterator, ListError, FieldValue};
 use crate::utils::*;
 use crate::cbuf;
+use crate::errors::*;
 use std::fmt;
 
 use ContextError::*;
+use HexchatError::*;
 
-#[derive(Debug, Clone)]
-pub enum ContextError {
-    InvalidContext(String, String),
-    OperationFailed(String),
-}
-
-
-impl error::Error for ContextError {}
-
-impl fmt::Display for ContextError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            InvalidContext(network, channel) => {
-                write!(f, "An existing `Context` for {}/{} has failed to \
-                           acquire a valid Hexchat context pointer while \
-                           performing an operation. Contexts can go bad \
-                           if the client disconnects, the user shuts the \
-                           associated tab/window, or parts/leaves the channel.",
-                          network, channel)
-            },
-            OperationFailed(reason) => {
-                write!(f, "The `Context` is still valid, but an operation \
-                           didn't succeed with the given reason: {}", reason)
-            },
-        }
-    }
-}
-
+#[derive(Debug)]
 struct ContextData {
     hc          : &'static Hexchat,
     network     : CString,
     channel     : CString,
 }
-
+#[derive(Debug)]
 pub struct Context {
     data    : Rc<ContextData>,
 }
@@ -119,6 +94,29 @@ impl Context {
         }
     }
 
+    pub (crate)
+    fn from_pointer(pointer: *const c_void) -> Option<Self> {
+        if pointer.is_null() {
+            None
+        } else {
+            unsafe {
+                let hc = &(*HEXCHAT);
+                let prior = (hc.c_get_context)(hc);
+                if !prior.is_null() {
+                    if (hc.c_set_context)(hc, pointer) > 0 {
+                        let ctx = Context::get();
+                        (hc.c_set_context)(hc, prior);
+                        ctx
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            }
+        }
+    }
+
     /// Private method to try and acquire a context pointer for a `Context`
     /// object. Contexts can go bad in Hexchat: if the user shuts a tab/window
     /// or leaves a channel, using a context associated with that channel
@@ -126,7 +124,7 @@ impl Context {
     /// case, using old context pointers can cause unexpected problems.
     /// So `Context` objects need to reacquire the pointer for each command
     /// invocation. If successful, `Ok(ptr)` is returned with the pointer value;
-    /// `InvalidContext(network, channel)` otherwise.
+    /// `AcquisitionFailed(network, channel)` otherwise.
     #[inline]
     fn acquire(&self) -> Result<*const hexchat_context, ContextError> {
         let data = &*self.data;
@@ -138,8 +136,8 @@ impl Context {
         if !ptr.is_null() {
             Ok(ptr)
         } else {
-            Err(InvalidContext(cstring2string(&data.network),
-                               cstring2string(&data.channel)))
+            Err(AcquisitionFailed(cstring2string(&data.network),
+                                  cstring2string(&data.channel)))
         }
     }
 
@@ -181,13 +179,8 @@ impl Context {
             (data.hc.c_set_context)(data.hc, ptr);
             let result = data.hc.emit_print(event_name, var_args);
             (data.hc.c_set_context)(data.hc, prior);
-            if let Err(msg) = result {
-                // TODO - Should I put the original error inside this one?
-                //        There's a "source" error trait or something?
-                Err(OperationFailed(format!("`.emit_print(\"{}\", {:?})` \
-                                             failed. Check the event name and \
-                                             data for errors.",
-                                             event_name, var_args)))
+            if let Err(CommandFailed(msg)) = result {
+                Err(OperationFailed(msg))
             } else {
                 Ok(())
             }
@@ -240,3 +233,52 @@ impl Context {
         }
     }
 }
+
+impl fmt::Display for Context {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let data    = &*self.data;
+        let network = cstring2string(&data.network);
+        let channel = cstring2string(&data.channel);
+
+        write!(f, "Context(\"{}\", \"{}\")", network, channel)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum ContextError {
+    AcquisitionFailed(String, String),
+    OperationFailed(String),
+}
+
+
+impl error::Error for ContextError {}
+
+impl fmt::Display for ContextError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            AcquisitionFailed(network, channel) => {
+                write!(f, "An existing `Context` for {}/{} has failed to \
+                           acquire a valid Hexchat context pointer while \
+                           performing an operation. Contexts can go bad \
+                           if the client disconnects, the user shuts the \
+                           associated tab/window, or they part/leave the \
+                           related channel.",
+                          network, channel)
+            },
+            OperationFailed(reason) => {
+                write!(f, "The `Context` is still valid, but an operation \
+                           didn't succeed with the given reason: {}", reason)
+            },
+        }
+    }
+}
+
+/*
+impl error::Error for ContextError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        Some(&self.side)
+    }
+}
+*/
+
+
