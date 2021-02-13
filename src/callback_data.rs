@@ -1,4 +1,6 @@
 
+//#![feature(unsized_locals)] ????
+
 //! The `CallbackData` object holds all the information about a callback 
 //! needed to manage the `user_data` and  invoke it safely and correctly.
 //! The objects of this module are used internally. This file also contains
@@ -13,7 +15,7 @@ use crate::utils::*;
 
 /// An enumeration of the different types of callback.
 #[derive(PartialEq)]
-enum CBType { Command, Print, PrintAttrs, Timer, FD }
+enum CBType { Command, Print, PrintAttrs, Timer, TimerOnce, FD }
 
 /// The Rust-facing `user_data` type.
 type UserData = Option<Box<dyn Any>>;
@@ -27,6 +29,7 @@ union UCallback {
     print          : MD<PrintCallback>,
     print_attrs    : MD<PrintAttrsCallback>,
     timer          : MD<TimerCallback>,
+    timer_once     : MD<TimerCallbackOnce>,
     fd             : MD<FdCallback>,
 }
 
@@ -44,6 +47,7 @@ struct CallbackData {
     callback    : UCallback,
     data        : UserData,
     hook        : Hook,
+    once_cb     : Option<Box<TimerCallbackOnce>>,
 }
 
 impl CallbackData {
@@ -55,7 +59,8 @@ impl CallbackData {
                        ) -> Self 
     {
         let cb = UCallback { command: ManuallyDrop::new(callback) };
-        CallbackData { cbtype: CBType::Command, callback: cb, data, hook  }
+        CallbackData {
+            cbtype: CBType::Command, callback: cb, data, hook, once_cb: None  }
     }
 
     /// Creates callback data for a print callback.
@@ -66,7 +71,8 @@ impl CallbackData {
                      ) -> Self
     {
         let cb = UCallback { print: ManuallyDrop::new(callback) };
-        CallbackData { cbtype: CBType::Print, callback: cb, data, hook }
+        CallbackData {
+            cbtype: CBType::Print, callback: cb, data, hook, once_cb: None }
     }
 
     /// Creates callback data for a print attrs callback.
@@ -77,7 +83,8 @@ impl CallbackData {
                            ) -> Self
     {
         let cb = UCallback { print_attrs: ManuallyDrop::new(callback) };
-        CallbackData { cbtype: CBType::PrintAttrs, callback: cb, data, hook }
+        CallbackData {
+            cbtype: CBType::PrintAttrs, callback: cb, data, hook, once_cb: None }
     }
 
     /// Creates callback data for a timer callback.
@@ -88,8 +95,21 @@ impl CallbackData {
                      ) -> Self
     {
         let cb = UCallback { timer: ManuallyDrop::new(callback) };
-        CallbackData { cbtype: CBType::Timer, callback: cb, data, hook }
+        CallbackData {
+            cbtype: CBType::Timer, callback: cb, data, hook, once_cb: None }
     }
+
+    pub (crate)
+    fn new_timer_once_data(callback : Box<TimerCallbackOnce>,
+                           data     : UserData,
+                           hook     : Hook
+                          ) -> Self
+    {
+        let cb = UCallback { timer_once: ManuallyDrop::new(callback) };
+        CallbackData {
+            cbtype: CBType::TimerOnce, callback: cb, data, hook, once_cb: None }
+    }
+
     
     /// Creates callback data for a fd callback.
     pub (crate)
@@ -99,7 +119,8 @@ impl CallbackData {
                   ) -> Self
     {
         let cb = UCallback { fd: ManuallyDrop::new(callback) };
-        CallbackData { cbtype: CBType::Timer, callback: cb, data, hook }
+        CallbackData {
+            cbtype: CBType::Timer, callback: cb, data, hook, once_cb: None }
     }
 
     /// Returns a mutable reference to the Rust-facing `user_data` that was
@@ -179,19 +200,28 @@ impl CallbackData {
         debug_assert!(CBType::Timer == self.cbtype);
         let keep_going = (*self.callback.timer)(hc, ud);
         if keep_going == 0 {
-            // Hexchat automatically removes the callback if 0 is returned.
-            // This is not good because Hexchat doesn't free the user_data.
-            // So we intervene here to ensure the user data gets cleaned up
-            // by calling .unhook(). This removes the callback.
             self.hook.unhook();
+            0
+        } else {
+            1
         }
-        // 1 is returned regardless of what the callback itself returns; this
-        // is to prevent Hexchat from trying to remove the (already terminated)
-        // callback itself, which can crash the application. If the client's
-        // Rust-facing callback returned 0 above (keep_going == 0), The
-        // callback will have been cleaned up in the conditional above.
-        1
     }
+
+    /// One time use timer callback. This is a special case; it's used for
+    /// invoking callbacks on the main thread from other threads. It will
+    /// unhook itself after one use.
+    #[inline]
+    pub (crate)
+    unsafe fn timer_once_cb(&mut self, hc: &Hexchat, ud: &mut UserData) -> i32
+    {
+        debug_assert!(CBType::TimerOnce == self.cbtype);
+        // Panic if by chance the same callback is used again!
+        let callback_once = self.once_cb.take().unwrap();
+        let keep_going = callback_once(hc, ud);
+        self.hook.unhook();
+        0
+    }
+    
 
     /// Invokes the callback held in the `callback` field. This is invoked by
     /// c_fd_callback()`.
@@ -231,6 +261,9 @@ impl Drop for CallbackData {
                 },
                 Timer => {
                     ManuallyDrop::drop(&mut self.callback.timer);
+                },
+                TimerOnce => {
+                    ManuallyDrop::drop(&mut self.callback.timer_once);
                 },
                 FD => {
                     ManuallyDrop::drop(&mut self.callback.fd);
@@ -281,6 +314,11 @@ type PrintAttrsCallback
 pub (crate)
 type TimerCallback 
               = dyn FnMut(&Hexchat, &mut Option<Box<dyn Any>>) -> i32;
+              
+pub (crate)
+type TimerCallbackOnce 
+              = dyn FnOnce(&Hexchat, &mut Option<Box<dyn Any>>) -> i32;
+
 
 /// The Rust-facing function signature corresponding to the C-facing  
 /// `C_FdCallback`. Note that, unlike the C API, the Rust-facing callback

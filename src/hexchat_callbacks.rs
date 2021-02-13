@@ -102,6 +102,27 @@ extern "C" fn c_timer_callback(user_data: *mut c_void) -> c_int
     }
 }
 
+#[allow(dead_code)]
+pub (crate)
+extern "C" fn c_timer_callback_once(user_data: *mut c_void) -> c_int
+{
+    match catch_unwind(|| {
+        unsafe {
+            let cd = user_data as *mut CallbackData;
+            let hc = &*HEXCHAT;
+            (*cd).timer_once_cb(hc, (*cd).get_data())
+            // TODO - Make sure this thing isn't used again. This cb needs to
+            //        be unhooked right after use.
+            // TODO - This is identical to the one above. Maybe that one can
+            //        also handle the once case.
+        }
+    }) {
+        Ok(result) => result as i32,
+        Err(_)     => 0,  // TODO - consider not using this value here.
+                          //        It has the effect: command not found...
+    }
+}
+
 /// An actual callback registered with Hexchat, which proxies for client plugin
 /// callbacks.
 pub (crate)

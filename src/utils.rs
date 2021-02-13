@@ -28,6 +28,36 @@ macro_rules! cbuf {
     ( $s:expr ) => { CString::new( $s ).unwrap().as_ptr() };
 }
 
+#[macro_export]
+macro_rules! fmt {
+    ( $obj:ident . printf ( $fmt:expr, $( $argv:expr ),+ ) ) => {
+        $obj.print(&format!($fmt, $($argv),+))
+    }
+}
+
+#[macro_export]
+macro_rules! outp {
+    ( $obj:ident, $fmt:expr, $( $argv:expr ),+ ) => {
+        $obj.print(&format!($fmt, $($argv),+))
+    };
+    ( $obj:ident, $( $argv:expr ),+ ) => {
+        $obj.print( $($argv),+ )
+    };
+}
+
+// Don't call this macro from the main thread.
+#[macro_export]
+macro_rules! outpth {
+    ( $obj:ident, $fmt:expr, $( $argv:expr ),+ ) => {{
+        let fm_msg = format!($fmt, $($argv),+);
+        let rc_msg = Arc::new(fm_msg.to_string());
+        main_thread(move |$obj| $obj.print(&rc_msg));
+    }};
+    ( $obj:ident, $argv:expr ) => {{
+        let rc_msg = Arc::new(msg.to_string());
+        main_thread(move |$obj| $obj.print(&rc_msg));
+    }};
+}
 
 /// ```*const c_char -> CString```
 ///

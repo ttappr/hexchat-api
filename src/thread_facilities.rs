@@ -75,7 +75,6 @@ impl<T: Clone + Send> AsyncResult<T> {
     }
 }
 
-
 /// Executes a closure from the Hexchat main thread. This function returns
 /// immediately with an AsyncResult object that can be used to retrieve the
 /// result of the operation that will run on the main thread.
@@ -92,11 +91,38 @@ where
     let res = AsyncResult::new();
     let cln = res.clone();
     let hex = unsafe { &*HEXCHAT };
-    hex.hook_timer(0, 
+    hex.hook_timer(0,
                    move |hc, ud| {
                         cln.set(callback(hc));
                         0 // Returning 0 disposes of the callback.
                     }, 
                     None);
     res
+}
+
+// TODO - At some point, figure out if both these functions are needed, or if
+//        only one of them serves for all use cases needed.
+
+/// Serves the same purpose as `main_thread()` but takes a `FnOnce()` callback
+/// instead of `FnMut()`. With the other command, the callback will hold its
+/// state between uses. In this case, the callback will be newly initialized
+/// each time this command is invoked.
+pub fn main_thread_once<F, R>(callback: F) -> AsyncResult<R>
+where
+    F: FnOnce(&Hexchat) -> R,
+    F: 'static + Send,
+    R: 'static + Clone + Send,
+{
+    let res = AsyncResult::new();
+    let cln = res.clone();
+    let hex = unsafe { &*HEXCHAT };
+    hex.hook_timer_once(0,
+                        Box::new(
+                            move |hc, ud| {
+                                cln.set(callback(hc));
+                                0 // Returning 0 disposes of the callback.
+                        }),
+                        None);
+    res
+
 }

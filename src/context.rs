@@ -34,7 +34,7 @@ struct ContextData {
     network     : CString,
     channel     : CString,
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Context {
     data    : Rc<ContextData>,
 }
@@ -90,29 +90,6 @@ impl Context {
                 Some(ctx)
             } else{
                 None
-            }
-        }
-    }
-
-    pub (crate)
-    fn from_pointer(pointer: *const c_void) -> Option<Self> {
-        if pointer.is_null() {
-            None
-        } else {
-            unsafe {
-                let hc = &(*HEXCHAT);
-                let prior = (hc.c_get_context)(hc);
-                if !prior.is_null() {
-                    if (hc.c_set_context)(hc, pointer) > 0 {
-                        let ctx = Context::get();
-                        (hc.c_set_context)(hc, prior);
-                        ctx
-                    } else {
-                        None
-                    }
-                } else {
-                    None
-                }
             }
         }
     }

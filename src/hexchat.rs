@@ -17,7 +17,7 @@ use std::ops::FnMut;
 use std::ptr::null;
 use std::str;
 
-use crate::callback_data::CallbackData;
+use crate::callback_data::{CallbackData, TimerCallbackOnce};
 use crate::context::Context;
 use crate::context::ContextError;
 use crate::errors::*;
@@ -247,6 +247,33 @@ impl Hexchat {
         }
         hook
     }
+
+    /// This is a special case feature, used internally to enable other threads
+    /// to invoke callbacks on the main thread.
+    pub (crate)
+    fn hook_timer_once(&self,
+                       timeout  : i64,
+                       callback : Box<TimerCallbackOnce>,
+                       user_data : Option<Box<dyn Any>>
+                      ) -> Hook
+    {
+        // TODO - Put the function signatures somewhere logical (?)
+
+        let hook = Hook::new();
+        let ud   = Box::new(CallbackData::new_timer_once_data(
+                                            callback,
+                                            user_data,
+                                            hook.clone()
+                                        ));
+        let ud = Box::into_raw(ud) as *mut c_void;
+        unsafe {
+            hook.set((self.c_hook_timer)(self,
+                                         timeout as c_int,
+                                         c_timer_callback_once,
+                                         ud));
+        }
+        hook
+    }                                   
 
     /// Registers a callback to be called after the given timeout.
     pub fn hook_fd<F: 'static>(&self,

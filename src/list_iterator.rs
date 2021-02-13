@@ -1,12 +1,12 @@
 
 #![allow(dead_code, unused_imports)]
 
-//! This module provides a Rust wrapper for Hexchat's list related API. A list 
-//! can be accessed by creating a `ListIterator` by passing the name of one of 
-//! the list types to the constructor. The iterator itself can be used to 
-//! access list item fields by name using `get_field()`. Fields can't be 
+//! This module provides a Rust wrapper for Hexchat's list related API. A list
+//! can be accessed by creating a `ListIterator` by passing the name of one of
+//! the list types to the constructor. The iterator itself can be used to
+//! access list item fields by name using `get_field()`. Fields can't be
 //! accessed until `next()` has been invoked to advance the internal pointer.
-//! This iterator can be used in loops like any other iterator, or `collect()` 
+//! This iterator can be used in loops like any other iterator, or `collect()`
 //! can be called to generate a vector or other collections.
 
 use libc::c_void;
@@ -34,9 +34,9 @@ use crate::cbuf;
 use FieldValue::*;
 use ListError::*;
 
-/// The `ListIterator` wraps the list pointer and related functions of Hexchat. 
-/// It provides are more Rust OO interface. The iterator returns clones of 
-/// itself that can be used to access the current list item's fields through 
+/// The `ListIterator` wraps the list pointer and related functions of Hexchat.
+/// It provides are more Rust OO interface. The iterator returns clones of
+/// itself that can be used to access the current list item's fields through
 /// `get_field()`. The list iterator object is internally a smart pointer,
 /// among other things. You can clone it if you need multiple references to
 /// a list.
@@ -47,7 +47,7 @@ pub struct ListIterator {
 }
 
 impl ListIterator {
-    /// Creates a new list iterator instance.
+    /// Creates a new list iterator instance.`
     /// # Arguments
     /// * `list_name` - The name of one of the Hexchat lists ('channels', 'dcc',
     ///                'ignore', 'notify', 'users').
@@ -111,8 +111,8 @@ impl ListIterator {
     /// * `name` - The name of the field to retrieve the value for.
     ///
     /// # Returns
-    /// * A `Result` where `Ok` holds the field data, and `Err` indicates the 
-    ///   field doesn't exist or some other problem. See `ListError` for the 
+    /// * A `Result` where `Ok` holds the field data, and `Err` indicates the
+    ///   field doesn't exist or some other problem. See `ListError` for the
     ///   error types. The values are returned as `FieldValue` tuples that hold
     ///   the requested data.
     ///
@@ -230,7 +230,7 @@ impl Iterator for ListIterator {
     type Item = Self;
 
     /// The standard method for iterators. The items returned are clones of the
-    /// iterator itself. Calling `next` on the iterator advances an internal 
+    /// iterator itself. Calling `next` on the iterator advances an internal
     /// pointer used to access Hexchat data.
     ///
     fn next(&mut self) -> Option<Self::Item> {
@@ -307,6 +307,26 @@ pub enum FieldValue {
     PointerVal   (*const c_void),
     ContextVal   (Option<Context>),
     TimeVal      (time_t),
+}
+
+impl fmt::Display for FieldValue {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            // TODO - Decide if I want quotes around the strings for display,
+            //        or if that should only apply to the debug string repr.
+            StringVal(s)   => { write!(f, "\"{}\"", s) },
+            IntVal(i)      => { write!(f, "{:?}", i) },
+            PointerVal(p)  => { write!(f, "Pointer({:?})", p) },
+            TimeVal(t)     => { write!(f, "TimeVal({:?})", t) },
+            ContextVal(c)  => { 
+                if let Some(c) = &c {
+                    write!(f, "{}", c) 
+                } else {
+                    write!(f, "Context(invalid)")
+                }
+            },
+        }
+    }
 }
 
 /// # Errors
