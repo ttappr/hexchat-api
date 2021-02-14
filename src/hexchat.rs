@@ -29,10 +29,9 @@ use crate::utils::*;
 
 use crate::HexchatError::*;
 
-// Note the non-intuitive way macros from other files have to be accessed!
 use crate::cbuf;
 
-static mut PREFS_TYPES: Option<HashMap<String, char>> = None;
+// hexchat_send_modes, hexchat_event_attrs_free, pluginpref_delete, 
 
 /// The priorty for a given callback invoked by Hexchat.
 pub enum Priority {
@@ -451,34 +450,6 @@ impl Hexchat {
     }
 
     pub fn pluginpref_set(&self, name: &str, value: &PrefValue) -> bool {
-        if name.len() > 0 {
-            match value {
-                StringVal(s) => unsafe {
-                    let tname = format!("s{}", name);
-                    (self.c_pluginpref_set_str)(self,
-                                                cbuf!(tname.as_str()),
-                                                cbuf!(s.as_str())) > 0
-                },
-                IntegerVal(i) => unsafe {
-                    let tname = format!("i{}", name);
-                    (self.c_pluginpref_set_int)(self,
-                                                cbuf!(tname.as_str()),
-                                                *i) > 0
-                },
-                BoolVal(b) => unsafe {
-                    let tname = format!("b{}", name);
-                    let val = if *b { 1 } else { 0 };
-                    (self.c_pluginpref_set_int)(self,
-                                                cbuf!(tname.as_str()),
-                                                val) > 0
-                },
-            }
-        } else {
-            false
-        }
-    }
-
-    pub fn _pluginpref_set(&self, name: &str, value: &PrefValue) -> bool {
         if let Ok(ser_val) = serde_json::to_string(value) {
             unsafe {
                 (self.c_pluginpref_set_str)(self,
@@ -490,7 +461,7 @@ impl Hexchat {
         }
     }
 
-    pub fn _pluginpref_get(&self, name: &str) -> Option<PrefValue> {
+    pub fn pluginpref_get(&self, name: &str) -> Option<PrefValue> {
         let mut buf = [0i8; 512];
         if unsafe { (self.c_pluginpref_get_str)(self,
                                                 cbuf!(name),
@@ -506,61 +477,24 @@ impl Hexchat {
     }
 
     pub fn pluginpref_list(&self) -> Option<Vec<String>> {
-        let maybe_list = self.pvt_pluginpref_list();
-        if let Some(list) = maybe_list {
-            let mut fields = vec![];
-            for name in list {
-                fields.push((&name[1..]).to_string());
+        let mut buf = [0i8; 4096];
+        if unsafe{ (self.c_pluginpref_list)(self, buf.as_mut_ptr()) > 0 } {
+            let s = pchar2string(buf.as_ptr());
+            if s.len() > 0 {
+                let mut v = vec![];
+                for name in s.split(",") {
+                    if !name.is_empty() {
+                        v.push(name.to_string());
+                    }
+                }
+                Some(v)
+            } else {
+                None
             }
-            Some(fields)
         } else {
             None
         }
     }
-
-    fn pvt_pluginpref_type(&self, name: &str) -> char {
-        self.pvt_build_map();
-        if let Some(hash_map) = unsafe { &PREFS_TYPES } {
-            if let Some(typ) = hash_map.get(name) { *typ } else { '#' }
-        } else {
-            '#'
-        }
-    }
-
-    fn pvt_build_map(&self) {
-        if unsafe { PREFS_TYPES.is_none() } {
-            let mut hash_map: HashMap<String, char> = HashMap::new();
-            if let Some(list) = self.pvt_pluginpref_list() {
-                for pref in list {
-                    let key = (&pref[1..]).to_string();
-                    let val = pref.chars().nth(0); // ugh!
-                    if key.len() > 0 && val.is_some() {
-                        hash_map.insert((&pref[1..]).to_string(), val.unwrap());
-                    }
-                }
-            }
-            unsafe { PREFS_TYPES = Some(hash_map); }
-        }
-    }
-
-    fn pvt_pluginpref_list(&self) -> Option<Vec<String>> {
-        unsafe {
-            let mut buf = [0i8; 4096];
-            if (self.c_pluginpref_list)(self, buf.as_mut_ptr()) > 0 {
-                let s = pchar2string(buf.as_ptr());
-                if s.len() > 0 {
-                    let v = s.split(",").map(|s| s.to_string()).collect();
-                    Some(v)
-                } else {
-                    None
-                }
-            } else {
-                None
-            }
-        }
-    }
-
-
 
     pub fn plugingui_add(&self,
                          filename : &str,
