@@ -14,16 +14,16 @@
 
 use libc::{c_char, c_void};
 use std::error;
+use std::fmt;
 use std::ffi::{CString, CStr};
 use std::cell::RefCell;
 use std::rc::Rc;
-use crate::hexchat::{Hexchat, hexchat_context};
+
+use crate::hexchat::{Hexchat, hexchat_context, HexchatError};
 use crate::hexchat_entry_points::HEXCHAT;
 use crate::list_iterator::{ListIterator, ListError, FieldValue};
 use crate::utils::*;
 use crate::cbuf;
-use crate::errors::*;
-use std::fmt;
 
 use ContextError::*;
 use HexchatError::*;
@@ -227,35 +227,35 @@ pub enum ContextError {
     OperationFailed(String),
 }
 
-
 impl error::Error for ContextError {}
 
 impl fmt::Display for ContextError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             AcquisitionFailed(network, channel) => {
-                write!(f, "An existing `Context` for {}/{} has failed to \
-                           acquire a valid Hexchat context pointer while \
-                           performing an operation. Contexts can go bad \
-                           if the client disconnects, the user shuts the \
-                           associated tab/window, or they part/leave the \
-                           related channel.",
+                write!(f, "AcquisitionFailed(\"{}\", \"{}\")",
                           network, channel)
             },
             OperationFailed(reason) => {
-                write!(f, "The `Context` is still valid, but an operation \
-                           didn't succeed with the given reason: {}", reason)
+                write!(f, "OperationFailed(\"{}\")", reason)
             },
         }
     }
 }
-
 /*
+// See the following for the methods to implement:
+//  https://doc.rust-lang.org/src/std/error.rs.html#48-153
 impl error::Error for ContextError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        Some(&self.side)
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        Option::from(match self {
+            AcquisitionFailed(network, channel, err) => {
+                match err {
+                    Some(err) => { err },
+                    None => { None },
+                }
+            },
+            OperationFailed(msg) => { None },
+        })
     }
 }
 */
-
-

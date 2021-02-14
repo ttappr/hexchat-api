@@ -17,7 +17,7 @@ use std::borrow::Borrow;
 use std::collections::hash_map::Keys;
 use std::collections::HashMap;
 use std::error::Error;
-use std::fmt;
+use std::{fmt, error};
 use std::iter::IntoIterator;
 use std::marker::PhantomData;
 use std::rc::Rc;
@@ -312,17 +312,14 @@ pub enum FieldValue {
 impl fmt::Display for FieldValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            // TODO - Decide if I want quotes around the strings for display,
-            //        or if that should only apply to the debug string repr.
-            StringVal(s)   => { write!(f, "\"{}\"", s) },
-            IntVal(i)      => { write!(f, "{:?}", i) },
-            PointerVal(p)  => { write!(f, "Pointer({:?})", p) },
+            StringVal(s)   => { write!(f, "StringVal(\"{}\")", s) },
+            IntVal(i)      => { write!(f, "IntVal(\"{:?}\")", i) },
+            PointerVal(p)  => { write!(f, "PointerVal({:?})", p) },
             TimeVal(t)     => { write!(f, "TimeVal({:?})", t) },
             ContextVal(c)  => { 
-                if let Some(c) = &c {
-                    write!(f, "{}", c) 
-                } else {
-                    write!(f, "Context(invalid)")
+                match c {
+                    Some(c) => { write!(f, "ContextVal(\"{}\")", c) },
+                    None    => { write!(f, "Context(None)") },
                 }
             },
         }
@@ -343,12 +340,23 @@ impl fmt::Display for FieldValue {
 ///                    before the fields of the current item can be accessed.
 #[derive(Debug)]
 pub enum ListError {
-    UnknownList  (String),
-    UnknownField (String),
-    UnknownType  (i8),
-    NotStarted   (&'static str),
+    UnknownList(String),
+    UnknownField(String),
+    UnknownType(i8),
+    NotStarted(&'static str),
 }
 
+impl error::Error for ListError {}
 
+impl fmt::Display for ListError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            UnknownList(msg)  => { write!(f, "UnknownList(\"{}\")", msg) },
+            UnknownField(msg) => { write!(f, "UnknownField(\"{}\")", msg) }
+            UnknownType(msg)  => { write!(f, "UnknownType(\"{}\")", msg) }
+            NotStarted(msg)   => { write!(f, "NotStarted(\"{}\")", msg) }
+        }
+    }
+}
 
 

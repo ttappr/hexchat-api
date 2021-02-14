@@ -24,13 +24,13 @@ extern "C" fn c_callback(word        : *const *const c_char,
                         ) -> c_int
 {
     match catch_unwind(|| {
-        let word     = argv2svec(word);
-        let word_eol = argv2svec(word_eol);
+        let word     = argv2svec(word, 1);
+        let word_eol = argv2svec(word_eol, 1);
 
         unsafe {
             let cd = user_data as *mut CallbackData;
             let hc = &*HEXCHAT;
-            (*cd).command_cb(hc, &word, &word_eol, (*cd).get_data())
+            (*cd).command_cb(hc, &word, &word_eol[1..], (*cd).get_data())
         }
     }) {
         Ok(result) => result as i32,
@@ -48,7 +48,7 @@ extern "C" fn c_print_callback(word      : *const *const c_char,
                               ) -> c_int
 {
     match catch_unwind(|| {
-        let word = argv2svec(word);
+        let word = argv2svec(word, 1);
 
         unsafe {
             let cd = user_data as *mut CallbackData;
@@ -71,7 +71,7 @@ extern "C" fn c_print_attrs_callback(word      : *const *const c_char,
                                     ) -> c_int
 {
     match catch_unwind(|| {
-        let word = argv2svec(word);
+        let word = argv2svec(word, 1);
         
         unsafe {
             let cd = user_data as *mut CallbackData;
@@ -102,6 +102,10 @@ extern "C" fn c_timer_callback(user_data: *mut c_void) -> c_int
     }
 }
 
+/// A special case callback. This is used by the multi threading support to
+/// put code on the main thread from code running on an independent thread.
+/// The `CallbackData` object will ensure that this callback gets unhooked
+/// after a one-time callback is executed.
 #[allow(dead_code)]
 pub (crate)
 extern "C" fn c_timer_callback_once(user_data: *mut c_void) -> c_int
@@ -111,10 +115,6 @@ extern "C" fn c_timer_callback_once(user_data: *mut c_void) -> c_int
             let cd = user_data as *mut CallbackData;
             let hc = &*HEXCHAT;
             (*cd).timer_once_cb(hc, (*cd).get_data())
-            // TODO - Make sure this thing isn't used again. This cb needs to
-            //        be unhooked right after use.
-            // TODO - This is identical to the one above. Maybe that one can
-            //        also handle the once case.
         }
     }) {
         Ok(result) => result as i32,

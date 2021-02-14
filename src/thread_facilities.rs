@@ -64,8 +64,8 @@ impl<T: Clone + Send> AsyncResult<T> {
         }
         (*guard).0.as_ref().unwrap().clone()
     }
-    /// Sets the return data for the async result. This will unblock the receiver
-    /// waiting on the result from `get()`.
+    /// Sets the return data for the async result. This will unblock the
+    /// receiver waiting on the result from `get()`.
     pub (crate)
     fn set(&self, result: T) {
         let (mtx, cvar) = &*self.data;
@@ -124,5 +124,4 @@ where
                         }),
                         None);
     res
-
 }

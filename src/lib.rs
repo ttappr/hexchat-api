@@ -9,7 +9,6 @@ mod hook;
 mod callback_data;
 mod consts;
 mod context;
-mod errors;
 mod hexchat;
 mod hexchat_callbacks;
 mod hexchat_entry_points;
@@ -22,7 +21,6 @@ pub use hook::*;
 pub use callback_data::*;
 pub use consts::*;
 pub use context::*;
-pub use errors::*;
 pub use hexchat::*;
 pub use hexchat_callbacks::*;
 pub use hexchat_entry_points::*;
@@ -31,3 +29,8 @@ pub use plugin::*;
 pub use thread_facilities::*;
 pub use utils::*;
 
+// TODO - Find out why I need these 'extern's and what they are/do.
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json;

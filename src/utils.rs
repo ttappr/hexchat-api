@@ -97,16 +97,24 @@ fn pchar2string(p_char: *const c_char) -> String {
 ///
 /// # Arguments
 /// * `pchar`   - The C array of character pointers.
+/// * `start`   - Which offset in the pchar array to start at.
 ///
 /// # Returns
 /// A String Vec mirroring the data passed to it via `pchar`.
 ///
 pub (crate)
-fn argv2svec(pchar: *const *const c_char) -> Vec<String>
+fn argv2svec(pchar: *const *const c_char, start: usize) -> Vec<String>
 {
+    // From the Hexchat document site at
+    // (https://hexchat.readthedocs.io/en/latest/plugins.html), the first string
+    // of word and word_eol shouldn't be read:
+    //     These arrays are simply provided for your convenience. You are not
+    //     allowed to alter them. Both arrays are limited to 32 elements
+    //     (index 31). word[0] and word_eol[0] are reserved and should not be
+    //     read.
     unsafe {
         let mut svec = vec![];
-        let mut i    = 1;
+        let mut i    = start;
         let mut pval = *pchar.add(i);
         loop {
             // to_string_lossy() protects against invalid chars.
@@ -125,6 +133,9 @@ fn argv2svec(pchar: *const *const c_char) -> Vec<String>
 }
 
 /// ```&CString -> String``` creates a new String from a CString.
+/// Some strings coming from Hexchat my contain invalid characters. This
+/// function guards against them offecting the system by replacing those
+/// characters with a default character.
 pub (crate)
 fn cstring2string(cstring: &CString) -> String {
     cstring.to_string_lossy().into_owned()

@@ -29,7 +29,7 @@ union UCallback {
     print          : MD<PrintCallback>,
     print_attrs    : MD<PrintAttrsCallback>,
     timer          : MD<TimerCallback>,
-    timer_once     : MD<TimerCallbackOnce>,
+    timer_once     : MD<Option<Box<TimerCallbackOnce>>>, // ugh!
     fd             : MD<FdCallback>,
 }
 
@@ -47,7 +47,7 @@ struct CallbackData {
     callback    : UCallback,
     data        : UserData,
     hook        : Hook,
-    once_cb     : Option<Box<TimerCallbackOnce>>,
+    //once_cb     : Option<Box<TimerCallbackOnce>>,
 }
 
 impl CallbackData {
@@ -59,8 +59,7 @@ impl CallbackData {
                        ) -> Self 
     {
         let cb = UCallback { command: ManuallyDrop::new(callback) };
-        CallbackData {
-            cbtype: CBType::Command, callback: cb, data, hook, once_cb: None  }
+        CallbackData { cbtype: CBType::Command, callback: cb, data, hook  }
     }
 
     /// Creates callback data for a print callback.
@@ -71,8 +70,7 @@ impl CallbackData {
                      ) -> Self
     {
         let cb = UCallback { print: ManuallyDrop::new(callback) };
-        CallbackData {
-            cbtype: CBType::Print, callback: cb, data, hook, once_cb: None }
+        CallbackData { cbtype: CBType::Print, callback: cb, data, hook }
     }
 
     /// Creates callback data for a print attrs callback.
@@ -83,8 +81,7 @@ impl CallbackData {
                            ) -> Self
     {
         let cb = UCallback { print_attrs: ManuallyDrop::new(callback) };
-        CallbackData {
-            cbtype: CBType::PrintAttrs, callback: cb, data, hook, once_cb: None }
+        CallbackData { cbtype: CBType::PrintAttrs, callback: cb, data, hook }
     }
 
     /// Creates callback data for a timer callback.
@@ -95,8 +92,7 @@ impl CallbackData {
                      ) -> Self
     {
         let cb = UCallback { timer: ManuallyDrop::new(callback) };
-        CallbackData {
-            cbtype: CBType::Timer, callback: cb, data, hook, once_cb: None }
+        CallbackData { cbtype: CBType::Timer, callback: cb, data, hook }
     }
 
     pub (crate)
@@ -105,9 +101,12 @@ impl CallbackData {
                            hook     : Hook
                           ) -> Self
     {
-        let cb = UCallback { timer_once: ManuallyDrop::new(callback) };
-        CallbackData {
-            cbtype: CBType::TimerOnce, callback: cb, data, hook, once_cb: None }
+        // TODO - Find a better solution to boxing an option for one-time
+        //        callbacks. Yuck!!
+        let cb = UCallback {
+            timer_once: ManuallyDrop::new(Box::new(Some(callback)))
+        };
+        CallbackData { cbtype  : CBType::TimerOnce, callback: cb, data, hook }
     }
 
     
@@ -119,8 +118,7 @@ impl CallbackData {
                   ) -> Self
     {
         let cb = UCallback { fd: ManuallyDrop::new(callback) };
-        CallbackData {
-            cbtype: CBType::Timer, callback: cb, data, hook, once_cb: None }
+        CallbackData { cbtype: CBType::Timer, callback: cb, data, hook }
     }
 
     /// Returns a mutable reference to the Rust-facing `user_data` that was
@@ -215,10 +213,11 @@ impl CallbackData {
     unsafe fn timer_once_cb(&mut self, hc: &Hexchat, ud: &mut UserData) -> i32
     {
         debug_assert!(CBType::TimerOnce == self.cbtype);
-        // Panic if by chance the same callback is used again!
-        let callback_once = self.once_cb.take().unwrap();
-        let keep_going = callback_once(hc, ud);
-        self.hook.unhook();
+        // Maybe panic, if by chance the same callback is used again!?
+        if let Some(callback_once) = (*self.callback.timer_once).take() {
+            let keep_going = callback_once(hc, ud);
+            self.hook.unhook();
+        }
         0
     }
     
