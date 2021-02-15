@@ -313,12 +313,12 @@ impl fmt::Display for FieldValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             StringVal(s)   => { write!(f, "StringVal(\"{}\")", s) },
-            IntVal(i)      => { write!(f, "IntVal(\"{:?}\")", i) },
+            IntVal(i)      => { write!(f, "IntVal({:?})", i) },
             PointerVal(p)  => { write!(f, "PointerVal({:?})", p) },
             TimeVal(t)     => { write!(f, "TimeVal({:?})", t) },
             ContextVal(c)  => { 
                 match c {
-                    Some(c) => { write!(f, "ContextVal(\"{}\")", c) },
+                    Some(c) => { write!(f, "ContextVal({})", c) },
                     None    => { write!(f, "Context(None)") },
                 }
             },

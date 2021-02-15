@@ -24,6 +24,7 @@ use std::ptr::NonNull;
 
 //use crate::{plugin_get_info, plugin_init, plugin_deinit};
 use crate::hexchat::Hexchat;
+use crate::hook::*;
 use crate::utils::*;
 
 /// The signatures for the required functions a plugin needs to implement to
@@ -34,7 +35,6 @@ pub type InfoFn   = dyn FnOnce()                 -> PinnedPluginInfo
                                                         + UnwindSafe;
 
 /// Holds persistent client plugin info strings.
-pub (crate)
 static mut PLUGIN_INFO: Option<Pin<Box<PluginInfo>>> = None;
 
 /// The global Hexchat pointer obtained from `hexchat_plugin_init()`.
@@ -113,7 +113,7 @@ macro_rules! dll_entry_points {
         {
             hexchat_api::lib_hexchat_plugin_deinit(hexchat, Box::new($deinit))
         }
-    }
+    };
 }
 
 pub type PinnedPluginInfo = Pin<Box<PluginInfo>>;
@@ -204,12 +204,25 @@ pub fn lib_hexchat_plugin_init(hexchat   : &'static Hexchat,
 
 /// Invoked indirectly while a plugin is being unloaded. This function will
 /// call the deinitialization function that was registered using the
-/// `dll_entry_points()` macro.
+/// `dll_entry_points()` macro. It will also unhook all the callbacks
+/// currently registered forcing them, and their closure state, to drop and
+/// thus clean up.
 pub fn lib_hexchat_plugin_deinit(hexchat  : &'static Hexchat, 
                                  callback : Box<DeinitFn>
                                 ) -> i32
 {
-    catch_unwind(|| { callback(hexchat) }).unwrap_or(0)
+    catch_unwind(|| { 
+        // Call user's deinit().
+        let retval = callback(hexchat);
+        
+        // Cause the callback_data objects to drop and clean up.
+        Hook::deinit();   
+        
+        // Destruct the info struct.
+        unsafe { PLUGIN_INFO = None; }
+        
+        retval     
+    }).unwrap_or(0)
 }
 
 

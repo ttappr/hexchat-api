@@ -31,6 +31,13 @@ use crate::HexchatError::*;
 
 use crate::cbuf;
 
+/// Value used in example from the Hexchat Plugin Interface doc web page.
+const MAX_PREF_VALUE_SIZE: usize =  512;
+
+/// Value specified on the [Hexchat Plugin Interface web page]
+/// (https://hexchat.readthedocs.io/en/latest/plugins.html).
+const MAX_PREF_LIST_SIZE : usize = 4096; 
+
 // hexchat_send_modes, hexchat_event_attrs_free, pluginpref_delete, 
 
 /// The priorty for a given callback invoked by Hexchat.
@@ -59,9 +66,9 @@ pub enum FD {
 }
 
 pub enum StripFlags {
-    StripMIrcColors = 1,
+    StripMIrcColors     = 1,
     StripTextAttributes = 2,
-    StripBoth = 3,
+    StripBoth           = 3,
 }
 
 /// This is the rust-facing Hexchat API. Each method has a corresponding
@@ -253,8 +260,8 @@ impl Hexchat {
     /// to invoke callbacks on the main thread.
     pub (crate)
     fn hook_timer_once(&self,
-                       timeout  : i64,
-                       callback : Box<TimerCallbackOnce>,
+                       timeout   : i64,
+                       callback  : Box<TimerCallbackOnce>,
                        user_data : Option<Box<dyn Any>>
                       ) -> Hook
     {
@@ -313,6 +320,8 @@ impl Hexchat {
     }
 
 
+    /// Issues one of the Hexchat IRC events. The command works for any of the
+    /// events listed in Settings > Text Events dialog.
     pub fn emit_print(&self, event_name: &str, var_args: &[&str])
         -> Result<(), HexchatError>
     {
@@ -320,20 +329,26 @@ impl Hexchat {
         self.emit_print_impl(0, &event_attrs, event_name, var_args)
     }
 
+    
+    /// Issues one of the Hexchat IRC events. The command works for any of the
+    /// events listed in Settings > Text Events dialog.
     pub fn emit_print_attrs(&self,
-                            event_attrs: &EventAttrs,
-                            event_name: &str,
-                            var_args: &[&str]
+                            event_attrs : &EventAttrs,
+                            event_name  : &str,
+                            var_args    : &[&str]
                            ) -> Result<(), HexchatError>
     {
         self.emit_print_impl(1, event_attrs, event_name, var_args)
     }
 
+    /// Issues one of the Hexchat IRC events. Called internally by the public
+    /// commands, `emit_print()` and `emit_print_attrs()`. The command works
+    /// for any of the events listed in Settings > Text Events dialog.
     fn emit_print_impl(&self,
-                       ver: i32,
-                       event_attrs: &EventAttrs,
-                       event_name: &str,
-                       var_args: &[&str]
+                       ver          : i32,
+                       event_attrs  : &EventAttrs,
+                       event_name   : &str,
+                       var_args     : &[&str]
                       ) -> Result<(), HexchatError>
     {
         let emsg  = "Hexchat.emit_print() string conversion failed.";
@@ -395,6 +410,9 @@ impl Hexchat {
         }
     }
 
+    /// Converts a string with text attributes and IRC colors embedded into
+    /// a plain text string. Either IRC colors, or text attributes (or both)
+    /// can be stripped out of the string.
     pub fn strip(&self, text: &str, flags: StripFlags) -> Option<String> {
         let length = text.len() as i32;
         let result = unsafe {
@@ -407,27 +425,54 @@ impl Hexchat {
         } else { None }
     }
 
+    /// Sets the currently active context to that bound to the  `Context`
+    /// object. The contexts are essentially the channels the user is in
+    /// and has open tabs/windows to them.
     pub fn set_context(&self, context: &Context) -> Result<(), ContextError> {
         context.set()
     }
 
+    /// Returns a `Context` object bound to the requested server/channel.
+    /// The object provides methods like `print()` that will execute the 
+    /// Hexchat print command in that tab/window related to the context.
     pub fn find_context(&self, server: &str, channel: &str)
         -> Option<Context>
     {
         Context::find(server, channel)
     }
 
+    /// Returns a `Context` object for the current context (Hexchat tab/window
+    /// currently visible in the app). This object can be used to invoke
+    /// the Hexchat API within the context the object is bound to.
     pub fn get_context(&self) -> Option<Context> {
         Context::get()
     }
 
+    // TODO - Combine PrefValue and FieldValue into one enum.
+    // TODO - Consider making the common string type CString for compatibility
+    //        reasons. No.. Seems that most other crates made for Rust want to
+    //        use Rust's native String/str types.
+
+    /// Retrieves the info data with the given `id`. It returns None on failure
+    /// and Some(String) on success. All information is returned as String
+    /// data - even the "win_ptr"/"gtkwin_ptr" values - these can be easily
+    /// converted to a pointer using an approprate parsing function.
+    ///
     pub fn get_info(&self, id: &str) -> Option<String> {
         let info = unsafe { (self.c_get_info)(self, cbuf!(id)) };
         if !info.is_null() {
-            Some(pchar2string(info))
+            match id {
+                "win_ptr"  | "gtkwin_ptr"  => { 
+                    Some((info as u64).to_string())
+                },
+                _ => { 
+                    Some(pchar2string(info))
+                },
+            }
         } else { None }
     }
 
+    /// Returns the requested pref value, or None if it doesn't exist.
     pub fn get_prefs(&self, name: &str) -> Option<PrefValue> {
         unsafe {
             let mut str_ptr: *const c_char = ptr::null();
@@ -448,9 +493,21 @@ impl Hexchat {
     pub fn list_get(&self, name: &str) -> Option<ListIterator> {
         ListIterator::new(name)
     }
-
+    
+    /// Writes a variable name and value to a configuration file maintained
+    /// by Hexchat for your plugin. These can be accessed later using 
+    /// `pluginpref_get()`.
+    ///
     pub fn pluginpref_set(&self, name: &str, value: &PrefValue) -> bool {
         if let Ok(ser_val) = serde_json::to_string(value) {
+            if ser_val.len() > MAX_PREF_VALUE_SIZE {
+                panic!("`hexchat.pluginpref_set()` value is larger than the \
+                        current buffer can hold when read back. Please \
+                        consider splitting the data into parts, or some \
+                        other approach to reduce the value size of the \
+                        data. The max size is {:?} bytes including \
+                        serialization data.", MAX_PREF_VALUE_SIZE);
+            }
             unsafe {
                 (self.c_pluginpref_set_str)(self,
                                             cbuf!(name),
@@ -461,8 +518,12 @@ impl Hexchat {
         }
     }
 
+    /// Retrieves, from a config file that Hexchat manages for your plugin,
+    /// the value for the named variable that had been previously created using
+    /// `pluginpref_set()`.
+    ///
     pub fn pluginpref_get(&self, name: &str) -> Option<PrefValue> {
-        let mut buf = [0i8; 512];
+        let mut buf = [0i8; MAX_PREF_VALUE_SIZE];
         if unsafe { (self.c_pluginpref_get_str)(self,
                                                 cbuf!(name),
                                                 buf.as_mut_ptr()) > 0 }
@@ -476,9 +537,13 @@ impl Hexchat {
         } else { None }
     }
 
+    /// Returns a list of all the plugin pref variable names your plugin 
+    /// registered using `pluginpref_set()`. `pluginpref_get()` can be invoked
+    /// on each item to get their values.
+    ///
     pub fn pluginpref_list(&self) -> Option<Vec<String>> {
-        let mut buf = [0i8; 4096];
-        if unsafe{ (self.c_pluginpref_list)(self, buf.as_mut_ptr()) > 0 } {
+        let mut buf = [0i8; MAX_PREF_LIST_SIZE];
+        if unsafe { (self.c_pluginpref_list)(self, buf.as_mut_ptr()) > 0 } {
             let s = pchar2string(buf.as_ptr());
             if s.len() > 0 {
                 let mut v = vec![];
@@ -496,6 +561,16 @@ impl Hexchat {
         }
     }
 
+    /// Adds a dummy entry in Hexchat's list of plugins. The "plugin" registered
+    /// using this command is visible in the "Plugins and Scripts" dialog and
+    /// using other slash "/" commands; however, that's all it does. This
+    /// command is useful when embedding a script interpreter that loads
+    /// scripts as plugin code. Each script thus loaded can be visible to the
+    /// user as a plugin. If writing a native plugin, you don't need to be
+    /// concerned with this command as your plugin's info is registered during
+    /// init from the `PluginInfo` object provided by your `plugin_get_info()`
+    /// function.
+    ///
     pub fn plugingui_add(&self,
                          filename : &str,
                          name     : &str,
@@ -506,6 +581,9 @@ impl Hexchat {
         Plugin::new(filename, name, desc, version)
     }
 
+    /// Removes the dummy plugin entry from the Hexchat environment. The
+    /// dummy plugin would have been registered using `hexchat.plugingui_add()`.
+    ///
     pub fn plugingui_remove(&self, plugin: &Plugin) {
         plugin.remove();
     }

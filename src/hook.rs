@@ -23,6 +23,10 @@ use std::ptr::null;
 use crate::callback_data::*;
 use crate::hexchat_entry_points::HEXCHAT;
 
+// Hooks are retained for cleanup when deinit is called on plugin unload.
+static mut HOOK_LIST: Option<Vec<Hook>> = None;
+
+
 /// A wrapper for Hexchat callback hooks. These hooks are returned when 
 /// registering callbacks and can be used to unregister (unhook) them.
 #[derive(Clone)]
@@ -34,7 +38,18 @@ impl Hook {
     /// C-facing callback.
     pub (crate)
     fn new() -> Self {
-        Hook { hook: Rc::new(RefCell::new(null::<c_void>())) }
+        let hook = Hook { hook: Rc::new(RefCell::new(null::<c_void>())) };
+        unsafe {
+            if let Some(hook_list) = &mut HOOK_LIST {
+                hook_list.retain(|h| !h.hook.borrow().is_null());
+                hook_list.push(hook.clone());
+            } else {
+                let mut hook_list = Vec::new();
+                hook_list.push(hook.clone());
+                HOOK_LIST = Some(hook_list);
+            }
+        }
+        hook
     }
     
     /// Sets the value of the internal hook pointer.
@@ -45,7 +60,8 @@ impl Hook {
 
     /// Unhooks the related callback from Hexchat. The user_data object is
     /// returned, passing ownership to the caller. Subsequent calls to 
-    /// `unhook()` will return `None`.
+    /// `unhook()` will return `None`. The callback that was registered with
+    /// Hexchat will be unhooked and dropped.
     pub fn unhook(&self) -> Option<Box<dyn Any>> {
         unsafe {
             let mut ptr_ref = self.hook.borrow_mut();
@@ -61,4 +77,31 @@ impl Hook {
             }
         }
     }
+    
+    /// Called when a plugin is unloaded by Hexchat. This happens when the user
+    /// opens the "Plugins and Scripts" dialog and unloads/reloads the plugin,
+    /// or the user issues one of the slash "/" commands to perform the same
+    /// operation. This function iterates over each hook, calling their 
+    /// `unhook()` method which grabs the callback data into ownership on the 
+    /// stack, which then goes out of scope, thus cleaning up each 
+    /// `CallbackData`  object. This is relevant for closures, as they have
+    /// state associated with them that gets freed.
+    pub (crate) fn deinit() {
+        unsafe {
+            if let Some(hook_list) = &HOOK_LIST {
+                for hook in hook_list {
+                    hook.unhook();
+                }
+                HOOK_LIST = None;
+            }
+        }
+    }    
 }
+
+
+
+
+
+
+
+
