@@ -29,6 +29,7 @@ static mut HOOK_LIST: Option<Vec<Hook>> = None;
 
 /// A wrapper for Hexchat callback hooks. These hooks are returned when 
 /// registering callbacks and can be used to unregister (unhook) them.
+/// `Hook`s can be cloned to share a reference to the same callback hook.
 ///
 #[derive(Clone)]
 pub struct Hook {
@@ -38,8 +39,7 @@ impl Hook {
     /// Constructor. `hook` is a hook returned by Hexchat when registering a
     /// C-facing callback.
     ///
-    pub (crate)
-    fn new() -> Self {
+    pub (crate) fn new() -> Self {
         let hook = Hook { hook: Rc::new(RefCell::new(null::<c_void>())) };
         unsafe {
             if let Some(hook_list) = &mut HOOK_LIST {
@@ -55,8 +55,7 @@ impl Hook {
     }
     
     /// Sets the value of the internal hook pointer.
-    pub (crate)
-    fn set(&self, ptr: *const c_void) {
+    pub (crate) fn set(&self, ptr: *const c_void) {
         *self.hook.borrow_mut() = ptr;
     }
 

@@ -141,8 +141,15 @@ impl Hexchat {
                                       hook.clone()
                                   ));
                                   
-        let ud = Box::into_raw(ud) as *mut c_void;
+        let ud   = Box::into_raw(ud) as *mut c_void;
+        let help = if !help.is_empty() {
+            help
+        } else {
+            "No help available for this command."
+        };
         unsafe {
+            // TODO - Consider making an empty help string cause a NULL to be
+            //        used as hook_command()'s 5th argument.
             hook.set((self.c_hook_command)(self,
                                            cbuf!(name),
                                            pri as i32,
@@ -779,6 +786,8 @@ use PrefValue::*;
 impl PrefValue {
     /// Simple config file value serialization into string.
     /// The string produced can be written to the config file Hexchat maintains.
+    /// A type character is prepended ('s', 'i', or 'b').
+    ///
     fn simple_ser(&self) -> String {
         match self {
             StringVal(s) => {
@@ -799,6 +808,10 @@ impl PrefValue {
         }
     }
     /// Simple config file value deserialization from a string to a `PrefValue`.
+    /// Treats the first character of the string read in from the config file
+    /// as the type, which it then discards and parses the rest of the string
+    /// to return the correct variant of `PrefValue`.
+    ///
     fn simple_deser(s: &str) -> PrefValue {
         if s.len() > 1 {
             match &s[0..1] {
@@ -808,20 +821,14 @@ impl PrefValue {
                 "i" => {
                     if let Ok(v) = s[1..].parse::<i32>() {
                         IntegerVal(v)
-                    } else {
-                        StringVal(s.to_string())
-                    }
+                    } else { StringVal(s.to_string()) }
                 },
                 "b" => {
                     if let Ok(v) = s[1..].parse::<bool>() {
                         BoolVal(v)
-                    } else {
-                        StringVal(s.to_string())
-                    }
+                    } else { StringVal(s.to_string()) }
                 },
-                _ => {
-                    StringVal(s.to_string())
-                },
+                _ => { StringVal(s.to_string()) },
             }
         } else {
             StringVal(s.to_string())
