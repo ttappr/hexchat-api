@@ -8,6 +8,10 @@
 //! this Hexchat interface. 
 
 use libc::{c_int, c_char, c_void, time_t};
+//use serde::Serialize;
+//use serde::Deserialize;
+//use serde_json::to_string;
+//use serde_json::
 use std::any::Any;
 use std::convert::From;
 use std::{error, ptr};
@@ -26,6 +30,11 @@ use crate::hook::Hook;
 use crate::list_iterator::ListIterator;
 use crate::plugin::Plugin;
 use crate::utils::*;
+
+//extern crate serde;
+//#[macro_use]
+//extern crate serde_derive;
+//extern crate serde_json;
 
 use crate::HexchatError::*;
 
@@ -77,7 +86,6 @@ pub enum StripFlags {
 impl Hexchat {
 
     /// Prints the string passed to it to the active Hexchat window.
-    ///
     /// # Arguments
     /// * `text` - The text to print.
     ///
@@ -86,7 +94,6 @@ impl Hexchat {
     }
 
     /// Invokes the Hexchat command specified by `command`.
-    ///
     /// # Arguments
     /// * `command` - The Hexchat command to invoke.
     ///
@@ -94,14 +101,16 @@ impl Hexchat {
         unsafe { (self.c_command)(self, cbuf!(command)); }
     }
 
-    /// Registeres a command callback with Hexchat.
-    ///
+    /// Registeres a command callback with Hexchat. This will add a user
+    /// invocable slash "/" command that can be seen when listing `/help`.
     /// The callback can be a static function, or a closure, that has the form:
-    /// 
     /// ```
     ///     FnMut(&Hexchat, &[String], &[String], &mut Option<Box<dyn Any>>) 
     ///     -> Eat
     /// ```
+    /// Note that the callback parameters include a reference to the `Hexchat`
+    /// object as a convenience. This differs from the C interface which doesn't
+    /// include it.
     ///
     /// # Arguments
     /// * `name`        - The name of the event that invokes the callback.
@@ -145,6 +154,23 @@ impl Hexchat {
     }
 
     /// Registers a callback to be called when a certain server event occurs.
+    /// For any of these functions, more information can be found at
+    /// [Hexchat Plugin Interface](https://hexchat.readthedocs.io/en/latest/plugins.html)
+    /// The callback needs to be compatible with this signature:
+    ///  ```
+    ///  FnMut(&Hexchat, &[String], &[String], &mut Option<Box<dyn Any>>)
+    ///  -> Eat
+    ///  ```
+    /// # Arguments
+    /// * `name`        - The name of the event to listen for.
+    /// * `pri`         - The priority of the callback.
+    /// * `callback`    - The callback to invoke when the event occurs.
+    /// * `user_data`   - The user data that gets passed back to the callback
+    ///                   when it's invoked.
+    /// # Returns
+    /// * A `Hook` object that can be used to deregister the callback. It
+    ///   doesn't need to be retained if not needed.
+    ///
     pub fn hook_server<F: 'static>(&self,
                                    name        : &str,
                                    pri         : Priority,
@@ -173,7 +199,22 @@ impl Hexchat {
         hook
     }
 
-    /// Registers a callback to be called when a given print event occurs.
+    /// Registers a callback to be called when a given print event occurs. This
+    /// can be any of the text events listed under Settings > Text Events.
+    /// Callback needs to be compatible with this signature:
+    /// ```
+    /// FnMut(&Hexchat, &[String], &mut Option<Box<dyn Any>>) -> Eat
+    /// ```
+    /// # Arguments
+    /// * `name`        - The name of the event to listen for.
+    /// * `pri`         - The priority of the callback.
+    /// * `callback`    - The callback to invoke when the event occurs.
+    /// * `user_data`   - The user data that gets passed back to the callback
+    ///                   when it's invoked.
+    /// # Returns
+    /// * A `Hook` object that can be used to deregister the callback. It
+    ///   doesn't need to be retained if not needed.
+    ///
     pub fn hook_print<F: 'static>(&self,
                                   event_name  : &str,
                                   pri         : Priority,
@@ -202,6 +243,23 @@ impl Hexchat {
     }
 
     /// Registers a callback to be called when a given print event occurs.
+    /// The callback will be invoked with an `EventAttrs` object containing
+    /// a `time_t` value for the event. The callback needs to be compatible
+    /// with this signature:
+    /// ```
+    /// FnMut(&Hexchat, &[String], &EventAttrs, &mut Option<Box<dyn Any>>)
+    /// -> Eat
+    /// ```
+    /// # Arguments
+    /// * `name`        - The name of the event to listen for.
+    /// * `pri`         - The priority of the callback.
+    /// * `callback`    - The callback to invoke when the event occurs.
+    /// * `user_data`   - The user data that gets passed back to the callback
+    ///                   when it's invoked.
+    /// # Returns
+    /// * A `Hook` object that can be used to deregister the callback. It
+    ///   doesn't need to be retained if not needed.
+    ///
     pub fn hook_print_attrs<F: 'static>(&self,
                                         name        : &str,
                                         pri         : Priority,
@@ -231,7 +289,19 @@ impl Hexchat {
     }
 
 
-    /// Registers a callback to be called after the given timeout.
+    /// Sets up a callback to be invoked every `timeout` milliseconds. The
+    /// callback needs to be compatible with:
+    /// ```
+    /// FnMut(&Hexchat, &mut Option<Box<dyn Any>>) -> i32
+    /// ```
+    /// # Arguments
+    /// * `timeout`     - The timeout in milliseconds.
+    /// * `callback`    - The `FnOnce()` callback.
+    /// * `user_data`   - User data included with the callback and passed back
+    ///                   to the callback during invocation.
+    /// # Returns
+    /// * A `Hook` object that is can be used to deregister the callback.
+    ///
     pub fn hook_timer<F: 'static>(&self,
                                   timeout   : i64,
                                   callback  : F,
@@ -257,7 +327,17 @@ impl Hexchat {
     }
 
     /// This is a special case feature, used internally to enable other threads
-    /// to invoke callbacks on the main thread.
+    /// to invoke callbacks on the main thread. This function isn't exported
+    /// with the rest of the functions of this class.
+    /// # Arguments
+    /// * `timeout`     - The timeout in milliseconds.
+    /// * `callback`    - The `FnOnce()` callback.
+    /// * `user_data`   - User data included with the callback and passed back
+    ///                   to the callback during invocation.
+    /// # Returns
+    /// * A `Hook` object that is used to deregister the callback after it's
+    ///   invoked.
+    ///
     pub (crate)
     fn hook_timer_once(&self,
                        timeout   : i64,
@@ -314,6 +394,12 @@ impl Hexchat {
     /// Ownership of the user_data is transferred to the caller.
     /// Note: Hexchat unhooks all hooks automatically when a plugin is unloaded,
     /// so the client plugin doesn't have to in that case.
+    /// # Arguments
+    /// * `hook` - The callback hook to deregister with Hexchat.
+    /// # Returns
+    /// * The user data that was registered with the callback using one of the
+    ///   hook commands. Ownership of this object is transferred to the caller.
+    ///
     pub fn unhook(&self, hook: &mut Hook) -> Option<Box<dyn Any>> 
     {
         hook.unhook()
@@ -322,6 +408,12 @@ impl Hexchat {
 
     /// Issues one of the Hexchat IRC events. The command works for any of the
     /// events listed in Settings > Text Events dialog.
+    /// # Arguments
+    /// * `event_name`  - The name of the Hexchat text event to send.
+    /// * `var_args`    - A slice of `&str`'s containing the event's arguments.
+    /// # Returns
+    /// * On success, `Ok(())` is returned; otherwise, `Err(<HexchatError>)`.
+    ///
     pub fn emit_print(&self, event_name: &str, var_args: &[&str])
         -> Result<(), HexchatError>
     {
@@ -332,6 +424,13 @@ impl Hexchat {
     
     /// Issues one of the Hexchat IRC events. The command works for any of the
     /// events listed in Settings > Text Events dialog.
+    /// # Arguments
+    /// * `event_attrs` - A reference to an `EventAttrs` struct.
+    /// * `event_name`  - The name of the Hexchat text event to send.
+    /// * `var_args`    - A slice of `&str`'s containing the event's arguments.
+    /// # Returns
+    /// * On success, `Ok(())` is returned; otherwise, `Err(<HexchatError>)`.
+    ///
     pub fn emit_print_attrs(&self,
                             event_attrs : &EventAttrs,
                             event_name  : &str,
@@ -344,6 +443,15 @@ impl Hexchat {
     /// Issues one of the Hexchat IRC events. Called internally by the public
     /// commands, `emit_print()` and `emit_print_attrs()`. The command works
     /// for any of the events listed in Settings > Text Events dialog.
+    /// # Arguments
+    /// * `ver`         - 0 to invoke `hc.c_emit_print()`, 1 to invoke
+    ///                   `hc.c_emit_print_attrs()`.
+    /// * `event_attrs` - A reference to an `EventAttrs` struct.
+    /// * `event_name`  - The name of the Hexchat text event to send.
+    /// * `var_args`    - A slice of `&str`'s containing the event's arguments.
+    /// # Returns
+    /// * On success, `Ok(())` is returned; otherwise, `Err(<HexchatError>)`.
+    ///
     fn emit_print_impl(&self,
                        ver          : i32,
                        event_attrs  : &EventAttrs,
@@ -351,20 +459,11 @@ impl Hexchat {
                        var_args     : &[&str]
                       ) -> Result<(), HexchatError>
     {
-        let emsg  = "Hexchat.emit_print() string conversion failed.";
-        let empty = str2cstring("");
-
-        let mut args = vec![];
-        let     name = str2cstring(event_name);
-
+        let mut args   = vec![];
+        let     name   = str2cstring(event_name);
+        let     va_len = var_args.len();
         for i in 0..6 {
-            let c_arg;
-            if i < var_args.len() {
-                c_arg = str2cstring(var_args[i]);
-            } else {
-                c_arg = empty.clone();
-            }
-            args.push(c_arg);
+            args.push(str2cstring(if i < va_len { var_args[i] } else { "" }));
         }
         // TODO - If empty strings don't suffice as a nop param, then construct
         //        another vector containing pointers and pad with nulls.
@@ -404,6 +503,16 @@ impl Hexchat {
         }
     }
 
+    /// Compares two nicknames, returning a similar value to `strcmp()`.
+    /// If they're equal (0), s1 < s2 (<0 - negative), or s1 > s2 (>0 positive).
+    /// # Arguments
+    /// * `s1` - The first nickname to compare.
+    /// * `s2` - The second.
+    /// # Returns
+    /// * If the first non-matching character is of lesser value for `s1`, a
+    ///   negative value is returned; if `s1`'s char is greater, then a non-0
+    ///   postive value is returned. 0 is returned if they match.
+    ///
     pub fn nickcmp(&self, s1: &str, s2: &str) -> i32 {
         unsafe {
             (self.c_nickcmp)(self, cbuf!(s1), cbuf!(s2))
@@ -413,6 +522,13 @@ impl Hexchat {
     /// Converts a string with text attributes and IRC colors embedded into
     /// a plain text string. Either IRC colors, or text attributes (or both)
     /// can be stripped out of the string.
+    /// # Arguments
+    /// * `text`    - The string to strip.
+    /// * `flags`   - One of the `StripFlags` cases (`StripMIrcColors`,
+    ///               `StripTextAttributes`, `StripBoth`).
+    /// # Returns
+    /// * `Some(<stripped-string>)` or `None` if the operation failed.
+    ///
     pub fn strip(&self, text: &str, flags: StripFlags) -> Option<String> {
         let length = text.len() as i32;
         let result = unsafe {
@@ -427,7 +543,15 @@ impl Hexchat {
 
     /// Sets the currently active context to that bound to the  `Context`
     /// object. The contexts are essentially the channels the user is in
-    /// and has open tabs/windows to them.
+    /// and has open tabs/windows to them. The `Context` object itself has
+    /// a `.set()` method that can be invoked directly, which this command
+    /// invokes.
+    /// # Arguments
+    /// * `context` - The `Context` to make the currently active context.
+    /// # Returns
+    /// * A result (`Result<(), ContextError`) where `Ok(())` indicates
+    ///   the context has been switched, and a `ContextError` if it didn't.
+    ///
     pub fn set_context(&self, context: &Context) -> Result<(), ContextError> {
         context.set()
     }
@@ -435,28 +559,46 @@ impl Hexchat {
     /// Returns a `Context` object bound to the requested server/channel.
     /// The object provides methods like `print()` that will execute the 
     /// Hexchat print command in that tab/window related to the context.
-    pub fn find_context(&self, server: &str, channel: &str)
+    /// The `Context::find()` can also be invoked to find a context.
+    /// # Arguments
+    /// * `network`  - The network (e.g. "freenode") of the context.
+    /// * `channel`  - The channel name for the context (e.g. "##rust").
+    /// # Returns
+    /// *  the context was found, i.e. if the user is joined to the channel
+    ///    specified currently, a `Some(<Context>)` is returned with the
+    ///    context object; `None` otherwise.
+    ///
+    pub fn find_context(&self, network: &str, channel: &str)
         -> Option<Context>
     {
-        Context::find(server, channel)
+        Context::find(network, channel)
     }
 
     /// Returns a `Context` object for the current context (Hexchat tab/window
     /// currently visible in the app). This object can be used to invoke
-    /// the Hexchat API within the context the object is bound to.
+    /// the Hexchat API within the context the object is bound to. Also,
+    /// `Context::get()` will return a context object for the current context.
+    /// # Returns
+    /// * The `Context` for the currently active context. This usually means
+    ///   the channel window the user has visible in the GUI.
+    ///
     pub fn get_context(&self) -> Option<Context> {
         Context::get()
     }
 
-    // TODO - Combine PrefValue and FieldValue into one enum.
-    // TODO - Consider making the common string type CString for compatibility
-    //        reasons. No.. Seems that most other crates made for Rust want to
-    //        use Rust's native String/str types.
-
     /// Retrieves the info data with the given `id`. It returns None on failure
-    /// and Some(String) on success. All information is returned as String
-    /// data - even the "win_ptr"/"gtkwin_ptr" values - these can be easily
-    /// converted to a pointer using an approprate parsing function.
+    /// and `Some(String)` on success. All information is returned as String
+    /// data - even the "win_ptr"/"gtkwin_ptr" values, which can be parsed
+    /// and cast to pointers.
+    /// # Arguments
+    /// * `id` - The name/identifier for the information needed. A list of
+    ///          the names for some of these can be found on the Hexchat
+    ///          Plugin Interface page under `hexchat_get_info()`. These include
+    ///          "channel", "network", "topic", etc.
+    /// # Returns
+    /// * `Some(<String>)` is returned with the string value of the info
+    ///   requested. `None` is returned if there is no info with the requested
+    ///   `id`.
     ///
     pub fn get_info(&self, id: &str) -> Option<String> {
         let info = unsafe { (self.c_get_info)(self, cbuf!(id)) };
@@ -472,7 +614,16 @@ impl Hexchat {
         } else { None }
     }
 
-    /// Returns the requested pref value, or None if it doesn't exist.
+    /// Returns the requested pref value, or None if it doesn't exist. These
+    /// are settings specific to Hexchat itself. It's possible to get the
+    /// user's input box text cursor position via this command with
+    /// "state_cursor", for instance. Other preferences can be listed with the
+    /// `/set` command.
+    /// # Arguments
+    /// * name - The name of the pref to read.
+    /// # Returns
+    /// * `Some(PrefValue)` if the pref exists, `None` otherwise.
+    ///
     pub fn get_prefs(&self, name: &str) -> Option<PrefValue> {
         unsafe {
             let mut str_ptr: *const c_char = ptr::null();
@@ -490,37 +641,58 @@ impl Hexchat {
         }
     }
 
+    /// Creates an iterator for the requested Hexchat list. This is modeled
+    /// after how Hexchat implements the listing feature: rather than load
+    /// all the list items up front, an internal list pointer is advanced
+    /// to the current item, and the fields of which are accessible through
+    /// the iterator's `.get_field()` function. List iterators can also be
+    /// created by invoking `ListIterator::new(<list-name>)`. See the Hexchat
+    /// Plugin Interface web page for more information on the related lists.
+    /// # Arguments
+    /// * `name` - The name of the list to iterate over.
+    /// # Returns
+    /// * If the list exists, `Some(ListIterator)` is returned; `None`
+    ///   otherwise.
+    ///
     pub fn list_get(&self, name: &str) -> Option<ListIterator> {
         ListIterator::new(name)
     }
     
     /// Writes a variable name and value to a configuration file maintained
     /// by Hexchat for your plugin. These can be accessed later using 
-    /// `pluginpref_get()`.
+    /// `pluginpref_get()`. *A character representing the type of the pref is
+    /// prepended to the value output to the config file. `pluginpref_get()`
+    /// uses this when reading back values from the config file to return the
+    /// correct variant of `PrefValue`.*
+    /// # Arguments
+    /// * `name`    - The name of the pref to set.
+    /// * `value`   - The value to set - an instance of one of the `PrefValue`
+    ///               types (`StringVal, IntVal, or BoolVal`).
+    /// # Returns
+    /// * `true` if the operation succeeds, `false` otherwise.
     ///
     pub fn pluginpref_set(&self, name: &str, value: &PrefValue) -> bool {
-        if let Ok(ser_val) = serde_json::to_string(value) {
-            if ser_val.len() > MAX_PREF_VALUE_SIZE {
-                panic!("`hexchat.pluginpref_set()` value is larger than the \
-                        current buffer can hold when read back. Please \
-                        consider splitting the data into parts, or some \
-                        other approach to reduce the value size of the \
-                        data. The max size is {:?} bytes including \
-                        serialization data.", MAX_PREF_VALUE_SIZE);
-            }
-            unsafe {
-                (self.c_pluginpref_set_str)(self,
-                                            cbuf!(name),
-                                            cbuf!(ser_val)) > 0
-            }
-        } else {
-            false
+        let sval = value.simple_ser();
+        if sval.len() > MAX_PREF_VALUE_SIZE {
+            panic!("`hexchat.pluginpref_set({}, <overflow>)`: the value \
+                    exceeds the max allowable size of {:?} bytes.",
+                   name, MAX_PREF_VALUE_SIZE);
+        }
+        unsafe {
+            (self.c_pluginpref_set_str)(self,
+                                        cbuf!(name),
+                                        cbuf!(sval.as_str())) > 0
         }
     }
 
     /// Retrieves, from a config file that Hexchat manages for your plugin,
     /// the value for the named variable that had been previously created using
     /// `pluginpref_set()`.
+    /// # Arguments
+    /// * `name` - The name of the pref to load.
+    /// # Returns
+    /// * `Some(<PrefValue>)` holding the value of the requested pref if it
+    ///   exists, `None` otherwise.
     ///
     pub fn pluginpref_get(&self, name: &str) -> Option<PrefValue> {
         let mut buf = [0i8; MAX_PREF_VALUE_SIZE];
@@ -528,18 +700,17 @@ impl Hexchat {
                                                 cbuf!(name),
                                                 buf.as_mut_ptr()) > 0 }
         {
-            let ser_val = pchar2string(buf.as_ptr());
-            if let Ok(val) = serde_json::from_str(&ser_val) {
-                Some(val)
-            } else {
-                None
-            }
+            let sval = pchar2string(buf.as_ptr());
+            Some(PrefValue::simple_deser(&sval))
         } else { None }
     }
 
     /// Returns a list of all the plugin pref variable names your plugin 
     /// registered using `pluginpref_set()`. `pluginpref_get()` can be invoked
-    /// on each item to get their values.
+    /// with each item to get their values.
+    /// # Returns
+    /// * `Some(Vec<String>)` if prefs exist for the plugin, `None` otherwise.
+    ///    The vector contains the names of the prefs registered.
     ///
     pub fn pluginpref_list(&self) -> Option<Vec<String>> {
         let mut buf = [0i8; MAX_PREF_LIST_SIZE];
@@ -553,12 +724,8 @@ impl Hexchat {
                     }
                 }
                 Some(v)
-            } else {
-                None
-            }
-        } else {
-            None
-        }
+            } else { None }
+        } else { None }
     }
 
     /// Adds a dummy entry in Hexchat's list of plugins. The "plugin" registered
@@ -570,6 +737,16 @@ impl Hexchat {
     /// concerned with this command as your plugin's info is registered during
     /// init from the `PluginInfo` object provided by your `plugin_get_info()`
     /// function.
+    /// # Arguments
+    /// * `filename`    - This can be the name of a script or binary.
+    /// * `name`        - The name of the plugin.
+    /// * `desc`        - The description of the plugin.
+    /// * `version`     - A version string.
+    /// # Returns
+    /// * A new `Plugin` object that represents the plugin entry in Hexchat.
+    ///   It can be used to deregister the plugin, and it (or a clone of it)
+    ///   needs to be retained; otherwise, the plugin entry will be removed
+    ///   when the last copy of the `Plugin` object goes out of scope.
     ///
     pub fn plugingui_add(&self,
                          filename : &str,
@@ -589,7 +766,9 @@ impl Hexchat {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+// TODO - Merge this with context::FieldValue and rename both to something
+//        common.
+#[derive(Debug)]
 pub enum PrefValue {
     StringVal(String),
     IntegerVal(i32),
@@ -597,6 +776,60 @@ pub enum PrefValue {
 }
 use PrefValue::*;
 
+impl PrefValue {
+    /// Simple config file value serialization into string.
+    /// The string produced can be written to the config file Hexchat maintains.
+    fn simple_ser(&self) -> String {
+        match self {
+            StringVal(s) => {
+                let mut sstr = s.clone();
+                sstr.insert(0, 's');
+                sstr
+            },
+            IntegerVal(i) => {
+                let mut istr = i.to_string();
+                istr.insert(0, 'i');
+                istr
+            },
+            BoolVal(b) => {
+                let mut bstr = b.to_string();
+                bstr.insert(0, 'b');
+                bstr
+            },
+        }
+    }
+    /// Simple config file value deserialization from a string to a `PrefValue`.
+    fn simple_deser(s: &str) -> PrefValue {
+        if s.len() > 1 {
+            match &s[0..1] {
+                "s" => {
+                    StringVal(s.to_string())
+                },
+                "i" => {
+                    if let Ok(v) = s[1..].parse::<i32>() {
+                        IntegerVal(v)
+                    } else {
+                        StringVal(s.to_string())
+                    }
+                },
+                "b" => {
+                    if let Ok(v) = s[1..].parse::<bool>() {
+                        BoolVal(v)
+                    } else {
+                        StringVal(s.to_string())
+                    }
+                },
+                _ => {
+                    StringVal(s.to_string())
+                },
+            }
+        } else {
+            StringVal(s.to_string())
+        }
+    }
+}
+
+/// Some types used by the C struct below.
 pub (crate) type hexchat_hook        = c_void;
 pub (crate) type hexchat_list        = c_void;
 pub (crate) type hexchat_context     = c_void;
@@ -681,7 +914,9 @@ impl Error for HexchatError {
 
 /// This struct mirrors the C Hexchat struct passed to the plugin from
 /// Hexchat when the plugin is loaded. Hexchat's API is implemented as a struct
-/// holding callbacks to its native functions.
+/// holding callbacks to its native functions. *Don't modify* this struct,
+/// unless there has been a change to the layout of it in the Hexchat C code
+/// base.
 #[repr(C)]
 pub struct Hexchat {
     pub (crate)

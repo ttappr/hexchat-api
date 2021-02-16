@@ -12,6 +12,7 @@ mod context;
 mod hexchat;
 mod hexchat_callbacks;
 mod hexchat_entry_points;
+mod hexchat_value;
 mod list_iterator;
 mod plugin;
 mod thread_facilities;
@@ -24,13 +25,14 @@ pub use context::*;
 pub use hexchat::*;
 pub use hexchat_callbacks::*;
 pub use hexchat_entry_points::*;
+pub use hexchat_value::*;
 pub use list_iterator::*;
 pub use plugin::*;
 pub use thread_facilities::*;
 pub use utils::*;
 
 // TODO - Find out why I need these 'extern's and what they are/do.
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde_json;
+//extern crate serde;
+//#[macro_use]
+//extern crate serde_derive;
+//extern crate serde_json;

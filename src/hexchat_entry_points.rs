@@ -70,11 +70,13 @@ static mut HEXCHAT: *const Hexchat = null::<Hexchat>();
 /// init function needs to return either 0 (good) or 1 (error).
 ///
 /// The **deinit function** gets called when your plugin is unloaded. Return a
-/// 0 (good) or 1 (error). Any cleanup actions needed to be done ccan be done
+/// 0 (good) or 1 (error). Any cleanup actions needed to be done can be done
 /// here. However, when your  DLL is unloaded by Hexchat, all its hooked
 /// commands are unhooked automatically - so you don't need to worry about
 /// managing the `Hook` objects returned by the hook commands unless you're
-/// plugin needs to fo some reason.
+/// plugin needs to for some reason. If your plugin creates any static
+/// variables, This is the place to drop their values, for example:
+/// `MY_STATIC_VAR = None;`
 ///
 #[macro_export]
 macro_rules! dll_entry_points {
@@ -116,6 +118,7 @@ macro_rules! dll_entry_points {
     };
 }
 
+/// The return value type for `PluginInfo::new()`.
 pub type PinnedPluginInfo = Pin<Box<PluginInfo>>;
 
 /// Holds client plugin information strings.
@@ -270,13 +273,13 @@ fn set_panic_hook(hexchat: &'static Hexchat)
         }
         if let Some(location) = panic_info.location() {
             hexchat.print(
-                &format!("\x0313Panic occured in {} in file '{}' at line {}.",
+                &format!("\x0313Panic occured in {} in file '{}' at line {:?}.",
                          plugin_name,
                          location.file(),
                          location.line()));
                         
             #[cfg(debug_assertions)]
-            {loc = format!("{}:{}", location.file(), location.line());}
+            { loc = format!("{}:{:?}", location.file(), location.line()); }
         }
         // For the debug build, include a stack trace.
         #[cfg(debug_assertions)]

@@ -128,7 +128,7 @@ impl ListIterator {
             }
         } else {
             Err(NotStarted("The iterator must have `.next()` invoked \
-                            before fields can be accessed."))
+                            before fields can be accessed.".to_string()))
         }
     }
 
@@ -196,13 +196,12 @@ impl ListIterator {
                         let channel = (data.hc.c_list_str)(data.hc,
                                                            data.list_ptr,
                                                            cbuf!("channel"));
-                        if !network.is_null() && !channel.is_null() {
-                            Ok(ContextVal(
-                                Context::find(&pchar2string(network),
-                                              &pchar2string(channel))
-                            ))
+                        if let Some(c) = Context::find(&pchar2string(network),
+                                                       &pchar2string(channel))
+                        {
+                            Ok(ContextVal(c))
                         } else {
-                            Ok(ContextVal(None))
+                            Err(NotAvailable("Context unavailable".to_string()))
                         }
                     } else {
                         let ptr = (data.hc.c_list_str)(data.hc,
@@ -305,7 +304,7 @@ pub enum FieldValue {
     StringVal    (String),
     IntVal       (i32),
     PointerVal   (*const c_void),
-    ContextVal   (Option<Context>),
+    ContextVal   (Context),
     TimeVal      (time_t),
 }
 
@@ -316,12 +315,7 @@ impl fmt::Display for FieldValue {
             IntVal(i)      => { write!(f, "IntVal({:?})", i) },
             PointerVal(p)  => { write!(f, "PointerVal({:?})", p) },
             TimeVal(t)     => { write!(f, "TimeVal({:?})", t) },
-            ContextVal(c)  => { 
-                match c {
-                    Some(c) => { write!(f, "ContextVal({})", c) },
-                    None    => { write!(f, "Context(None)") },
-                }
-            },
+            ContextVal(c)  => { write!(f, "ContextVal({})", c) },
         }
     }
 }
@@ -343,7 +337,8 @@ pub enum ListError {
     UnknownList(String),
     UnknownField(String),
     UnknownType(i8),
-    NotStarted(&'static str),
+    NotStarted(String),
+    NotAvailable(String),
 }
 
 impl error::Error for ListError {}
@@ -352,9 +347,10 @@ impl fmt::Display for ListError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             UnknownList(msg)  => { write!(f, "UnknownList(\"{}\")", msg) },
-            UnknownField(msg) => { write!(f, "UnknownField(\"{}\")", msg) }
-            UnknownType(msg)  => { write!(f, "UnknownType(\"{}\")", msg) }
-            NotStarted(msg)   => { write!(f, "NotStarted(\"{}\")", msg) }
+            UnknownField(msg) => { write!(f, "UnknownField(\"{}\")", msg) },
+            UnknownType(msg)  => { write!(f, "UnknownType(\"{:?}\")", msg) },
+            NotStarted(msg)   => { write!(f, "NotStarted(\"{}\")", msg) },
+            NotAvailable(msg) => { write!(f, "NotAvailable(\"{}\")", msg) },
         }
     }
 }

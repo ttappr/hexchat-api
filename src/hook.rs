@@ -29,6 +29,7 @@ static mut HOOK_LIST: Option<Vec<Hook>> = None;
 
 /// A wrapper for Hexchat callback hooks. These hooks are returned when 
 /// registering callbacks and can be used to unregister (unhook) them.
+///
 #[derive(Clone)]
 pub struct Hook {
     hook: Rc<RefCell<*const c_void>>,
@@ -36,6 +37,7 @@ pub struct Hook {
 impl Hook {
     /// Constructor. `hook` is a hook returned by Hexchat when registering a
     /// C-facing callback.
+    ///
     pub (crate)
     fn new() -> Self {
         let hook = Hook { hook: Rc::new(RefCell::new(null::<c_void>())) };
@@ -62,6 +64,10 @@ impl Hook {
     /// returned, passing ownership to the caller. Subsequent calls to 
     /// `unhook()` will return `None`. The callback that was registered with
     /// Hexchat will be unhooked and dropped.
+    /// # Returns
+    /// * The user data that was registered with the callback using one of the
+    /// hexchat hook functions.
+    ///
     pub fn unhook(&self) -> Option<Box<dyn Any>> {
         unsafe {
             let mut ptr_ref = self.hook.borrow_mut();
@@ -82,10 +88,10 @@ impl Hook {
     /// opens the "Plugins and Scripts" dialog and unloads/reloads the plugin,
     /// or the user issues one of the slash "/" commands to perform the same
     /// operation. This function iterates over each hook, calling their 
-    /// `unhook()` method which grabs the callback data into ownership on the 
-    /// stack, which then goes out of scope, thus cleaning up each 
-    /// `CallbackData`  object. This is relevant for closures, as they have
-    /// state associated with them that gets freed.
+    /// `unhook()` method which grabs ownership of the `CallbackData` objects
+    /// and drops them as they go out of scope ensuring their destructors
+    /// are called.
+    ///
     pub (crate) fn deinit() {
         unsafe {
             if let Some(hook_list) = &HOOK_LIST {
@@ -97,11 +103,3 @@ impl Hook {
         }
     }    
 }
-
-
-
-
-
-
-
-
