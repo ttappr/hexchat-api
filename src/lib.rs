@@ -15,6 +15,7 @@ mod hexchat_entry_points;
 mod list_iterator;
 mod plugin;
 mod thread_facilities;
+mod user_data;
 mod utils;
 
 pub use hook::*;
