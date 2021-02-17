@@ -19,6 +19,9 @@ use std::sync::{Arc, Condvar, Mutex};
 
 use crate::hexchat::Hexchat;
 use crate::hexchat_entry_points::HEXCHAT;
+use crate::user_data::*;
+
+use UserData::*;
 
 /// A result object that allows callbacks operating on a thread to send their
 /// return value to a receiver calling `get()` from another thread. Whether
@@ -96,7 +99,7 @@ where
                         cln.set(callback(hc));
                         0 // Returning 0 disposes of the callback.
                     }, 
-                    None);
+                    NoData);
     res
 }
 
@@ -122,6 +125,6 @@ where
                                 cln.set(callback(hc));
                                 0 // Returning 0 disposes of the callback.
                         }),
-                        None);
+                        NoData);
     res
 }

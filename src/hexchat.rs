@@ -29,6 +29,7 @@ use crate::hexchat_callbacks::*;
 use crate::hook::Hook;
 use crate::list_iterator::ListIterator;
 use crate::plugin::Plugin;
+use crate::user_data::*;
 use crate::utils::*;
 
 //extern crate serde;
@@ -105,7 +106,7 @@ impl Hexchat {
     /// invocable slash "/" command that can be seen when listing `/help`.
     /// The callback can be a static function, or a closure, that has the form:
     /// ```
-    ///     FnMut(&Hexchat, &[String], &[String], &mut Option<Box<dyn Any>>) 
+    ///     FnMut(&Hexchat, &[String], &[String], &mut UserData)
     ///     -> Eat
     /// ```
     /// Note that the callback parameters include a reference to the `Hexchat`
@@ -127,10 +128,10 @@ impl Hexchat {
                                     pri         : Priority,
                                     callback    : F,
                                     help        : &str,
-                                    user_data   : Option<Box<dyn Any>>
+                                    user_data   : UserData
                                    ) -> Hook
     where 
-        F: FnMut(&Hexchat, &[String], &[String], &mut Option<Box<dyn Any>>) 
+        F: FnMut(&Hexchat, &[String], &[String], &mut UserData)
            -> Eat
     {
         let hook = Hook::new();
@@ -165,7 +166,7 @@ impl Hexchat {
     /// [Hexchat Plugin Interface](https://hexchat.readthedocs.io/en/latest/plugins.html)
     /// The callback needs to be compatible with this signature:
     ///  ```
-    ///  FnMut(&Hexchat, &[String], &[String], &mut Option<Box<dyn Any>>)
+    ///  FnMut(&Hexchat, &[String], &[String], &mut UserData)
     ///  -> Eat
     ///  ```
     /// # Arguments
@@ -182,10 +183,10 @@ impl Hexchat {
                                    name        : &str,
                                    pri         : Priority,
                                    callback    : F,
-                                   user_data   : Option<Box<dyn Any>>
+                                   user_data   : UserData
                                   ) -> Hook
     where 
-        F: FnMut(&Hexchat, &[String], &[String], &mut Option<Box<dyn Any>>) 
+        F: FnMut(&Hexchat, &[String], &[String], &mut UserData)
            -> Eat
     {
         let hook = Hook::new();
@@ -210,7 +211,7 @@ impl Hexchat {
     /// can be any of the text events listed under Settings > Text Events.
     /// Callback needs to be compatible with this signature:
     /// ```
-    /// FnMut(&Hexchat, &[String], &mut Option<Box<dyn Any>>) -> Eat
+    /// FnMut(&Hexchat, &[String], &mut UserData) -> Eat
     /// ```
     /// # Arguments
     /// * `name`        - The name of the event to listen for.
@@ -226,10 +227,10 @@ impl Hexchat {
                                   event_name  : &str,
                                   pri         : Priority,
                                   callback    : F,
-                                  user_data   : Option<Box<dyn Any>>
+                                  user_data   : UserData
                                  ) -> Hook
     where 
-        F: FnMut(&Hexchat, &[String], &mut Option<Box<dyn Any>>) -> Eat
+        F: FnMut(&Hexchat, &[String], &mut UserData) -> Eat
     {
         let hook = Hook::new();
         let ud   = Box::new(
@@ -254,7 +255,7 @@ impl Hexchat {
     /// a `time_t` value for the event. The callback needs to be compatible
     /// with this signature:
     /// ```
-    /// FnMut(&Hexchat, &[String], &EventAttrs, &mut Option<Box<dyn Any>>)
+    /// FnMut(&Hexchat, &[String], &EventAttrs, &mut UserData)
     /// -> Eat
     /// ```
     /// # Arguments
@@ -271,10 +272,10 @@ impl Hexchat {
                                         name        : &str,
                                         pri         : Priority,
                                         callback    : F,
-                                        user_data   : Option<Box<dyn Any>>
+                                        user_data   : UserData
                                        ) -> Hook
     where 
-        F: FnMut(&Hexchat, &[String], &EventAttrs, &mut Option<Box<dyn Any>>) 
+        F: FnMut(&Hexchat, &[String], &EventAttrs, &mut UserData)
            -> Eat
     {
         let hook = Hook::new();
@@ -299,7 +300,7 @@ impl Hexchat {
     /// Sets up a callback to be invoked every `timeout` milliseconds. The
     /// callback needs to be compatible with:
     /// ```
-    /// FnMut(&Hexchat, &mut Option<Box<dyn Any>>) -> i32
+    /// FnMut(&Hexchat, &mut UserData) -> i32
     /// ```
     /// # Arguments
     /// * `timeout`     - The timeout in milliseconds.
@@ -312,10 +313,10 @@ impl Hexchat {
     pub fn hook_timer<F: 'static>(&self,
                                   timeout   : i64,
                                   callback  : F,
-                                  user_data : Option<Box<dyn Any>>
+                                  user_data : UserData
                                  ) -> Hook
     where 
-        F: FnMut(&Hexchat, &mut Option<Box<dyn Any>>) -> i32
+        F: FnMut(&Hexchat, &mut UserData) -> i32
     {
         let hook = Hook::new();
         let ud   = Box::new(CallbackData::new_timer_data(
@@ -349,7 +350,7 @@ impl Hexchat {
     fn hook_timer_once(&self,
                        timeout   : i64,
                        callback  : Box<TimerCallbackOnce>,
-                       user_data : Option<Box<dyn Any>>
+                       user_data : UserData
                       ) -> Hook
     {
         // TODO - Put the function signatures somewhere logical (?)
@@ -375,10 +376,10 @@ impl Hexchat {
                                fd        : i32,
                                flags     : i32,
                                callback  : F,
-                               user_data : Option<Box<dyn Any>>
+                               user_data : UserData
                               ) -> Hook
     where 
-        F: FnMut(&Hexchat, i32, i32, &mut Option<Box<dyn Any>>) -> Eat
+        F: FnMut(&Hexchat, i32, i32, &mut UserData) -> Eat
     {
         let hook = Hook::new();
         let ud   = Box::new(CallbackData::new_fd_data(
@@ -407,7 +408,7 @@ impl Hexchat {
     /// * The user data that was registered with the callback using one of the
     ///   hook commands. Ownership of this object is transferred to the caller.
     ///
-    pub fn unhook(&self, hook: &mut Hook) -> Option<Box<dyn Any>> 
+    pub fn unhook(&self, hook: &mut Hook) -> UserData
     {
         hook.unhook()
     }

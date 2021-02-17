@@ -11,14 +11,15 @@ use std::mem::ManuallyDrop;
 
 use crate::hook::Hook;
 use crate::hexchat::{ Hexchat, Eat, EventAttrs };
+use crate::user_data::*;
 use crate::utils::*;
+
+use UserData::*;
+use core::mem;
 
 /// An enumeration of the different types of callback.
 #[derive(PartialEq)]
 enum CBType { Command, Print, PrintAttrs, Timer, TimerOnce, FD }
-
-/// The Rust-facing `user_data` type.
-type UserData = Option<Box<dyn Any>>;
 
 /// Holds the Rust-implemented function, or closure, of a registered Hexchat 
 /// callback. `ManuallyDrop` had to be applied to the union's fields to get
@@ -125,7 +126,7 @@ impl CallbackData {
     /// registered with the callback.    
     #[inline]
     pub (crate)
-    fn get_data(&mut self) -> &mut Option<Box<dyn Any>> {
+    fn get_data(&mut self) -> &mut UserData {
         &mut self.data
     }
     
@@ -137,12 +138,9 @@ impl CallbackData {
     /// any custom cleanup. After this function is called, the callback
     /// should be considered finished.
     pub (crate)
-    fn take_data(mut self) -> Option<Box<dyn Any>> {
-        if self.data.is_some() {
-            self.data.take()
-        } else {
-            None
-        }
+    fn take_data(&mut self) -> UserData {
+        mem::take(&mut self.data)
+        // TODO - TEST THIS!
     }
 
     /// Invokes the callback held in the `callback` field.
@@ -280,7 +278,7 @@ pub (crate)
 type Callback = dyn FnMut(&Hexchat,
                           &[String],
                           &[String],
-                          &mut Option<Box<dyn Any>>
+                          &mut UserData
                          ) -> Eat;
 
 /// The Rust-facing function signature corresponding to the C-facing  
@@ -291,7 +289,7 @@ pub (crate)
 type PrintCallback 
               = dyn FnMut(&Hexchat,
                           &[String],
-                          &mut Option<Box<dyn Any>>
+                          &mut UserData
                          ) -> Eat;
 
 /// The Rust-facing function signature corresponding to the C-facing  
@@ -303,7 +301,7 @@ type PrintAttrsCallback
               = dyn FnMut(&Hexchat,
                           &[String],
                           &EventAttrs,
-                          &mut Option<Box<dyn Any>>
+                          &mut UserData
                          ) -> Eat;
 
 /// The Rust-facing function signature corresponding to the C-facing  
@@ -312,11 +310,11 @@ type PrintAttrsCallback
 /// convenience.
 pub (crate)
 type TimerCallback 
-              = dyn FnMut(&Hexchat, &mut Option<Box<dyn Any>>) -> i32;
+              = dyn FnMut(&Hexchat, &mut UserData) -> i32;
               
 pub (crate)
 type TimerCallbackOnce 
-              = dyn FnOnce(&Hexchat, &mut Option<Box<dyn Any>>) -> i32;
+              = dyn FnOnce(&Hexchat, &mut UserData) -> i32;
 
 
 /// The Rust-facing function signature corresponding to the C-facing  
@@ -325,5 +323,5 @@ type TimerCallbackOnce
 /// convenience.
 pub (crate)
 type FdCallback 
-              = dyn FnMut(&Hexchat, i32, i32, &mut Option<Box<dyn Any>>) -> Eat;
+              = dyn FnMut(&Hexchat, i32, i32, &mut UserData) -> Eat;
               

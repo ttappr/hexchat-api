@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::any::Any;
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -31,7 +33,7 @@ use std::sync::Mutex;
 /// * `NoData`      - Represents the absence of data.
 ///
 #[derive(Debug)]
-enum UserData {
+pub enum UserData {
     BoxedData  ( Box<dyn Any>         ),
     SharedData ( Rc<RefCell<dyn Any>> ),
     SyncData   ( Arc<Mutex<dyn Any>>  ),
@@ -48,7 +50,7 @@ impl UserData {
     /// # Returns
     /// * `BoxedData(user_data)`.
     ///
-    fn boxed<B:'static>(user_data: B) -> Self {
+    pub fn boxed<D:'static>(user_data: D) -> Self {
         BoxedData(Box::new(user_data))
     }
 
@@ -59,8 +61,8 @@ impl UserData {
     /// # Returns
     /// `SharedData(user_data)`.
     ///
-    fn shared<S:'static>(ud: S) -> Self {
-        SharedData(Rc::new(RefCell::new(ud)))
+    pub fn shared<D:'static>(user_data: D) -> Self {
+        SharedData(Rc::new(RefCell::new(user_data)))
     }
 
     /// Creates a `SyncData` variant. The type to use if the user data needs
@@ -70,8 +72,8 @@ impl UserData {
     /// # Returns
     /// * `SyncData(user_data)`.
     ///
-    fn sync<S:'static>(ud: S) -> Self {
-        SyncData(Arc::new(Mutex::new(ud)))
+    pub fn sync<D:'static>(user_data: D) -> Self {
+        SyncData(Arc::new(Mutex::new(user_data)))
     }
 
     /// Applies the given function to the wrapped object inside a `UserData`
@@ -81,42 +83,53 @@ impl UserData {
     /// # Arguments
     /// * `f` - A function, or closure, to invoke with the user data, free of
     ///         any wrappers. The format of the function needs to be
-    ///         `Fn(&T) -> R`, where `T` is the type of the user data; and `R`
+    ///         `Fn(&T) -> R`, where `D` is the type of the user data; and `R`
     ///         is the return type that gets wrapped in an `Option` and returned
     ///         by `apply()`.
     /// # Returns
     /// * Returns the return value of function `f` wrapped in an `Option`.
-    ///   Or returns `None` if the downcast failed. This can happen if `T`
+    ///   Or returns `None` if the downcast failed. This can happen if `D`
     ///   is incompatible with the user data's actual type.
     ///
-    fn apply<T:'static, F, R>(&self, f: F) -> Option<R>
+    pub fn apply<D:'static, F, R>(&self, f: F) -> Option<R>
     where
-        F: FnOnce(&T) -> R
+        F: FnOnce(&D) -> R
     {
         match self {
             BoxedData(d) => {
-                Some(f(d.downcast_ref::<T>()?))
+                Some(f(d.downcast_ref::<D>()?))
             },
             SharedData(d) => {
-                Some(f(d.borrow().downcast_ref::<T>()?))
+                Some(f(d.borrow().downcast_ref::<D>()?))
             },
             SyncData(d) => {
-                Some(f((*d.lock().unwrap()).downcast_ref::<T>()?))
+                Some(f((*d.lock().unwrap()).downcast_ref::<D>()?))
             },
             NoData => { None },
         }
+    }
+
+    pub fn take(self) -> Self {
+        unimplemented!("FIX THIS!")
+        //self
     }
 }
 
 impl Clone for UserData {
     fn clone(&self) -> Self {
         match self {
-            BoxedData(d) => { NoData },
             SharedData(d) => { SharedData(d.clone()) },
-            SyncData(d) => { SyncData(d.clone()) },
-            NoData => { NoData },
+            SyncData(d)   => { SyncData(d.clone()) },
+            NoData        => { NoData },
+            BoxedData(d)  => { 
+                panic!("If user data needs to be shared, The `SharedData` or \
+                       `SyncData` variants should be used.")
+            },
         }
     }
 }
 
+impl Default for UserData {
+    fn default() -> Self { NoData }
+}
 

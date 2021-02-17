@@ -22,10 +22,12 @@ use std::ptr::null;
 
 use crate::callback_data::*;
 use crate::hexchat_entry_points::HEXCHAT;
+use crate::user_data::*;
 
 // Hooks are retained for cleanup when deinit is called on plugin unload.
 static mut HOOK_LIST: Option<Vec<Hook>> = None;
 
+use UserData::*;
 
 /// A wrapper for Hexchat callback hooks. These hooks are returned when 
 /// registering callbacks and can be used to unregister (unhook) them.
@@ -67,18 +69,18 @@ impl Hook {
     /// * The user data that was registered with the callback using one of the
     /// hexchat hook functions.
     ///
-    pub fn unhook(&self) -> Option<Box<dyn Any>> {
+    pub fn unhook(&self) -> UserData {
         unsafe {
             let mut ptr_ref = self.hook.borrow_mut();
             if !ptr_ref.is_null() {
                 let hc = &*HEXCHAT;
                 let cd = (hc.c_unhook)(hc, *ptr_ref);
                 let cd = &mut (*(cd as *mut CallbackData));
-                let cd = Box::from_raw(cd);
+                let mut cd = Box::from_raw(cd);
                 *ptr_ref = null::<c_void>();
                 cd.take_data()
             } else {
-                None
+                NoData
             }
         }
     }
