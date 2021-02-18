@@ -30,7 +30,7 @@ extern "C" fn c_callback(word        : *const *const c_char,
         unsafe {
             let cd = user_data as *mut CallbackData;
             let hc = &*HEXCHAT;
-            (*cd).command_cb(hc, &word, &word_eol[1..], (*cd).get_data())
+            (*cd).command_cb(hc, &word, &word_eol, (*cd).get_data())
         }
     }) {
         Ok(result) => result as i32,

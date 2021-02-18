@@ -34,9 +34,9 @@ use std::sync::Mutex;
 ///
 #[derive(Debug)]
 pub enum UserData {
-    BoxedData  ( Box<dyn Any>         ),
-    SharedData ( Rc<RefCell<dyn Any>> ),
-    SyncData   ( Arc<Mutex<dyn Any>>  ),
+    BoxedData  (       Box     < dyn Any >   ),
+    SharedData ( Rc  < RefCell < dyn Any > > ),
+    SyncData   ( Arc < Mutex   < dyn Any > > ),
     NoData,
 }
 
@@ -108,11 +108,25 @@ impl UserData {
             NoData => { None },
         }
     }
-
-    pub fn take(self) -> Self {
-        unimplemented!("FIX THIS!")
-        //self
+    
+    pub fn apply_mut<D:'static, F, R>(&mut self, f: F) -> Option<R>
+    where
+        F: FnOnce(&mut D) -> R
+    {
+        match self {
+            BoxedData(d) => {
+                Some(f(d.downcast_mut::<D>()?))
+            },
+            SharedData(d) => {
+                Some(f(d.borrow_mut().downcast_mut::<D>()?))
+            },
+            SyncData(d) => {
+                Some(f((*d.lock().unwrap()).downcast_mut::<D>()?))
+            },
+            NoData => { None },
+        }
     }
+
 }
 
 impl Clone for UserData {

@@ -28,5 +28,6 @@ pub use hexchat_entry_points::*;
 pub use list_iterator::*;
 pub use plugin::*;
 pub use thread_facilities::*;
+pub use user_data::*;
 pub use utils::*;
 
