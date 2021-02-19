@@ -139,8 +139,9 @@ impl CallbackData {
     /// should be considered finished.
     pub (crate)
     fn take_data(&mut self) -> UserData {
-        mem::take(&mut self.data)
-        // TODO - TEST THIS!
+        // mem::take() was tried before this and caused crashes.
+        // mem::replace() doesn't crash.
+        mem::replace(&mut self.data, NoData)
     }
 
     /// Invokes the callback held in the `callback` field.
