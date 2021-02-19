@@ -109,6 +109,9 @@ impl UserData {
         }
     }
     
+    /// Same as the `apply()` function except allows mutable access to the
+    /// user data contents.
+    ///
     pub fn apply_mut<D:'static, F, R>(&mut self, f: F) -> Option<R>
     where
         F: FnOnce(&mut D) -> R
@@ -126,10 +129,15 @@ impl UserData {
             NoData => { None },
         }
     }
-
 }
 
 impl Clone for UserData {
+    /// The clone operation for `UserData` allows each variant to be cloned,
+    /// except for `BoxedData`. The reason `BoxedData` is prohibited is to 
+    /// deter sharing a box between callbacks, as that's not what
+    /// a box is meant to be used for. One of the shared variants is more
+    /// appropriate to share access to user data.
+    ///
     fn clone(&self) -> Self {
         match self {
             SharedData(d) => { SharedData(d.clone()) },
@@ -144,6 +152,11 @@ impl Clone for UserData {
 }
 
 impl Default for UserData {
+    /// Implemented to support the `take()` operation in `CallbackData` so the
+    /// user data can be retrieved with ownership when a callback is 
+    /// deregistered. That take operation replaces the user data the callback
+    /// owns with the default value (`NoData`).
+    ///
     fn default() -> Self { NoData }
 }
 
