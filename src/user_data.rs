@@ -79,7 +79,7 @@ impl UserData {
     /// Applies the given function to the wrapped object inside a `UserData`
     /// object. The type of the wrapped data has to be compatible with the
     /// type of the function's single parameter, or the downcast won't work
-    /// and `apply()` will return `None` without invoking the function.
+    /// and `apply()` will panic.
     /// # Arguments
     /// * `f` - A function, or closure, to invoke with the user data, free of
     ///         any wrappers. The format of the function needs to be
@@ -87,46 +87,47 @@ impl UserData {
     ///         is the return type that gets wrapped in an `Option` and returned
     ///         by `apply()`.
     /// # Returns
-    /// * Returns the return value of function `f` wrapped in an `Option`.
-    ///   Or returns `None` if the downcast failed. This can happen if `D`
-    ///   is incompatible with the user data's actual type.
+    /// * Returns the return value of function `f` if the downcast is 
+    ///   successful.
     ///
-    pub fn apply<D:'static, F, R>(&self, f: F) -> Option<R>
+    pub fn apply<D:'static, F, R>(&self, f: F) -> R
     where
         F: FnOnce(&D) -> R
     {
+        const ERRMSG: &str = "Unable to downcast to requested type.";
         match self {
             BoxedData(d) => {
-                Some(f(d.downcast_ref::<D>()?))
+                f(d.downcast_ref::<D>().expect(ERRMSG))
             },
             SharedData(d) => {
-                Some(f(d.borrow().downcast_ref::<D>()?))
+                f(d.borrow().downcast_ref::<D>().expect(ERRMSG))
             },
             SyncData(d) => {
-                Some(f((*d.lock().unwrap()).downcast_ref::<D>()?))
+                f((*d.lock().unwrap()).downcast_ref::<D>().expect(ERRMSG))
             },
-            NoData => { None },
+            NoData => { panic!("Can't downcast `NoData`.") },
         }
     }
     
     /// Same as the `apply()` function except allows mutable access to the
     /// user data contents.
     ///
-    pub fn apply_mut<D:'static, F, R>(&mut self, f: F) -> Option<R>
+    pub fn apply_mut<D:'static, F, R>(&mut self, f: F) -> R
     where
         F: FnOnce(&mut D) -> R
     {
+        const ERRMSG: &str = "Unable to downcast to requested type.";
         match self {
             BoxedData(d) => {
-                Some(f(d.downcast_mut::<D>()?))
+                f(d.downcast_mut::<D>().expect(ERRMSG))
             },
             SharedData(d) => {
-                Some(f(d.borrow_mut().downcast_mut::<D>()?))
+                f(d.borrow_mut().downcast_mut::<D>().expect(ERRMSG))
             },
             SyncData(d) => {
-                Some(f((*d.lock().unwrap()).downcast_mut::<D>()?))
+                f((*d.lock().unwrap()).downcast_mut::<D>().expect(ERRMSG))
             },
-            NoData => { None },
+            NoData => { panic!("Can't downcast `NoData`.") },
         }
     }
 }

@@ -64,14 +64,15 @@ impl Hook {
     /// Unhooks the related callback from Hexchat. The user_data object is
     /// returned. Subsequent calls to `unhook()` will return `None`. The 
     /// callback that was registered with Hexchat will be unhooked and dropped.
+    /// If the user data was one of the shared types, a clone of it is returned.
+    /// The boxed type `BoxedData` can't be copied or cloned, so `NoData` will 
+    /// be returned in that case. If getting the user data back from a callback
+    /// using its hook is needed, consider using one of the shared types 
+    /// (`SharedData`, `SyncData`) instead of `BoxedData`.
     /// # Returns
     /// * The user data that was registered with the callback using one of the
-    ///   hexchat hook functions. If the user data was one of the shared types,
-    ///   a clone of it is returned. The boxed type `BoxedData` can't be copied
-    ///   or cloned, so `NoData` will be returned in that case. If getting the
-    ///   user data back from a callback using its hook is needed, consider 
-    ///   using one of the shared types (`SharedData`, `SyncData`) instead of 
-    ///   `BoxedData`.
+    ///   hexchat hook functions. A clone of the data is returned, if possible.
+    ///   `NoData` is returned for `NoData` and `BoxedData` types.
     ///
     pub fn unhook(&self) -> UserData {
         unsafe {
