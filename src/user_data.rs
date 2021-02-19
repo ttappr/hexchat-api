@@ -144,8 +144,9 @@ impl Clone for UserData {
             SyncData(d)   => { SyncData(d.clone()) },
             NoData        => { NoData },
             BoxedData(d)  => { 
-                panic!("If user data needs to be shared, The `SharedData` or \
-                       `SyncData` variants should be used.")
+                panic!("Can't clone `BoxedData`. If user data needs to be \
+                        shared, The `SharedData` or `SyncData` variants of \
+                        `UserData` should be used.")
             },
         }
     }
@@ -159,4 +160,5 @@ impl Default for UserData {
     ///
     fn default() -> Self { NoData }
 }
+
 

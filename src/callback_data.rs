@@ -126,22 +126,25 @@ impl CallbackData {
     /// registered with the callback.    
     #[inline]
     pub (crate)
-    fn get_data(&mut self) -> &mut UserData {
+    fn get_data_mut(&mut self) -> &mut UserData {
         &mut self.data
     }
     
     /// Returns the `data` (Rust facing user_data) field of the object. 
-    /// Ownership of the user_data is transferred to the caller from this 
-    /// operation. This is used internally by `Hook::unhook()` to retrieve
-    /// callback data when a callback is unregistered. This gives the runtime
-    /// the opportunity to free the data by going out of scope, or perform
-    /// any custom cleanup. After this function is called, the callback
-    /// should be considered finished.
+    /// # Returns
+    /// * If the user data type was one of the shared types (`SharedData` or
+    ///   `SyncData`) a clone will be returned. `NoData` is returned otherwise.
+    ///
     pub (crate)
-    fn take_data(&mut self) -> UserData {
-        // mem::take() was tried before this and caused crashes.
-        // mem::replace() doesn't crash.
-        mem::replace(&mut self.data, NoData)
+    fn get_data(&self) -> UserData {
+        // mem::take(&mut self.data) <- This causes crashes when unloading
+        // the plugin. Box's can't clone or copy, so can't return them from 
+        // here - A NoData will be returned instead. The other variants will
+        // return a clone.
+        match self.data {
+            BoxedData(_) => { NoData },
+            _            => { self.data.clone() },
+        }
     }
 
     /// Invokes the callback held in the `callback` field.
