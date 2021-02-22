@@ -30,8 +30,8 @@ use crate::user_data::*;
 
 // Hooks are retained for cleanup when deinit is called on plugin unload.
 lazy_static! {
-    // The synchronization is needed because `main_thread()`, while running on
-    // another thread, creates a new hook when it registers a timer callback.
+    // The synchronization is needed because `main_thread()`, executed from
+    // another thread, creates a new hook when by registering a timer callback.
     static ref HOOK_LIST: RwLock<Option<Vec<Hook>>> = RwLock::new(Some(vec![]));
 }
 
@@ -121,8 +121,13 @@ impl Hook {
                 }
             }
         }
+        // TODO - Find a better solution that guarantees the clean up of 
+        //        all resources. Currently, the RwLock and lazy_static 
+        //        are leaving behind some unfree'd data/resources on the heap.
+        
+        // Free memory associated with the hook vector. 
         *HOOK_LIST.write().unwrap() = None;
-    }    
+    }
 }
 
 
