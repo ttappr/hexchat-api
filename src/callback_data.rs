@@ -31,6 +31,10 @@ enum UCallback {
     FD          (Box< FdCallback >         ),
     OnceDone,
 }
+impl Default for UCallback {
+    fn default() -> Self { OnceDone }
+}
+
 
 /// Pointers to instances of this struct are registered with the Hexchat
 /// callbacks. On the C-facing side, this is the `user_data` passed to the
@@ -218,13 +222,19 @@ impl CallbackData {
     pub (crate)
     unsafe fn timer_once_cb(&mut self, hc: &Hexchat, ud: &mut UserData) -> i32
     {
-        if let TimerOnce(callback) = &mut self.callback {
-            // Maybe panic, if by chance the same callback is used again!?
-            //(*callback)(hc, ud);
-            //self.hook.unhook();
-            0
-        } else {
-            panic!("Invoked wrong type in CallbackData.");
+        let variant = mem::take(&mut self.callback);
+        match variant {
+            TimerOnce(callback) => {
+                (callback)(hc, ud);
+                self.hook.unhook();
+                0
+            },
+            OnceDone => {
+                panic!("Invoked a one-time callback more than once.");
+            },
+            _ => {
+                panic!("Invoked wrong type in CallbackData.");
+            },
         }
     }
     
