@@ -113,10 +113,12 @@ impl Hook {
     /// are called.
     ///
     pub (crate) fn deinit() {
-        let hook_list_lock = HOOK_LIST.read();
-        if let Some(hook_list) = &*hook_list_lock.unwrap() {
-            for hook in hook_list {
-                hook.unhook();
+        {
+            let hook_list_lock = HOOK_LIST.read();
+            if let Some(hook_list) = &*hook_list_lock.unwrap() {
+                for hook in hook_list {
+                    hook.unhook();
+                }
             }
         }
         *HOOK_LIST.write().unwrap() = None;
