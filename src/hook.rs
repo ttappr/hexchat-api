@@ -53,7 +53,8 @@ impl Hook {
     ///
     pub (crate) fn new() -> Self {
         let hook = Hook { hook: Rc::new(RefCell::new(null::<c_void>())) };
-        if let Some(hook_list) = &mut *HOOK_LIST.write().unwrap() {
+        let hook_list_lock = HOOK_LIST.write();
+        if let Some(hook_list) = &mut *hook_list_lock.unwrap() {
             hook_list.retain(|h| !h.hook.borrow().is_null());
             hook_list.push(hook.clone());
         } 
@@ -112,7 +113,8 @@ impl Hook {
     /// are called.
     ///
     pub (crate) fn deinit() {
-        if let Some(hook_list) = &*HOOK_LIST.read().unwrap() {
+        let hook_list_lock = HOOK_LIST.read();
+        if let Some(hook_list) = &*hook_list_lock.unwrap() {
             for hook in hook_list {
                 hook.unhook();
             }
