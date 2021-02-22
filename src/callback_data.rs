@@ -32,6 +32,9 @@ enum UCallback {
     OnceDone,
 }
 impl Default for UCallback {
+    /// Supports `mem::take()` for the `TimerOnce` callback invocation.
+    /// The value of that callback is replaced with `OnceDone` when 
+    /// `mem::take()` is performed on it in `timer_once_cb()`.
     fn default() -> Self { OnceDone }
 }
 

@@ -21,16 +21,19 @@ use std::rc::Rc;
 use std::ptr::null;
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::sync::RwLock;
+use lazy_static::lazy_static;
 
 use crate::callback_data::*;
 use crate::hexchat_entry_points::HEXCHAT;
 use crate::user_data::*;
 
 // Hooks are retained for cleanup when deinit is called on plugin unload.
-static mut HOOK_LIST: Option<Vec<Hook>> = None;
-
-// TODO - The hook list needs to be synchronized because `main_thread()` will
-//        create new hooks from another thread.
+lazy_static! {
+    // The synchronization is needed because `main_thread()`, while running on
+    // another thread, creates a new hook when it registers a timer callback.
+    static ref HOOK_LIST: RwLock<Option<Vec<Hook>>> = RwLock::new(Some(vec![]));
+}
 
 use UserData::*;
 
@@ -42,29 +45,24 @@ use UserData::*;
 pub struct Hook {
     hook: Rc<RefCell<*const c_void>>,
 }
+unsafe impl Send for Hook {}
+unsafe impl Sync for Hook {}
 impl Hook {
     /// Constructor. `hook` is a hook returned by Hexchat when registering a
     /// C-facing callback.
     ///
     pub (crate) fn new() -> Self {
         let hook = Hook { hook: Rc::new(RefCell::new(null::<c_void>())) };
-        unsafe {
-            if let Some(hook_list) = &mut HOOK_LIST {
-                //let hook_list = &mut *hook_list.lock().unwrap();
-                hook_list.retain(|h| !h.hook.borrow().is_null());
-                hook_list.push(hook.clone());
-            } else {
-                let mut hook_list = Vec::new();
-                hook_list.push(hook.clone());
-                //HOOK_LIST = Some(Arc::new(Mutex::new(hook_list)));
-                HOOK_LIST = Some(hook_list);
-            }
-        }
+        if let Some(hook_list) = &mut *HOOK_LIST.write().unwrap() {
+            hook_list.retain(|h| !h.hook.borrow().is_null());
+            hook_list.push(hook.clone());
+        } 
         hook
     }
     
     /// Sets the value of the internal hook pointer.
     pub (crate) fn set(&self, ptr: *const c_void) {
+        let hook_list_lock = HOOK_LIST.read();
         *self.hook.borrow_mut() = ptr;
     }
 
@@ -83,6 +81,7 @@ impl Hook {
     ///
     pub fn unhook(&self) -> UserData {
         unsafe {
+            let hook_list_lock = HOOK_LIST.read();
             let mut ptr_ref = self.hook.borrow_mut();
             if !ptr_ref.is_null() {
                 let hc = &*HEXCHAT;
@@ -113,14 +112,14 @@ impl Hook {
     /// are called.
     ///
     pub (crate) fn deinit() {
-        unsafe {
-            if let Some(hook_list) = &HOOK_LIST {
-                //let hook_list = &mut *hook_list.lock().unwrap();
-                for hook in hook_list {
-                    hook.unhook();
-                }
-                HOOK_LIST = None;
+        if let Some(hook_list) = &*HOOK_LIST.read().unwrap() {
+            for hook in hook_list {
+                hook.unhook();
             }
         }
+        *HOOK_LIST.write().unwrap() = None;
     }    
 }
+
+
+
