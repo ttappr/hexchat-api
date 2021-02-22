@@ -202,7 +202,10 @@ pub fn lib_hexchat_plugin_init(hexchat   : &'static Hexchat,
     lib_get_info(name, desc, version, info_cb);
 
     // Invoke client lib's init function.
-    catch_unwind(|| { init_cb(hexchat) }).unwrap_or(0)
+    catch_unwind(|| { 
+        Hook::init();
+        init_cb(hexchat) 
+    }).unwrap_or(0)
 }
 
 /// Invoked indirectly while a plugin is being unloaded. This function will
