@@ -19,6 +19,8 @@ use std::any::Any;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::ptr::null;
+use std::sync::Arc;
+use std::sync::Mutex;
 
 use crate::callback_data::*;
 use crate::hexchat_entry_points::HEXCHAT;
@@ -45,11 +47,13 @@ impl Hook {
         let hook = Hook { hook: Rc::new(RefCell::new(null::<c_void>())) };
         unsafe {
             if let Some(hook_list) = &mut HOOK_LIST {
+                //let hook_list = &mut *hook_list.lock().unwrap();
                 hook_list.retain(|h| !h.hook.borrow().is_null());
                 hook_list.push(hook.clone());
             } else {
                 let mut hook_list = Vec::new();
                 hook_list.push(hook.clone());
+                //HOOK_LIST = Some(Arc::new(Mutex::new(hook_list)));
                 HOOK_LIST = Some(hook_list);
             }
         }
@@ -80,10 +84,17 @@ impl Hook {
             if !ptr_ref.is_null() {
                 let hc = &*HEXCHAT;
                 let cd = (hc.c_unhook)(hc, *ptr_ref);
-                let cd = &mut (*(cd as *mut CallbackData));
-                let cd = Box::from_raw(cd);
-                *ptr_ref = null::<c_void>();
-                cd.get_data()
+                if !cd.is_null() {
+                    // TODO - Find out why this is necessary. cd should never
+                    //        be null when we're here. Why is c_unhook() 
+                    //        returning null pointers??
+                    let cd = &mut (*(cd as *mut CallbackData));
+                    let cd = Box::from_raw(cd);
+                    *ptr_ref = null::<c_void>();
+                    cd.get_data()
+                } else {
+                    NoData
+                }
             } else {
                 NoData
             }
@@ -101,6 +112,7 @@ impl Hook {
     pub (crate) fn deinit() {
         unsafe {
             if let Some(hook_list) = &HOOK_LIST {
+                //let hook_list = &mut *hook_list.lock().unwrap();
                 for hook in hook_list {
                     hook.unhook();
                 }
