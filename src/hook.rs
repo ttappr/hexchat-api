@@ -29,6 +29,9 @@ use crate::user_data::*;
 // Hooks are retained for cleanup when deinit is called on plugin unload.
 static mut HOOK_LIST: Option<Vec<Hook>> = None;
 
+// TODO - The hook list needs to be synchronized because `main_thread()` will
+//        create new hooks from another thread.
+
 use UserData::*;
 
 /// A wrapper for Hexchat callback hooks. These hooks are returned when 

@@ -17,21 +17,19 @@ use crate::utils::*;
 use UserData::*;
 use core::mem;
 
-/// An enumeration of the different types of callback.
-#[derive(PartialEq)]
-enum CBType { Command, Print, PrintAttrs, Timer, TimerOnce, FD }
+use UCallback::*;
 
 /// Holds the Rust-implemented function, or closure, of a registered Hexchat 
-/// callback. `ManuallyDrop` had to be applied to the union's fields to get
-/// it to compile - it's a 0-cost abstraction, so no big deal.
-type MD<T> = ManuallyDrop<Box<T>>;
-union UCallback { 
-    command        : MD<Callback>,
-    print          : MD<PrintCallback>,
-    print_attrs    : MD<PrintAttrsCallback>,
-    timer          : MD<TimerCallback>,
-    timer_once     : MD<Option<Box<TimerCallbackOnce>>>, // ugh!
-    fd             : MD<FdCallback>,
+/// callback.
+///
+enum UCallback {
+    Command     (Box< Callback >           ),
+    Print       (Box< PrintCallback >      ),
+    PrintAttrs  (Box< PrintAttrsCallback > ),
+    Timer       (Box< TimerCallback >      ),
+    TimerOnce   (Box< TimerCallbackOnce >  ),
+    FD          (Box< FdCallback >         ),
+    OnceDone,
 }
 
 /// Pointers to instances of this struct are registered with the Hexchat
@@ -44,11 +42,9 @@ union UCallback {
 /// passed to it when invoked.
 pub (crate) 
 struct CallbackData {
-    cbtype      : CBType,
     callback    : UCallback,
     data        : UserData,
     hook        : Hook,
-    //once_cb     : Option<Box<TimerCallbackOnce>>,
 }
 
 impl CallbackData {
@@ -59,8 +55,8 @@ impl CallbackData {
                         hook     : Hook
                        ) -> Self 
     {
-        let cb = UCallback { command: ManuallyDrop::new(callback) };
-        CallbackData { cbtype: CBType::Command, callback: cb, data, hook  }
+        let callback = Command(callback);
+        CallbackData { callback, data, hook  }
     }
 
     /// Creates callback data for a print callback.
@@ -70,8 +66,8 @@ impl CallbackData {
                       hook      : Hook
                      ) -> Self
     {
-        let cb = UCallback { print: ManuallyDrop::new(callback) };
-        CallbackData { cbtype: CBType::Print, callback: cb, data, hook }
+        let callback = Print(callback);
+        CallbackData { callback, data, hook }
     }
 
     /// Creates callback data for a print attrs callback.
@@ -81,8 +77,8 @@ impl CallbackData {
                             hook     : Hook
                            ) -> Self
     {
-        let cb = UCallback { print_attrs: ManuallyDrop::new(callback) };
-        CallbackData { cbtype: CBType::PrintAttrs, callback: cb, data, hook }
+        let callback = PrintAttrs(callback);
+        CallbackData { callback, data, hook }
     }
 
     /// Creates callback data for a timer callback.
@@ -92,8 +88,8 @@ impl CallbackData {
                       hook     : Hook
                      ) -> Self
     {
-        let cb = UCallback { timer: ManuallyDrop::new(callback) };
-        CallbackData { cbtype: CBType::Timer, callback: cb, data, hook }
+        let callback = Timer(callback);
+        CallbackData { callback, data, hook }
     }
 
     pub (crate)
@@ -102,12 +98,8 @@ impl CallbackData {
                            hook     : Hook
                           ) -> Self
     {
-        // TODO - Find a better solution to boxing an option for one-time
-        //        callbacks. Yuck!!
-        let cb = UCallback {
-            timer_once: ManuallyDrop::new(Box::new(Some(callback)))
-        };
-        CallbackData { cbtype  : CBType::TimerOnce, callback: cb, data, hook }
+        let callback = TimerOnce(callback);
+        CallbackData { callback, data, hook }
     }
 
     
@@ -118,8 +110,8 @@ impl CallbackData {
                    hook     : Hook
                   ) -> Self
     {
-        let cb = UCallback { fd: ManuallyDrop::new(callback) };
-        CallbackData { cbtype: CBType::Timer, callback: cb, data, hook }
+        let callback = FD(callback);
+        CallbackData { callback, data, hook }
     }
 
     /// Returns a mutable reference to the Rust-facing `user_data` that was
@@ -157,8 +149,11 @@ impl CallbackData {
                          ud       : &mut UserData
                         ) -> Eat
     {
-        debug_assert!(CBType::Command == self.cbtype);
-        (*self.callback.command)(hc, word, word_eol, ud)
+        if let Command(callback) = &mut self.callback {
+            (*callback)(hc, word, word_eol, ud)
+        } else {
+            panic!("Invoked wrong type in CallbackData.");
+        }
     }
     
     /// Invokes the callback held in the `callback` field. This is invoked by
@@ -172,8 +167,11 @@ impl CallbackData {
                        ud       : &mut UserData
                       ) -> Eat 
     {
-        debug_assert!(CBType::Print == self.cbtype);
-        (*self.callback.print)(hc, word, ud)
+        if let Print(callback) = &mut self.callback {
+            (*callback)(hc, word, ud)
+        } else {
+            panic!("Invoked wrong type in CallbackData.");
+        }
     }
     
     /// Invokes the callback held in the `callback` field. This is invoked by
@@ -187,8 +185,11 @@ impl CallbackData {
                              ud    : &mut UserData
                             ) -> Eat
     {
-        debug_assert!(CBType::PrintAttrs == self.cbtype);
-        (*self.callback.print_attrs)(hc, word, attrs, ud)
+        if let PrintAttrs(callback) = &mut self.callback {
+            (*callback)(hc, word, attrs, ud)
+        } else {
+            panic!("Invoked wrong type in CallbackData.");
+        }
     }
     
     /// Invokes the callback held in the `callback` field. This is invoked by
@@ -197,13 +198,16 @@ impl CallbackData {
     pub (crate)
     unsafe fn timer_cb(&mut self, hc: &Hexchat, ud: &mut UserData) -> i32
     {
-        debug_assert!(CBType::Timer == self.cbtype);
-        let keep_going = (*self.callback.timer)(hc, ud);
-        if keep_going == 0 {
-            self.hook.unhook();
-            0
+        if let Timer(callback) = &mut self.callback {
+            let keep_going = (*callback)(hc, ud);
+            if keep_going == 0 {
+                self.hook.unhook();
+                0
+            } else {
+                1
+            }
         } else {
-            1
+            panic!("Invoked wrong type in CallbackData.");
         }
     }
 
@@ -214,13 +218,14 @@ impl CallbackData {
     pub (crate)
     unsafe fn timer_once_cb(&mut self, hc: &Hexchat, ud: &mut UserData) -> i32
     {
-        debug_assert!(CBType::TimerOnce == self.cbtype);
-        // Maybe panic, if by chance the same callback is used again!?
-        if let Some(callback_once) = (*self.callback.timer_once).take() {
-            let keep_going = callback_once(hc, ud);
-            self.hook.unhook();
+        if let TimerOnce(callback) = &mut self.callback {
+            // Maybe panic, if by chance the same callback is used again!?
+            //(*callback)(hc, ud);
+            //self.hook.unhook();
+            0
+        } else {
+            panic!("Invoked wrong type in CallbackData.");
         }
-        0
     }
     
 
@@ -234,42 +239,10 @@ impl CallbackData {
                     flags : i32, 
                     ud    : &mut UserData) -> Eat
     {
-        debug_assert!(CBType::FD == self.cbtype);
-        (*self.callback.fd)(hc, fd, flags, ud)
-    }
-}
-
-impl Drop for CallbackData {
-    /// Causes the destructor for the `self.callback` field to be invoked.
-    /// This is called when `CallbackData` is being removed from Hexchat
-    /// during an `unhook()` operation.
-    ///
-    fn drop(&mut self) {
-        use CBType::*;
-        unsafe {
-            // This might be overkill. It might be enough to just pick one of
-            // the command types and drop it. But anyway, it's better to err
-            // in the direction of safety.
-            match self.cbtype {
-                Command => {
-                    ManuallyDrop::drop(&mut self.callback.command);
-                },
-                Print => {
-                    ManuallyDrop::drop(&mut self.callback.print);
-                },
-                PrintAttrs => {
-                    ManuallyDrop::drop(&mut self.callback.print_attrs);
-                },
-                Timer => {
-                    ManuallyDrop::drop(&mut self.callback.timer);
-                },
-                TimerOnce => {
-                    ManuallyDrop::drop(&mut self.callback.timer_once);
-                },
-                FD => {
-                    ManuallyDrop::drop(&mut self.callback.fd);
-                },
-            }
+        if let FD(callback) = &mut self.callback {
+            (*callback)(hc, fd, flags, ud)
+        } else {
+            panic!("Invoked wrong type in CallbackData.");
         }
     }
 }
