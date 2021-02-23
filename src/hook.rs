@@ -41,20 +41,32 @@ use UserData::*;
 pub struct Hook {
     hook: Rc<RefCell<*const c_void>>,
 }
+
 unsafe impl Send for Hook {}
 unsafe impl Sync for Hook {}
+
 impl Hook {
     /// Constructor. `hook` is a hook returned by Hexchat when registering a
     /// C-facing callback.
     ///
     pub (crate) fn new() -> Self {
-    let hook = Hook { hook: Rc::new(RefCell::new(null::<c_void>())) };
+
+        let hook = Hook { 
+            hook: Rc::new(RefCell::new(null::<c_void>())) 
+        };
+                   
         if let Some(hook_list_rwlock) = unsafe { &HOOK_LIST } {
+            // Acquire global hook list write lock.
             let wlock     = hook_list_rwlock.write();
             let hook_list = &mut *wlock.unwrap();
+            
+            // Clean up dead hooks.
             hook_list.retain(|h| !h.hook.borrow().is_null());
+            
+            // Store newly created hook in global list.
             hook_list.push(hook.clone());
         }
+
         hook
     }
     
@@ -63,6 +75,7 @@ impl Hook {
     ///
     pub (crate) fn set(&self, ptr: *const c_void) {
         if let Some(hl_rwlock) = unsafe { &HOOK_LIST } {
+            // Lock the global list, and set the internal pointer.
             let rlock = hl_rwlock.read();
             *self.hook.borrow_mut() = ptr;
         }
@@ -86,27 +99,30 @@ impl Hook {
             if let Some(hl_rwlock) = &HOOK_LIST {
                 let rlock = hl_rwlock.read();
                 
+                // Determine if the Hook is still alive (non-null ptr).
                 let mut ptr_ref = self.hook.borrow_mut();
+                
                 if !ptr_ref.is_null() {
+                    // Unhook the callback and retrieve the user data pointer.
                     let hc = &*HEXCHAT;
                     let cd = (hc.c_unhook)(hc, *ptr_ref);
+                    
+                    // TODO - Find out why c_unhook() sometimes yields null.
                     if !cd.is_null() {
-                        // TODO - Find out why this is necessary. cd should 
-                        //        never be null when we're here. Why is 
-                        //        c_unhook() returning null pointers??
+                        // Reconstruct the CallbackData Box.
                         let cd = &mut (*(cd as *mut CallbackData));
                         let cd = Box::from_raw(cd);
+                        
+                        // Null the hook pointer.
                         *ptr_ref = null::<c_void>();
-                        cd.get_data()
-                    } else {
-                        NoData
+                        
+                        // Give back the UserData registered with the callback.
+                        return cd.get_data();
+                        
                     }
-                } else {
-                    NoData
                 }
-            } else {
-                NoData
             }
+            NoData
         }
     }
 
