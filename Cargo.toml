@@ -1,7 +1,8 @@
 [package]
 name = "hexchat_api"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["ttappr <tmtappr@gmail.com>"]
+license = "MIT"
 edition = "2018"
 
 [lib]

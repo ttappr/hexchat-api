@@ -3,7 +3,7 @@
 //! fields are the actual callbacks provided by Hexchat. When Hexchat
 //! loads this library, the Hexchat pointer is stored and used by casting it
 //! to the struct contained in this file. These native function pointers are
-//! private to this file, and a more Rust-friendly API is provided through
+//! private to this crate, and a more Rust-friendly API is provided through
 //! this Hexchat interface. 
 
 use libc::{c_int, c_char, c_void, time_t};
