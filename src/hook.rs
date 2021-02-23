@@ -25,16 +25,9 @@ use crate::callback_data::*;
 use crate::hexchat_entry_points::HEXCHAT;
 use crate::user_data::*;
 
-/// A synchronized global list of the hooks. This is a semi dangerous approach,
-/// but should be okay by making sure `Hook::init()` is called in the plugin
-/// init DLL entry function - before any code tries to hook any commands 
-/// (which has been done). Also, when the deinit DLL entry function is called, 
-/// the only thing that can crash the software would be if the plugin author 
-/// left any threads running. So it has to be stipulated that plugin authors 
-/// ensure no threads are running when their plugins are unloaded - they need to
-/// join them in their deinit functions registered using `dll_entry_points()`. 
-/// `lazy_static` might seem applicable here, but it leaves behind some system 
-/// resources that can't be reliably free'd when a plugin is unloaded.
+/// A synchronized global list of the hooks. This gets initialized when a 
+/// plugin is loaded from within the `lib_hexchat_plugin_init()` function
+/// before the plugin author's registered init function is invoked.
 ///
 static mut HOOK_LIST: Option<RwLock<Vec<Hook>>> = None;
 
@@ -65,17 +58,9 @@ impl Hook {
         hook
     }
     
-    /// Called automatically within hexchat_entry_points.rs when a plugin is 
-    /// loaded - in the init function. This initializses the synchronized
-    /// global static hook list.
-    pub (crate) fn init() {
-        unsafe {
-            HOOK_LIST = Some(RwLock::new(Vec::new()));
-        }
-    }
-    
     /// Sets the value of the internal hook pointer. This is used by the hooking
     /// functions in hexchat.rs.
+    ///
     pub (crate) fn set(&self, ptr: *const c_void) {
         if let Some(hl_rwlock) = unsafe { &HOOK_LIST } {
             let rlock = hl_rwlock.read();
@@ -124,6 +109,15 @@ impl Hook {
             }
         }
     }
+
+    /// Called automatically within `lib_hexchat_plugin_init()` when a plugin is 
+    /// loaded. This initializes the synchronized global static hook list.
+    ///
+    pub (crate) fn init() {
+        unsafe {
+            HOOK_LIST = Some(RwLock::new(Vec::new()));
+        }
+    }
     
     /// Called when a plugin is unloaded by Hexchat. This happens when the user
     /// opens the "Plugins and Scripts" dialog and unloads/reloads the plugin,
@@ -142,6 +136,10 @@ impl Hook {
             }
         }
         unsafe {
+            // This causes the `RwLock` and hook vector to be dropped. 
+            // plugin authors need to ensure that no threads are running when
+            // their plugins are unloading - or one may try to access the lock
+            // and hook vector after they've been destroyed.
             let _ = HOOK_LIST.take();
         }
     }
