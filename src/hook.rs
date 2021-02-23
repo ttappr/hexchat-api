@@ -19,10 +19,7 @@ use std::any::Any;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::ptr::null;
-use std::sync::Arc;
-use std::sync::Mutex;
 use std::sync::RwLock;
-use lazy_static::lazy_static;
 
 use crate::callback_data::*;
 use crate::hexchat_entry_points::HEXCHAT;
@@ -30,14 +27,14 @@ use crate::user_data::*;
 
 /// A synchronized global list of the hooks. This is a semi dangerous approach,
 /// but should be okay by making sure `Hook::init()` is called in the plugin
-/// init DLL entry function - before any code tries to hook any commands.
-/// Also, when the deinit DLL entry function is called, the only thing that
-/// can crash the software would be if the plugin author left any threads
-/// running. So it has to be stipulated that plugin authors ensure no threads
-/// are running when their plugins are unloaded - they need to join them in
-/// their deinit functions registered using `dll_entry_points()`. `lazy_static`
-/// might seem applicable here, but it leaves behind some system resources that
-/// can't be reliably free'd when a plugin is unloaded.
+/// init DLL entry function - before any code tries to hook any commands 
+/// (which has been done). Also, when the deinit DLL entry function is called, 
+/// the only thing that can crash the software would be if the plugin author 
+/// left any threads running. So it has to be stipulated that plugin authors 
+/// ensure no threads are running when their plugins are unloaded - they need to
+/// join them in their deinit functions registered using `dll_entry_points()`. 
+/// `lazy_static` might seem applicable here, but it leaves behind some system 
+/// resources that can't be reliably free'd when a plugin is unloaded.
 ///
 static mut HOOK_LIST: Option<RwLock<Vec<Hook>>> = None;
 
@@ -68,13 +65,17 @@ impl Hook {
         hook
     }
     
+    /// Called automatically within hexchat_entry_points.rs when a plugin is 
+    /// loaded - in the init function. This initializses the synchronized
+    /// global static hook list.
     pub (crate) fn init() {
         unsafe {
             HOOK_LIST = Some(RwLock::new(Vec::new()));
         }
     }
     
-    /// Sets the value of the internal hook pointer.
+    /// Sets the value of the internal hook pointer. This is used by the hooking
+    /// functions in hexchat.rs.
     pub (crate) fn set(&self, ptr: *const c_void) {
         if let Some(hl_rwlock) = unsafe { &HOOK_LIST } {
             let rlock = hl_rwlock.read();
@@ -105,9 +106,9 @@ impl Hook {
                     let hc = &*HEXCHAT;
                     let cd = (hc.c_unhook)(hc, *ptr_ref);
                     if !cd.is_null() {
-                        // TODO - Find out why this is necessary. cd should never
-                        //        be null when we're here. Why is c_unhook() 
-                        //        returning null pointers??
+                        // TODO - Find out why this is necessary. cd should 
+                        //        never be null when we're here. Why is 
+                        //        c_unhook() returning null pointers??
                         let cd = &mut (*(cd as *mut CallbackData));
                         let cd = Box::from_raw(cd);
                         *ptr_ref = null::<c_void>();
