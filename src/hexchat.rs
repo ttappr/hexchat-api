@@ -1,4 +1,3 @@
-#![allow(non_camel_case_types, dead_code, unused_macros)]
 
 //! This file holds the Hexchat struct used to interface with Hexchat. Its
 //! fields are the actual callbacks provided by Hexchat. When Hexchat
@@ -8,16 +7,10 @@
 //! this Hexchat interface. 
 
 use libc::{c_int, c_char, c_void, time_t};
-//use serde::Serialize;
-//use serde::Deserialize;
-//use serde_json::to_string;
-//use serde_json::
-use std::any::Any;
-use std::convert::From;
 use std::{error, ptr};
-use std::ffi::{CString, CStr};
+use std::ffi::CString;
 use std::fmt;
-use std::ops::BitOr;
+use std::fmt::Debug;
 use std::ops::FnMut;
 use std::ptr::null;
 use std::str;
@@ -31,13 +24,6 @@ use crate::list_iterator::ListIterator;
 use crate::plugin::Plugin;
 use crate::user_data::*;
 use crate::utils::*;
-
-//extern crate serde;
-//#[macro_use]
-//extern crate serde_derive;
-//extern crate serde_json;
-
-use crate::HexchatError::*;
 
 use crate::cbuf;
 
@@ -476,6 +462,8 @@ impl Hexchat {
         // TODO - If empty strings don't suffice as a nop param, then construct
         //        another vector containing pointers and pad with nulls.
         unsafe {
+            use HexchatError::*;
+            
             if ver == 0 {
                 let result = (self.c_emit_print)(
                                     self,
@@ -838,12 +826,17 @@ impl PrefValue {
 }
 
 /// Some types used by the C struct below.
+#[allow(non_camel_case_types)]
 pub (crate) type hexchat_hook        = c_void;
+#[allow(non_camel_case_types)]
 pub (crate) type hexchat_list        = c_void;
+#[allow(non_camel_case_types)]
 pub (crate) type hexchat_context     = c_void;
+#[allow(dead_code, non_camel_case_types)]
 pub (crate) type hexchat_event_attrs = c_void;
 
 /// Mirrors the callback function pointer of Hexchat.
+#[allow(non_camel_case_types)]
 type C_Callback      = extern "C"
                        fn(word       : *const *const c_char,
                           word_eol   : *const *const c_char,
@@ -851,17 +844,20 @@ type C_Callback      = extern "C"
                          ) -> c_int;
 
 /// Mirrors the print callback function pointer of Hexchat.
+#[allow(non_camel_case_types)]
 type C_PrintCallback = extern "C"
                        fn(word       : *const *const c_char,
                           user_data  : *mut c_void
                          ) -> c_int;
 
 /// Mirrors the timer callback function pointer of Hexchat.
+#[allow(non_camel_case_types)]
 type C_TimerCallback = extern "C"
                        fn(user_data  : *mut c_void
                          ) -> c_int;
 
 /// Mirrors the print attr callback function pointer of Hexchat.
+#[allow(non_camel_case_types)]
 type C_AttrCallback  = extern "C"
                        fn(word       : *const *const c_char,
                           attrs      : *const EventAttrs,
@@ -869,6 +865,7 @@ type C_AttrCallback  = extern "C"
                          ) -> c_int;
 
 /// Mirrors the FD related callback function pointer of Hexchat.
+#[allow(non_camel_case_types)]
 type C_FDCallback    = extern "C"
                        fn(fd         : c_int,
                           flags      : c_int,
@@ -896,14 +893,12 @@ impl fmt::Debug for Hexchat {
 pub enum HexchatError {
     CommandFailed(String),
 }
-use HexchatError::*;
-use std::fmt::Debug;
-use std::collections::HashMap;
 
 impl error::Error for HexchatError {}
 
 impl fmt::Display for HexchatError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use HexchatError::*;
         match self {
             CommandFailed(message) => {
                 write!(f, "CommandFailed(\"{}\")", message)

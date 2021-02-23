@@ -15,7 +15,6 @@
 //! timer callbacks.
 
 use libc::c_void;
-use std::any::Any;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::ptr::null;
@@ -76,7 +75,7 @@ impl Hook {
     pub (crate) fn set(&self, ptr: *const c_void) {
         if let Some(hl_rwlock) = unsafe { &HOOK_LIST } {
             // Lock the global list, and set the internal pointer.
-            let rlock = hl_rwlock.read();
+            let _rlock = hl_rwlock.read();
             *self.hook.borrow_mut() = ptr;
         }
     }
@@ -97,7 +96,7 @@ impl Hook {
     pub fn unhook(&self) -> UserData {
         unsafe {
             if let Some(hl_rwlock) = &HOOK_LIST {
-                let rlock = hl_rwlock.read();
+                let _rlock = hl_rwlock.read();
                 
                 // Determine if the Hook is still alive (non-null ptr).
                 let mut ptr_ref = self.hook.borrow_mut();

@@ -1,4 +1,3 @@
-#![allow(unused_variables, unused_imports)]
 
 //! This file is used to organize the namespace structure of the crate that
 //! the user writing a plugin will see. The approach taken is to put all the
@@ -19,15 +18,16 @@ mod user_data;
 mod utils;
 
 pub use hook::*;
-pub use callback_data::*;
+//pub use callback_data::*;
 pub use consts::*;
 pub use context::*;
 pub use hexchat::*;
-pub use hexchat_callbacks::*;
+//pub use hexchat_callbacks::*;
 pub use hexchat_entry_points::*;
 pub use list_iterator::*;
 pub use plugin::*;
 pub use thread_facilities::*;
 pub use user_data::*;
+#[allow(unused_imports)]
 pub use utils::*;
 

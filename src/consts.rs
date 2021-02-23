@@ -63,37 +63,34 @@ pub enum IgnFlag {
     NOSAVE               = 0x40,
     DCC                  = 0x80,
 }
-/*
+
 // IRC color codes. Use these in strings printed to he/xchat.
-pub enum IrcColor {
-    WHITE            = "\x0300",
-    BLACK            = "\x0301",
-    NAVY             = "\x0302",
-    GREEN            = "\x0303",
-    RED              = "\x0304",
-    MAROON           = "\x0305",
-    PURPLE           = "\x0306",
-    OLIVE            = "\x0307",
-    YELLOW           = "\x0308",
-    LIGHT_GREEN      = "\x0309",
-    TEAL             = "\x0310",
-    CYAN             = "\x0311",
-    ROYAL_BLUE       = "\x0312",
-    MAGENTA          = "\x0313",
-    GRAY             = "\x0314",
-    LIGHT_GRAY       = "\x0315",
-}
+const IRC_WHITE: &str            = "\x0300";
+const IRC_BLACK: &str            = "\x0301";
+const IRC_NAVY: &str             = "\x0302";
+const IRC_GREEN: &str            = "\x0303";
+const IRC_RED: &str              = "\x0304";
+const IRC_MAROON: &str           = "\x0305";
+const IRC_PURPLE: &str           = "\x0306";
+const IRC_OLIVE: &str            = "\x0307";
+const IRC_YELLOW: &str           = "\x0308";
+const IRC_LIGHT_GREEN: &str      = "\x0309";
+const IRC_TEAL: &str             = "\x0310";
+const IRC_CYAN: &str             = "\x0311";
+const IRC_ROYAL_BLUE: &str       = "\x0312";
+const IRC_MAGENTA: &str          = "\x0313";
+const IRC_GRAY: &str             = "\x0314";
+const IRC_LIGHT_GRAY: &str       = "\x0315";
+
 
 // IRC text format codes. Use these in strings printed to he/xchat.
-pub enum IrcStyle {
-    BOLD               = "\x02", //"\002";
-    HIDDEN             = "\x08", //"\010";
-    UNDERLINE          = "\x1F", //"\037";
-    ORIG_ATTRIBS       = "\x0F", //"\017";
-    REVERSE_COLOR      = "\x16", //"\026";
-    BEEP               = "\x07", //"\007";
-    ITALICS            = "\x1D", //"\035";
-}
-*/
+
+const IRC_BOLD: &str               = "\x02"; //"\002";
+const IRC_HIDDEN: &str             = "\x08"; //"\010";
+const IRC_UNDERLINE: &str          = "\x1F"; //"\037";
+const IRC_ORIG_ATTRIBS: &str       = "\x0F"; //"\017";
+const IRC_REVERSE_COLOR: &str      = "\x16"; //"\026";
+const IRC_BEEP: &str               = "\x07"; //"\007";
+const IRC_ITALICS: &str            = "\x1D"; //"\035";
 
 

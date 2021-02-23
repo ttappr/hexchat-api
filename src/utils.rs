@@ -1,7 +1,7 @@
 
 #![allow(unused_macros, dead_code)]
 
-use libc::{c_char, c_void};
+use libc::c_char;
 use std::ffi::{CString, CStr};
 
 

@@ -149,7 +149,7 @@ impl ListIterator {
     {
         let cell = &*self.data;
 
-        'main: for item in self {
+        'main: for _item in self {
             let data = &*cell.borrow();
             let mut start = true;
             for (field_name, field_type) in &data.field_types {

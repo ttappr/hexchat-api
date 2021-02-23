@@ -95,7 +95,7 @@ where
     let cln = res.clone();
     let hex = unsafe { &*HEXCHAT };
     hex.hook_timer(0,
-                   move |hc, ud| {
+                   move |hc, _ud| {
                         cln.set(callback(hc));
                         0 // Returning 0 disposes of the callback.
                     }, 
@@ -121,7 +121,7 @@ where
     let hex = unsafe { &*HEXCHAT };
     hex.hook_timer_once(0,
                         Box::new(
-                            move |hc, ud| {
+                            move |hc, _ud| {
                                 cln.set(callback(hc));
                                 0 // Returning 0 disposes of the callback.
                         }),

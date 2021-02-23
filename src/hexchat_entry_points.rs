@@ -1,6 +1,4 @@
 
-#![allow(dead_code)]
-
 //! This module holds the DLL entry points for this plugin library.
 //! These exported functions are what Hexchat links to directly when the
 //! plugin is loaded.
@@ -13,7 +11,7 @@
 
 #[cfg(debug_assertions)]
 use backtrace::Backtrace;
-use libc::{c_int, c_char, c_void};
+use libc::c_char;
 use std::ffi::CString;
 use std::marker::PhantomPinned;
 use std::panic;
@@ -177,7 +175,7 @@ impl PluginInfo {
 pub fn lib_hexchat_plugin_get_info(name      : *mut *const i8,
                                    desc      : *mut *const i8,
                                    version   : *mut *const i8,
-                                   reserved  : *mut *const i8,
+                                   _reserved : *mut *const i8,
                                    callback  : Box<InfoFn>)
 {
     lib_get_info(name, desc, version, callback);

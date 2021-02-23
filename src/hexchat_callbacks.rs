@@ -5,7 +5,6 @@
 //! the parameters (word, word_eol, etc) for the Rust callbacks.
 
 use libc::{c_int, c_char, c_void};
-use std::ffi::{CStr};
 use std::panic::catch_unwind;
 
 use crate::callback_data::CallbackData;

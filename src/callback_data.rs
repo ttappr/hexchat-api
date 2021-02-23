@@ -1,18 +1,12 @@
 
-//#![feature(unsized_locals)] ????
-
 //! The `CallbackData` object holds all the information about a callback 
 //! needed to manage the `user_data` and  invoke it safely and correctly.
 //! The objects of this module are used internally. This file also contains
 //! type declarations for the Rust-facing callback signatures.
 
-use std::any::Any;
-use std::mem::ManuallyDrop;
-
 use crate::hook::Hook;
 use crate::hexchat::{ Hexchat, Eat, EventAttrs };
 use crate::user_data::*;
-use crate::utils::*;
 
 use UserData::*;
 use core::mem;

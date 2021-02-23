@@ -3,8 +3,6 @@
 use std::any::Any;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::ops::Deref;
-use std::ops::DerefMut;
 use std::sync::Arc;
 use std::sync::Mutex;
 
@@ -144,7 +142,7 @@ impl Clone for UserData {
             SharedData(d) => { SharedData(d.clone()) },
             SyncData(d)   => { SyncData(d.clone()) },
             NoData        => { NoData },
-            BoxedData(d)  => { 
+            BoxedData(_)  => { 
                 panic!("Can't clone `BoxedData`. If user data needs to be \
                         shared, The `SharedData` or `SyncData` variants of \
                         `UserData` should be used.")

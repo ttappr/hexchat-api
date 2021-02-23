@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 
 //! Objects of the `Context` class represent Hexchat contexts, which are
 //! associated with channels the user is currently in. These are usually
@@ -12,16 +11,14 @@
 //! ensure the `Context` is still valid. If that fails a `AcquisitionFailed`
 //! error is returned with the network/channel strings as data.
 
-use libc::{c_char, c_void};
 use std::error;
 use std::fmt;
-use std::ffi::{CString, CStr};
-use std::cell::RefCell;
+use std::ffi::CString;
 use std::rc::Rc;
 
 use crate::hexchat::{Hexchat, hexchat_context, HexchatError};
 use crate::hexchat_entry_points::HEXCHAT;
-use crate::list_iterator::{ListIterator, ListError, FieldValue};
+use crate::list_iterator::ListIterator;
 use crate::utils::*;
 use crate::cbuf;
 
