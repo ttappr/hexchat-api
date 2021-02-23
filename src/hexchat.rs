@@ -456,9 +456,14 @@ impl Hexchat {
         let mut args   = vec![];
         let     name   = str2cstring(event_name);
         let     va_len = var_args.len();
+        
+        // We don't know if there are 6 items in var_args - so Clippy's 
+        // suggestion would fail. This range loop is fine.
+        #[allow(clippy::needless_range_loop)]
         for i in 0..6 {
             args.push(str2cstring(if i < va_len { var_args[i] } else { "" }));
         }
+       
         // TODO - If empty strings don't suffice as a nop param, then construct
         //        another vector containing pointers and pad with nulls.
         unsafe {
@@ -712,9 +717,9 @@ impl Hexchat {
         let mut buf = [0i8; MAX_PREF_LIST_SIZE];
         if unsafe { (self.c_pluginpref_list)(self, buf.as_mut_ptr()) > 0 } {
             let s = pchar2string(buf.as_ptr());
-            if s.len() > 0 {
+            if !s.is_empty() {
                 let mut v = vec![];
-                for name in s.split(",") {
+                for name in s.split(',') {
                     if !name.is_empty() {
                         v.push(name.to_string());
                     }

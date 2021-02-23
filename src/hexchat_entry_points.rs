@@ -233,6 +233,7 @@ pub fn lib_hexchat_plugin_deinit(hexchat  : &'static Hexchat,
 /// This function sets Hexchat's character pointer pointer's to point at the
 /// pinned buffers holding info about a plugin.
 #[inline]
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub fn lib_get_info(name     : *mut *const c_char,
                     desc     : *mut *const c_char,
                     vers     : *mut *const c_char,

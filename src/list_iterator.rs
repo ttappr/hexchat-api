@@ -280,7 +280,7 @@ impl ListIteratorData {
     #[inline]
     fn get_type(&self, field: &str) -> Option<i8> {
         let fields = &self.field_types;
-        Some(fields.into_iter().find(|f| f.0 == field)?.1)
+        Some(fields.iter().find(|f| f.0 == field)?.1)
     }
 }
 
