@@ -35,11 +35,11 @@ pub type DeinitFn = dyn FnOnce(&'static Hexchat) -> i32 + UnwindSafe;
 
 /// The signature of the info function plugin authors need to register using
 /// `dll_entry_points!()`.
-pub type InfoFn   = dyn FnOnce()                 -> PinnedPluginInfo
+pub type InfoFn   = dyn FnOnce()                 -> PluginInfo
                                                         + UnwindSafe;
 
 /// Holds persistent client plugin info strings.
-static mut PLUGIN_INFO: Option<Pin<Box<PluginInfo>>> = None;
+static mut PLUGIN_INFO: Option<PluginInfo> = None;
 
 /// The global Hexchat pointer obtained from `hexchat_plugin_init()`.
 pub (crate)
@@ -122,11 +122,8 @@ macro_rules! dll_entry_points {
     };
 }
 
-/// The return value type for `PluginInfo::new()`.
-pub type PinnedPluginInfo = Pin<Box<PluginInfo>>;
-
 /// Holds client plugin information strings.
-pub struct PluginInfo {
+struct PluginInfoData {
     name         : CString,
     version      : CString,
     description  : CString,
@@ -135,6 +132,11 @@ pub struct PluginInfo {
     pdescription : NonNull<CString>,
     _pin         : PhantomPinned,
 }
+
+pub struct PluginInfo {
+    data: Pin<Box<PluginInfoData>>,
+}
+
 impl PluginInfo {
     /// Constructor. The plugin information provided in the parameters is used
     /// to create persistent pinned buffers that are guaranteed to be valid
@@ -148,9 +150,9 @@ impl PluginInfo {
     /// # Returns
     /// A `PluginInfo` object initialized from the parameter data.
     ///
-    pub fn new(name: &str, version: &str, description: &str) -> PinnedPluginInfo
+    pub fn new(name: &str, version: &str, description: &str) -> PluginInfo
     {
-        let pi = PluginInfo {
+        let pi = PluginInfoData {
             name         : str2cstring(name),
             version      : str2cstring(version),
             description  : str2cstring(description),
@@ -165,13 +167,13 @@ impl PluginInfo {
         let sdescription = NonNull::from(&boxed.description);
         
         unsafe {
-            let mut_ref: Pin<&mut Self> = Pin::as_mut(&mut boxed);
+            let mut_ref: Pin<&mut PluginInfoData> = Pin::as_mut(&mut boxed);
             let unchecked = Pin::get_unchecked_mut(mut_ref); 
             unchecked.pname        = sname;
             unchecked.pversion     = sversion;
             unchecked.pdescription = sdescription;
         }
-        boxed
+        PluginInfo { data: boxed }
     }
 }
 
@@ -260,9 +262,9 @@ pub fn lib_get_info(name     : *mut *const c_char,
             PLUGIN_INFO = Some(pi);
         }
         if let Some(info) = &PLUGIN_INFO {
-            *name = info.pname.as_ref().as_ptr();
-            *vers = info.pversion.as_ref().as_ptr();
-            *desc = info.description.as_ref().as_ptr();
+            *name = info.data.pname.as_ref().as_ptr();
+            *vers = info.data.pversion.as_ref().as_ptr();
+            *desc = info.data.description.as_ref().as_ptr();
         }
     }
 }
@@ -278,7 +280,7 @@ fn set_panic_hook(hexchat: &'static Hexchat)
         let plugin_name;
         unsafe {
             if let Some(plugin_info) = &PLUGIN_INFO {
-                plugin_name = plugin_info.name.to_str().unwrap();
+                plugin_name = plugin_info.data.name.to_str().unwrap();
             } else {
                 plugin_name = "a Rust plugin";
             }
