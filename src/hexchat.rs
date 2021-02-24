@@ -61,6 +61,8 @@ pub enum FD {
     NotSocket   =    8,
 }
 
+/// Used by the `hexthat.strip()` function to determine what to strip from the
+/// target string.
 pub enum StripFlags {
     StripMIrcColors     = 1,
     StripTextAttributes = 2,
@@ -767,8 +769,10 @@ impl Hexchat {
     }
 }
 
-// TODO - Merge this with context::FieldValue and rename both to something
-//        common.
+/// Represents the values that can be accessed using the prefs functions of
+/// the `Hexchat` object (`hc.pluginpref_get()`, `hc.pluginpref_get()`, etc.).
+/// The enumeration enables the typing of the values stored and retrieved.
+///
 #[derive(Debug)]
 pub enum PrefValue {
     StringVal(String),

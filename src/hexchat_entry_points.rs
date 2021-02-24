@@ -25,10 +25,16 @@ use crate::hexchat::Hexchat;
 use crate::hook::*;
 use crate::utils::*;
 
-/// The signatures for the required functions a plugin needs to implement to
-/// create a loadable Hexchat plugin.
+/// The signature for the init function that plugin authors need to register
+/// using `dll_entry_points!()`.
 pub type InitFn   = dyn FnOnce(&'static Hexchat) -> i32 + UnwindSafe;
+
+/// The signature for the deinit function plugin authors need to register using
+/// `dll_entry_points!()`.
 pub type DeinitFn = dyn FnOnce(&'static Hexchat) -> i32 + UnwindSafe;
+
+/// The signature of the info function plugin authors need to register using
+/// `dll_entry_points!()`.
 pub type InfoFn   = dyn FnOnce()                 -> PinnedPluginInfo
                                                         + UnwindSafe;
 

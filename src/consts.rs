@@ -1,6 +1,6 @@
 #![allow(dead_code, non_camel_case_types)]
 
-// Channel flags.
+/// Channel flags.
 pub enum ChanFlag {
     CONNECTED           = 0x0001,
     CONNECTING          = 0x0002,
@@ -21,7 +21,7 @@ pub enum ChanFlag {
     STRIP_COLORS_UNSET  =0x10000,    
 }
 
-// Channel types.
+/// Channel types.
 pub enum ChanType {
     SERVER                   = 1,
     CHANNEL                  = 2,
@@ -30,7 +30,7 @@ pub enum ChanType {
     SNOTICE                  = 5,    
 }
 
-// DCC status values.
+/// DCC status values.
 pub enum DccStatus {
     QUEUED                  = 0,
     ACTIVE                  = 1,
@@ -40,8 +40,7 @@ pub enum DccStatus {
     ABORTED                 = 5,
 }
 
-// Table online has these listed with values 0, 1, 1, 1 which can't be
-// right. So I made them sequential ints.
+/// DCC action type.
 pub enum DccType {
     SEND                    = 0,
     RECIEVE                 = 1,
@@ -65,32 +64,32 @@ pub enum IgnFlag {
 }
 
 // IRC color codes. Use these in strings printed to he/xchat.
-const IRC_WHITE: &str            = "\x0300";
-const IRC_BLACK: &str            = "\x0301";
-const IRC_NAVY: &str             = "\x0302";
-const IRC_GREEN: &str            = "\x0303";
-const IRC_RED: &str              = "\x0304";
-const IRC_MAROON: &str           = "\x0305";
-const IRC_PURPLE: &str           = "\x0306";
-const IRC_OLIVE: &str            = "\x0307";
-const IRC_YELLOW: &str           = "\x0308";
-const IRC_LIGHT_GREEN: &str      = "\x0309";
-const IRC_TEAL: &str             = "\x0310";
-const IRC_CYAN: &str             = "\x0311";
-const IRC_ROYAL_BLUE: &str       = "\x0312";
-const IRC_MAGENTA: &str          = "\x0313";
-const IRC_GRAY: &str             = "\x0314";
-const IRC_LIGHT_GRAY: &str       = "\x0315";
+pub const IRC_WHITE: &str            = "\x0300";
+pub const IRC_BLACK: &str            = "\x0301";
+pub const IRC_NAVY: &str             = "\x0302";
+pub const IRC_GREEN: &str            = "\x0303";
+pub const IRC_RED: &str              = "\x0304";
+pub const IRC_MAROON: &str           = "\x0305";
+pub const IRC_PURPLE: &str           = "\x0306";
+pub const IRC_OLIVE: &str            = "\x0307";
+pub const IRC_YELLOW: &str           = "\x0308";
+pub const IRC_LIGHT_GREEN: &str      = "\x0309";
+pub const IRC_TEAL: &str             = "\x0310";
+pub const IRC_CYAN: &str             = "\x0311";
+pub const IRC_ROYAL_BLUE: &str       = "\x0312";
+pub const IRC_MAGENTA: &str          = "\x0313";
+pub const IRC_GRAY: &str             = "\x0314";
+pub const IRC_LIGHT_GRAY: &str       = "\x0315";
 
 
 // IRC text format codes. Use these in strings printed to he/xchat.
 
-const IRC_BOLD: &str               = "\x02"; //"\002";
-const IRC_HIDDEN: &str             = "\x08"; //"\010";
-const IRC_UNDERLINE: &str          = "\x1F"; //"\037";
-const IRC_ORIG_ATTRIBS: &str       = "\x0F"; //"\017";
-const IRC_REVERSE_COLOR: &str      = "\x16"; //"\026";
-const IRC_BEEP: &str               = "\x07"; //"\007";
-const IRC_ITALICS: &str            = "\x1D"; //"\035";
+pub const IRC_BOLD: &str               = "\x02"; //"\002";
+pub const IRC_HIDDEN: &str             = "\x08"; //"\010";
+pub const IRC_UNDERLINE: &str          = "\x1F"; //"\037";
+pub const IRC_ORIG_ATTRIBS: &str       = "\x0F"; //"\017";
+pub const IRC_REVERSE_COLOR: &str      = "\x16"; //"\026";
+pub const IRC_BEEP: &str               = "\x07"; //"\007";
+pub const IRC_ITALICS: &str            = "\x1D"; //"\035";
 
 

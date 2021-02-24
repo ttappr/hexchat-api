@@ -11,6 +11,9 @@ Rust friendly features such as:
 * Hooked commands can be implemented as normal functions or closures.
 * Typed preference values and easy plugin pref access.
 
+## Documentation
+Documentation can be found [here](https://ttappr.github.io/hexchat_api/hexchat_api/index.html).
+
 ## Example
 
 Setting up and registering commands using the API is easy and syntactically 

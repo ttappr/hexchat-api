@@ -35,6 +35,20 @@ macro_rules! fmt {
     }
 }
 
+/// Reduces the syntax required to output formatted text to the current
+/// hexchat window. Internally it invokes 
+/// `hexchat.print(&format!("<format-string>", arg1, arg2, ...)`.
+/// Using the macro, this becomes 
+/// `outp!(hc, "<format_string>, arg1, arg2, ...)`. To print from another thread
+/// `outpth!()` can be used.
+/// ```
+/// outp!(obj, fmt, argv, ...)
+/// ```
+/// # Arguments
+/// * `obj`     - The Hexchat struct reference.
+/// * `fmt`     - The format string.
+/// * `argv`    - The varibale length formatted arguments.
+/// 
 #[macro_export]
 macro_rules! outp {
     ( $obj:ident, $fmt:expr, $( $argv:expr ),+ ) => {
@@ -45,7 +59,17 @@ macro_rules! outp {
     };
 }
 
-// Don't call this macro from the main thread.
+/// Similar to `outp!()`, that can be used from spawned threads to print to
+/// the active Hexchat window. This should not be invoked from the Hexchat
+/// main thread.
+/// ```
+/// outpth!(obj, fmt, argv, ...)
+/// ```
+/// # Arguments
+/// * `obj`     - The Hexchat struct reference.
+/// * `fmt`     - The format string.
+/// * `argv`    - The varibale length formatted arguments.
+/// 
 #[macro_export]
 macro_rules! outpth {
     ( $obj:ident, $fmt:expr, $( $argv:expr ),+ ) => {{
