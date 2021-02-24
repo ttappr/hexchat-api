@@ -71,7 +71,7 @@ The code below can be copied to start a new plugin project. The TOML file
 content is also included below.
 
 
-```
+```rust,no_run
 // FILE: lib.rs
 
 //! A starter project template that can be copied and modified.
@@ -153,7 +153,7 @@ fn hello_world(hc        : &Hexchat,
 
 And the Cargo.toml file.
 
-```
+```toml
 [package]
 name = "hexchat_plugin_template"
 version = "0.1.0"
