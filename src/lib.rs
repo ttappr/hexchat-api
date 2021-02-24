@@ -1,8 +1,10 @@
 
-//! This file is used to organize the namespace structure of the crate that
-//! the user writing a plugin will see. The approach taken is to put all the
-//! functions and structs in a flat namespace, `hexchat_api::`, to keep things
-//! simple for the user.
+//! This crate provides a Rust interface to the 
+//! [Hexchat Plugin Interface](https://hexchat.readthedocs.io/en/latest/plugins.html)
+//! The primary object of the interface is 
+//! [Hexchat](https://ttappr.github.io/hexchat_api/hexchat_api/struct.Hexchat.html),
+//! which exposes an interface with functions that mirror the C functions 
+//! listed on the Hexchat docs page linked above. 
 
 mod hook;
 mod callback_data;
