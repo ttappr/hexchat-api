@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["gimli"] = [{"text":"impl&lt;'input, Endian&gt; Deref for EndianSlice&lt;'input, Endian&gt; <span class=\"where fmt-newline\">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Endian: Endianity,&nbsp;</span>","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

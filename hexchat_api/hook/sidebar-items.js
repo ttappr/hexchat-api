@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Hook","A wrapper for Hexchat callback hooks. These hooks are returned when  registering callbacks and can be used to unregister (unhook) them."]]});

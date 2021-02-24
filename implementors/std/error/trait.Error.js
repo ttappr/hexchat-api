@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["hexchat_api"] = [{"text":"impl Error for ContextError","synthetic":false,"types":[]},{"text":"impl Error for HexchatError","synthetic":false,"types":[]},{"text":"impl Error for ListError","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
