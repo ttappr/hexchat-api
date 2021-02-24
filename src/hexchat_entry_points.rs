@@ -175,9 +175,12 @@ impl PluginInfo {
     }
 }
 
-/// Called indirectly when a plugin is loaded to get info about it.
+/// Called indirectly when a plugin is loaded to get info about it. The
+/// plugin author shouldn't invoke this fuction - it's only public because
+/// the `dll_entry_points()` macro generates code that calls this.
 /// This function calls the client plugin's `plugin_get_info()` indirectly to
 /// obtain the persistent plugin info strings that it sets the paramters to.
+///
 pub fn lib_hexchat_plugin_get_info(name      : *mut *const i8,
                                    desc      : *mut *const i8,
                                    version   : *mut *const i8,
@@ -187,9 +190,10 @@ pub fn lib_hexchat_plugin_get_info(name      : *mut *const i8,
     lib_get_info(name, desc, version, callback);
 }
 
-/// Called indirectly while a plugin is being loaded. This function will invoke
-/// The function that was registered for initialization by the
-/// `dll_entry_points()` macro.
+/// Called indirectly while a plugin is being loaded. The
+/// plugin author shouldn't invoke this fuction - it's only public because
+/// the `dll_entry_points()` macro generates code that calls this.
+///
 pub fn lib_hexchat_plugin_init(hexchat   : &'static Hexchat,
                                name      : *mut *const c_char,
                                desc      : *mut *const c_char,
@@ -216,7 +220,9 @@ pub fn lib_hexchat_plugin_init(hexchat   : &'static Hexchat,
 /// call the deinitialization function that was registered using the
 /// `dll_entry_points()` macro. It will also unhook all the callbacks
 /// currently registered forcing them, and their closure state, to drop and
-/// thus clean up.
+/// thus clean up. Plugin authors should not call this - it's only public 
+/// because `dll_entry_points()` generates code that needs this.
+///
 pub fn lib_hexchat_plugin_deinit(hexchat  : &'static Hexchat, 
                                  callback : Box<DeinitFn>
                                 ) -> i32
@@ -237,7 +243,10 @@ pub fn lib_hexchat_plugin_deinit(hexchat  : &'static Hexchat,
 
 
 /// This function sets Hexchat's character pointer pointer's to point at the
-/// pinned buffers holding info about a plugin.
+/// pinned buffers holding info about a plugin. Not to be called by plugin
+/// authors - it's only public because `dll_entry_points()` generates code
+/// that calls this.
+///
 #[inline]
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub fn lib_get_info(name     : *mut *const c_char,
