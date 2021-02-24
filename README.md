@@ -18,7 +18,7 @@ clean.
 
 Interaction between threads and Hexchat is facilitated by `main_thread()`, which
 uses Hexchat's timer event loop to delegate tasks, such as printing output
-to the active Hexchat window, to Hexchat's main thread. 
+to the active Hexchat window.
 
 ```rust,no_run
 hexchat.hook_command(
