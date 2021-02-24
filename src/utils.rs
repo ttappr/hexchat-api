@@ -32,8 +32,8 @@ macro_rules! cbuf {
 /// hexchat window. Internally it invokes 
 /// `hexchat.print(&format!("<format-string>", arg1, arg2, ...)`.
 /// Using the macro, this becomes 
-/// `outp!(hc, "<format_string>, arg1, arg2, ...)`. To print from another thread
-/// `outpth!()` can be used.
+/// `outp!(hc, "<format_string>", arg1, arg2, ...)`. To print from another 
+/// thread `outpth!()` can be used.
 /// ```
 /// outp!(obj, fmt, argv, ...)
 /// ```

@@ -65,3 +65,105 @@ Simply include an entry in your Rust project's `Cargo.toml` file:
 hexchat_api = { git = "https://github.com/ttappr/hexchat_api.git", branch = "main" }
 ```
 
+## Template
+
+The code below can be copied to start a new plugin project. The TOML file 
+content is also included below.
+
+
+```
+// FILE: lib.rs
+
+//! A starter project template that can be copied and modified.
+
+use hexchat_api::*;
+use UserData::*;
+
+// Register the entry points of the plugin.
+//
+dll_entry_points!(plugin_info, plugin_init, plugin_deinit);
+
+/// Called when the plugin is loaded to register it with Hexchat.
+///
+fn plugin_info() -> PinnedPluginInfo {
+    PluginInfo::new(
+        "Plugin Template",
+        "0.1",
+        "A Hexchat plugin to customize.")
+}
+
+/// Called when the plugin is loaded.
+///
+fn plugin_init(hc: &Hexchat) -> i32 {
+    hc.print("Plugin template loaded");
+   
+    // Example user data to pass to a callback.
+    let udata = UserData::boxed("Some data to pass to a callback.");
+    
+    // Register a simple command using a function.
+    hc.hook_command("HELLOWORLD", 
+                    Priority::Norm, 
+                    hello_world, 
+                    "Prints \"Hello, world!\"", 
+                    NoData);
+
+    // Register a simple command using a closure.
+    hc.hook_command("HELLOHEX", 
+                    Priority::Norm, 
+                    |hc, word, word_eol, user_data| {
+                    
+                        hc.print("Hello, Hexchat!");
+    
+                        user_data.apply(|msg: &&str| { hc.print(msg); });
+    
+                        Eat::All
+                    }, 
+                    "Prints \"Hello, Hexchat!\", and the user data.", 
+                    udata);
+    1
+}
+
+/// Called when the plugin is unloaded.
+///
+fn plugin_deinit(hc: &Hexchat) -> i32 {
+    hc.print("Plugin template unloaded");
+    1
+}
+
+/// A command callback implemented as a function.
+/// # Arguments
+/// * `hc`        - The Hexchat API object reference.
+/// * `word`      - A list of parameters passed to the command.
+/// * `word_eol`  - Like `word`, but catenates the word args decrementally.
+/// * `user_data` - The user data to be passed back to the command when invoked
+///                 by Hexchat.
+/// # Returns
+/// * One of `Eat::All`, `Eat::Hexchat`, `Eat::Plugin`, `Eat::None`. 
+///
+fn hello_world(hc        : &Hexchat, 
+               word      : &[String], 
+               word_eol  : &[String], 
+               user_data : &mut UserData
+              ) -> Eat
+{
+    hc.print("Hello, world!");
+    Eat::All
+}
+```
+
+And the Cargo.toml file.
+
+```
+[package]
+name = "hexchat_plugin_template"
+version = "0.1.0"
+authors = ["you <your@email.com>"]
+edition = "2018"
+
+[lib]
+name = "hexchat_plugin_template"
+crate-type = ["cdylib"]
+
+[dependencies]
+hexchat_api = { git = "https://github.com/ttappr/hexchat_api.git", branch = "main" }
+```
