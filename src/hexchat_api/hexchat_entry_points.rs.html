@@ -318,6 +318,15 @@
 <span id="315">315</span>
 <span id="316">316</span>
 <span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
 </pre><div class="example-wrap"><pre class="rust ">
 
 <span class="doccomment">//! This module holds the DLL entry points for this plugin library.</span>
@@ -496,9 +505,12 @@
     }
 }
 
-<span class="doccomment">/// Called indirectly when a plugin is loaded to get info about it.</span>
+<span class="doccomment">/// Called indirectly when a plugin is loaded to get info about it. The</span>
+<span class="doccomment">/// plugin author shouldn&#39;t invoke this fuction - it&#39;s only public because</span>
+<span class="doccomment">/// the `dll_entry_points()` macro generates code that calls this.</span>
 <span class="doccomment">/// This function calls the client plugin&#39;s `plugin_get_info()` indirectly to</span>
 <span class="doccomment">/// obtain the persistent plugin info strings that it sets the paramters to.</span>
+<span class="doccomment">///</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">lib_hexchat_plugin_get_info</span>(<span class="ident">name</span>      : <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">i8</span>,
                                    <span class="ident">desc</span>      : <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">i8</span>,
                                    <span class="ident">version</span>   : <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">i8</span>,
@@ -508,9 +520,10 @@
     <span class="ident">lib_get_info</span>(<span class="ident">name</span>, <span class="ident">desc</span>, <span class="ident">version</span>, <span class="ident">callback</span>);
 }
 
-<span class="doccomment">/// Called indirectly while a plugin is being loaded. This function will invoke</span>
-<span class="doccomment">/// The function that was registered for initialization by the</span>
-<span class="doccomment">/// `dll_entry_points()` macro.</span>
+<span class="doccomment">/// Called indirectly while a plugin is being loaded. The</span>
+<span class="doccomment">/// plugin author shouldn&#39;t invoke this fuction - it&#39;s only public because</span>
+<span class="doccomment">/// the `dll_entry_points()` macro generates code that calls this.</span>
+<span class="doccomment">///</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">lib_hexchat_plugin_init</span>(<span class="ident">hexchat</span>   : <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">Hexchat</span>,
                                <span class="ident">name</span>      : <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">c_char</span>,
                                <span class="ident">desc</span>      : <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">c_char</span>,
@@ -537,7 +550,9 @@
 <span class="doccomment">/// call the deinitialization function that was registered using the</span>
 <span class="doccomment">/// `dll_entry_points()` macro. It will also unhook all the callbacks</span>
 <span class="doccomment">/// currently registered forcing them, and their closure state, to drop and</span>
-<span class="doccomment">/// thus clean up.</span>
+<span class="doccomment">/// thus clean up. Plugin authors should not call this - it&#39;s only public </span>
+<span class="doccomment">/// because `dll_entry_points()` generates code that needs this.</span>
+<span class="doccomment">///</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">lib_hexchat_plugin_deinit</span>(<span class="ident">hexchat</span>  : <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">Hexchat</span>, 
                                  <span class="ident">callback</span> : <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">DeinitFn</span><span class="op">&gt;</span>
                                 ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">i32</span>
@@ -558,7 +573,10 @@
 
 
 <span class="doccomment">/// This function sets Hexchat&#39;s character pointer pointer&#39;s to point at the</span>
-<span class="doccomment">/// pinned buffers holding info about a plugin.</span>
+<span class="doccomment">/// pinned buffers holding info about a plugin. Not to be called by plugin</span>
+<span class="doccomment">/// authors - it&#39;s only public because `dll_entry_points()` generates code</span>
+<span class="doccomment">/// that calls this.</span>
+<span class="doccomment">///</span>
 <span class="attribute">#[<span class="ident">inline</span>]</span>
 <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">not_unsafe_ptr_arg_deref</span>)]</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">lib_get_info</span>(<span class="ident">name</span>     : <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">c_char</span>,
