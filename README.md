@@ -85,7 +85,7 @@ dll_entry_points!(plugin_info, plugin_init, plugin_deinit);
 
 /// Called when the plugin is loaded to register it with Hexchat.
 ///
-fn plugin_info() -> PinnedPluginInfo {
+fn plugin_info() -> PluginInfo {
     PluginInfo::new(
         "Plugin Template",
         "0.1",

@@ -59,14 +59,12 @@ static mut HEXCHAT: *const Hexchat = null::<Hexchat>();
 ///
 /// # The signatures for the functions are:
 ///
-/// * `my_info_func  ()                 -> PinnedPluginInfo;`
+/// * `my_info_func  ()                 -> PluginInfo;`
 /// * `my_init_func  (&'static Hexchat) -> i32;`
 /// * `my_deinit_func(&'static Hexchat) -> i32;`
 ///
 /// The **info function** should create an instance of `PluginInfo` by calling
-/// its constructor with information about the plugin as parameters. The
-/// `PluginInfo` constructor returns a `Pin<Box<PluginInfo>>` instance which can
-/// be returned as-is from your `my_info_func()`.
+/// its constructor with information about the plugin as parameters.
 ///
 /// The **init function** is typically where you'll want to register your
 /// plugin's commands. Hook commands are provided by the `&Hexchat` reference
