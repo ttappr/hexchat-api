@@ -28,13 +28,6 @@ macro_rules! cbuf {
     ( $s:expr ) => { CString::new( $s ).unwrap().as_ptr() };
 }
 
-#[macro_export]
-macro_rules! fmt {
-    ( $obj:ident . printf ( $fmt:expr, $( $argv:expr ),+ ) ) => {
-        $obj.print(&format!($fmt, $($argv),+))
-    }
-}
-
 /// Reduces the syntax required to output formatted text to the current
 /// hexchat window. Internally it invokes 
 /// `hexchat.print(&format!("<format-string>", arg1, arg2, ...)`.
