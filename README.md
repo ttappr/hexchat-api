@@ -40,10 +40,11 @@ hexchat.hook_command(
         thread::spawn(|| {
             // Send a task to the main thread to have executed and get its
             // AsyncResult object.
-            let async_result = main_thread(|hc| {
+            let async_result = main_thread(
+                                    |hc| {
                                         hc.print("Hello from main thread!");
                                         "This is the return value from main!"
-                                   });
+                                    });
             // Get the return data from the main thread callback (blocks).
             let result = async_result.get();
             outpth!(hc, "Spawned thread received from main thread: {}", result);

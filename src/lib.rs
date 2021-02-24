@@ -4,7 +4,7 @@
 //! The primary object of the interface is 
 //! [Hexchat](https://ttappr.github.io/hexchat_api/hexchat_api/struct.Hexchat.html),
 //! which exposes an interface with functions that mirror the C functions 
-//! listed on the Hexchat docs page linked above. 
+//! listed on the Hexchat docs page linked above.  
 
 mod hook;
 mod callback_data;
