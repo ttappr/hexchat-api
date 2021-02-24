@@ -34,12 +34,16 @@
 <span id="31">31</span>
 <span id="32">32</span>
 <span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
 </pre><div class="example-wrap"><pre class="rust ">
 
-<span class="doccomment">//! This file is used to organize the namespace structure of the crate that</span>
-<span class="doccomment">//! the user writing a plugin will see. The approach taken is to put all the</span>
-<span class="doccomment">//! functions and structs in a flat namespace, `hexchat_api::`, to keep things</span>
-<span class="doccomment">//! simple for the user.</span>
+<span class="doccomment">//! This crate provides a Rust interface to the </span>
+<span class="doccomment">//! [Hexchat Plugin Interface](https://hexchat.readthedocs.io/en/latest/plugins.html)</span>
+<span class="doccomment">//! The primary object of the interface is </span>
+<span class="doccomment">//! [Hexchat](https://ttappr.github.io/hexchat_api/hexchat_api/struct.Hexchat.html),</span>
+<span class="doccomment">//! which exposes an interface with functions that mirror the C functions </span>
+<span class="doccomment">//! listed on the Hexchat docs page linked above. </span>
 
 <span class="kw">mod</span> <span class="ident">hook</span>;
 <span class="kw">mod</span> <span class="ident">callback_data</span>;
