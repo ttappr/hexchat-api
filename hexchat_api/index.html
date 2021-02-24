@@ -18,8 +18,8 @@ macro like so:</p>
 hexchat window. Internally it invokes 
 <code>hexchat.print(&amp;format!(&quot;&lt;format-string&gt;&quot;, arg1, arg2, ...)</code>.
 Using the macro, this becomes 
-<code>outp!(hc, &quot;&lt;format_string&gt;, arg1, arg2, ...)</code>. To print from another thread
-<code>outpth!()</code> can be used.</p>
+<code>outp!(hc, &quot;&lt;format_string&gt;&quot;, arg1, arg2, ...)</code>. To print from another 
+thread <code>outpth!()</code> can be used.</p>
 </td></tr><tr class="module-item"><td><a class="macro" href="macro.outpth.html" title="hexchat_api::outpth macro">outpth</a></td><td class="docblock-short"><p>Similar to <code>outp!()</code>, that can be used from spawned threads to print to
 the active Hexchat window. This should not be invoked from the Hexchat
 main thread.</p>
@@ -65,8 +65,7 @@ look as if the loaded scripts are actual plugins. By creating a <code>Plugin</co
 object for such a script, an entry is made in Hexchat's list of loaded
 plugins. When one of these scripts is unloaded, the fictitious plugin entry
 can be removed from Hexchat by dropping the associated <code>Plugin</code> object.</p>
-</td></tr><tr class="module-item"><td><a class="struct" href="struct.PluginInfo.html" title="hexchat_api::PluginInfo struct">PluginInfo</a></td><td class="docblock-short"><p>Holds client plugin information strings.</p>
-</td></tr></table><h2 id="enums" class="section-header"><a href="#enums">Enums</a></h2>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.PluginInfo.html" title="hexchat_api::PluginInfo struct">PluginInfo</a></td><td class="docblock-short"></td></tr></table><h2 id="enums" class="section-header"><a href="#enums">Enums</a></h2>
 <table><tr class="module-item"><td><a class="enum" href="enum.ChanFlag.html" title="hexchat_api::ChanFlag enum">ChanFlag</a></td><td class="docblock-short"><p>Channel flags.</p>
 </td></tr><tr class="module-item"><td><a class="enum" href="enum.ChanType.html" title="hexchat_api::ChanType enum">ChanType</a></td><td class="docblock-short"><p>Channel types.</p>
 </td></tr><tr class="module-item"><td><a class="enum" href="enum.ContextError.html" title="hexchat_api::ContextError enum">ContextError</a></td><td class="docblock-short"><p>The <code>Context</code> functions may encounter an error when invoked depending on
@@ -129,5 +128,4 @@ each time this command is invoked.</p>
 <code>dll_entry_points!()</code>.</p>
 </td></tr><tr class="module-item"><td><a class="type" href="type.InitFn.html" title="hexchat_api::InitFn type">InitFn</a></td><td class="docblock-short"><p>The signature for the init function that plugin authors need to register
 using <code>dll_entry_points!()</code>.</p>
-</td></tr><tr class="module-item"><td><a class="type" href="type.PinnedPluginInfo.html" title="hexchat_api::PinnedPluginInfo type">PinnedPluginInfo</a></td><td class="docblock-short"><p>The return value type for <code>PluginInfo::new()</code>.</p>
 </td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../";window.currentCrate = "hexchat_api";</script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>
