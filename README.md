@@ -5,16 +5,23 @@ This library provides a Rust API to the Hexchat Plugin Interface with additional
 Rust friendly features such as:
 * A thread-safe API.
 * Simple `user_data` objects.
-* Abstractions like `Context` that make it simple to interact with specific tabs/windows in the UI.
+* Abstractions like `Context` that make it simple to interact with specific 
+  tabs/windows in the UI.
 * Panic's are caught and displayed in the active Hexchat window.
 * Debug builds include a full stack trace for panics.
 * Hooked commands can be implemented as normal functions or closures.
 * Typed preference values and easy plugin pref access.
 
 ## Documentation
-Documentation can be found [here](https://ttappr.github.io/hexchat_api/hexchat_api/index.html).
+Documentation can be found 
+[here](https://ttappr.github.io/hexchat_api/hexchat_api/index.html).
 
-## Example
+## Examples
+
+A completed plugin offers the most examples to pull from. 
+[Here's a plugin](https://github.com/ttappr/hexchat_translator) that does
+automatic translations which enables chatting with people in different tongues 
+(chat with subtitles).
 
 Setting up and registering commands using the API is easy and syntactically 
 clean. 
