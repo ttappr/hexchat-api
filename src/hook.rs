@@ -105,6 +105,9 @@ impl Hook {
                     // Unhook the callback and retrieve the user data pointer.
                     let hc = &*HEXCHAT;
                     let cd = (hc.c_unhook)(hc, *ptr_ref);
+
+                    // Null the hook pointer.
+                    *ptr_ref = null::<c_void>();
                     
                     // TODO - Find out why c_unhook() sometimes yields null.
                     if !cd.is_null() {
@@ -112,12 +115,8 @@ impl Hook {
                         let cd = &mut (*(cd as *mut CallbackData));
                         let cd = Box::from_raw(cd);
                         
-                        // Null the hook pointer.
-                        *ptr_ref = null::<c_void>();
-                        
                         // Give back the UserData registered with the callback.
                         return cd.get_data();
-                        
                     }
                 }
             }
