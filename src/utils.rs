@@ -3,7 +3,8 @@
 
 use libc::c_char;
 use std::ffi::{CString, CStr};
-
+#[allow(unused_imports)]
+use std::sync::Arc;
 
 /// ```&str -> CString``` (provides a C compatible character buffer)
 ///
