@@ -66,13 +66,13 @@ macro_rules! outp {
 /// 
 #[macro_export]
 macro_rules! outpth {
+    ( $obj:ident, $msg:expr ) => {{
+        let rc_msg = std::sync::Arc::new($msg.to_string());
+        main_thread(move |$obj| $obj.print(&rc_msg));
+    }};
     ( $obj:ident, $fmt:expr, $( $argv:expr ),+ ) => {{
         let fm_msg = format!($fmt, $($argv),+);
         let rc_msg = std::sync::Arc::new(fm_msg.to_string());
-        main_thread(move |$obj| $obj.print(&rc_msg));
-    }};
-    ( $obj:ident, $argv:expr ) => {{
-        let rc_msg = std::sync::Arc::new(msg.to_string());
         main_thread(move |$obj| $obj.print(&rc_msg));
     }};
 }
