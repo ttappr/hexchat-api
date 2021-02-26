@@ -227,7 +227,7 @@ pub fn lib_hexchat_plugin_deinit(hexchat  : &'static Hexchat,
                                  callback : Box<DeinitFn>
                                 ) -> i32
 {
-    catch_unwind(|| { 
+    let result = catch_unwind(|| {
         // Call user's deinit().
         let retval = callback(hexchat);
         
@@ -238,7 +238,10 @@ pub fn lib_hexchat_plugin_deinit(hexchat  : &'static Hexchat,
         unsafe { PLUGIN_INFO = None; }
         
         retval     
-    }).unwrap_or(0)
+    }).unwrap_or(0);
+    // Final clean up on unload - drop the hook closure.
+    let _ = panic::take_hook();
+    result
 }
 
 
