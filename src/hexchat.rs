@@ -131,6 +131,9 @@ impl Hexchat {
                                   ));
                                   
         let ud   = Box::into_raw(ud) as *mut c_void;
+        
+        hook.set_cbd(ud);
+        
         let help = if !help.is_empty() {
             help
         } else {
@@ -185,6 +188,9 @@ impl Hexchat {
                                       hook.clone()
                                   ));
         let ud = Box::into_raw(ud) as *mut c_void;
+        
+        hook.set_cbd(ud);
+        
         unsafe {
             hook.set((self.c_hook_server)(self,
                                           cbuf!(name),
@@ -228,6 +234,9 @@ impl Hexchat {
                                       hook.clone()
                                   ));
         let ud = Box::into_raw(ud) as *mut c_void;
+        
+        hook.set_cbd(ud);
+        
         unsafe {
             hook.set((self.c_hook_print)(self,
                                          cbuf!(event_name),
@@ -274,6 +283,9 @@ impl Hexchat {
                                       hook.clone()
                                   ));
         let ud = Box::into_raw(ud) as *mut c_void;
+        
+        hook.set_cbd(ud);
+        
         unsafe {
             hook.set((self.c_hook_print_attrs)(self,
                                                cbuf!(name),
@@ -313,6 +325,9 @@ impl Hexchat {
                                             hook.clone()
                                         ));
         let ud = Box::into_raw(ud) as *mut c_void;
+        
+        hook.set_cbd(ud);
+        
         unsafe {
             hook.set((self.c_hook_timer)(self,
                                          timeout as c_int,
@@ -350,6 +365,9 @@ impl Hexchat {
                                             hook.clone()
                                         ));
         let ud = Box::into_raw(ud) as *mut c_void;
+        
+        hook.set_cbd(ud);
+        
         unsafe {
             hook.set((self.c_hook_timer)(self,
                                          timeout as c_int,
@@ -376,6 +394,9 @@ impl Hexchat {
                                             hook.clone()
                                         ));
         let ud = Box::into_raw(ud) as *mut c_void;
+        
+        hook.set_cbd(ud);
+        
         unsafe {
             hook.set((self.c_hook_fd)(self,
                                       fd as c_int,

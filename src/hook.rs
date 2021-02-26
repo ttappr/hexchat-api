@@ -32,13 +32,18 @@ static mut HOOK_LIST: Option<RwLock<Vec<Hook>>> = None;
 
 use UserData::*;
 
+struct HookData {
+    hook_ptr    : *const c_void,
+    cbd_box_ptr : *const c_void,
+}
+
 /// A wrapper for Hexchat callback hooks. These hooks are returned when 
 /// registering callbacks and can be used to unregister (unhook) them.
 /// `Hook`s can be cloned to share a reference to the same callback hook.
 ///
 #[derive(Clone)]
 pub struct Hook {
-    hook: Rc<RefCell<*const c_void>>,
+    data: Rc<RefCell<HookData>>,
 }
 
 unsafe impl Send for Hook {}
@@ -51,7 +56,12 @@ impl Hook {
     pub (crate) fn new() -> Self {
 
         let hook = Hook { 
-            hook: Rc::new(RefCell::new(null::<c_void>())) 
+            data: Rc::new(
+                    RefCell::new(
+                        HookData {
+                            hook_ptr    : null::<c_void>(),
+                            cbd_box_ptr : null::<c_void>(),
+                    })),
         };
                    
         if let Some(hook_list_rwlock) = unsafe { &HOOK_LIST } {
@@ -60,7 +70,7 @@ impl Hook {
             let hook_list = &mut *wlock.unwrap();
             
             // Clean up dead hooks.
-            hook_list.retain(|h| !h.hook.borrow().is_null());
+            hook_list.retain(|h| !h.data.borrow().hook_ptr.is_null());
             
             // Store newly created hook in global list.
             hook_list.push(hook.clone());
@@ -76,7 +86,21 @@ impl Hook {
         if let Some(hl_rwlock) = unsafe { &HOOK_LIST } {
             // Lock the global list, and set the internal pointer.
             let _rlock = hl_rwlock.read();
-            *self.hook.borrow_mut() = ptr;
+            self.data.borrow_mut().hook_ptr = ptr;
+        }
+    }
+
+    /// Sets the Hook's internal pointer to the raw Box pointer that references
+    /// the CallbackData. We have to keep our own reference to any `user_data`
+    /// passed to Hexchat, because it doesn't seem to be playing nice during
+    /// unload, where it should be returning our user data on `unhook()` -
+    /// but it doesn't seem to be doing that.
+    ///
+    pub (crate) fn set_cbd(&self, ptr: *const c_void) {
+        if let Some(hl_rwlock) = unsafe { &HOOK_LIST } {
+            // Lock the global list, and set the internal pointer.
+            let _rlock = hl_rwlock.read();
+            self.data.borrow_mut().cbd_box_ptr = ptr;
         }
     }
 
@@ -98,26 +122,30 @@ impl Hook {
             if let Some(hl_rwlock) = &HOOK_LIST {
                 let _rlock = hl_rwlock.read();
                 
-                // Determine if the Hook is still alive (non-null ptr).
-                let mut ptr_ref = self.hook.borrow_mut();
+                let ptr_data = &mut self.data.borrow_mut();
                 
-                if !ptr_ref.is_null() {
-                    // Unhook the callback and retrieve the user data pointer.
+                // Determine if the Hook is still alive (non-null ptr).
+                if !ptr_data.hook_ptr.is_null() {
+                
+                    // Unhook the callback.
                     let hc = &*HEXCHAT;
-                    let cd = (hc.c_unhook)(hc, *ptr_ref);
+                    let _  = (hc.c_unhook)(hc, ptr_data.hook_ptr);
+                    
+                    // ^ _ should be our user_data, but we can't rely on Hexchat
+                    // to return a valid user_data pointer on unload, so we have
+                    // to maintain it ourselves.
 
                     // Null the hook pointer.
-                    *ptr_ref = null::<c_void>();
+                    ptr_data.hook_ptr = null::<c_void>();
+
+                    // Reconstitute the CallbackData Box.
+                    let cd = ptr_data.cbd_box_ptr;
+                    let cd = &mut (*(cd as *mut CallbackData));
+                    let cd = Box::from_raw(cd);
                     
-                    // TODO - Find out why c_unhook() sometimes yields null.
-                    if !cd.is_null() {
-                        // Reconstruct the CallbackData Box.
-                        let cd = &mut (*(cd as *mut CallbackData));
-                        let cd = Box::from_raw(cd);
-                        
-                        // Give back the UserData registered with the callback.
-                        return cd.get_data();
-                    }
+                    // Give the caller the `user_data` the plugin registered 
+                    // with the callback.
+                    return cd.get_data();
                 }
             }
             NoData
