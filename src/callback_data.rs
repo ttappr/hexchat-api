@@ -128,6 +128,7 @@ impl CallbackData {
     /// * If the user data type was one of the shared types (`SharedData` or
     ///   `SyncData`) a clone will be returned. `NoData` is returned otherwise.
     ///
+    #[allow(dead_code)]
     pub (crate)
     fn get_data(&self) -> UserData {
         // mem::take(&mut self.data) <- This causes crashes when unloading
@@ -138,6 +139,16 @@ impl CallbackData {
             BoxedData(_) => { NoData },
             _            => { self.data.clone() },
         }
+    }
+    
+    /// Returns the `user_data` held by the `CallbackData` object, passing
+    /// ownership to the caller. The data field in the `CallbackData` object is
+    /// replaced with `NoData`.
+    ///
+    #[allow(dead_code)]
+    pub (crate)
+    fn take_data(&mut self) -> UserData {
+        mem::take(&mut self.data)
     }
 
     /// Invokes the callback held in the `callback` field.

@@ -91,7 +91,7 @@ impl Hook {
     }
 
     /// Sets the Hook's internal pointer to the raw Box pointer that references
-    /// the CallbackData. We have to keep our own reference to any `user_data`
+    /// the `CallbackData`. We have to keep our own reference to any `user_data`
     /// passed to Hexchat, because it doesn't seem to be playing nice during
     /// unload, where it should be returning our user data on `unhook()` -
     /// but it doesn't seem to be doing that.
@@ -107,15 +107,10 @@ impl Hook {
     /// Unhooks the related callback from Hexchat. The user_data object is
     /// returned. Subsequent calls to `unhook()` will return `None`. The 
     /// callback that was registered with Hexchat will be unhooked and dropped.
-    /// If the user data was one of the shared types, a clone of it is returned.
-    /// The boxed type `BoxedData` can't be copied or cloned, so `NoData` will 
-    /// be returned in that case. If getting the user data back from a callback
-    /// using its hook is needed, consider using one of the shared types 
-    /// (`SharedData`, `SyncData`) instead of `BoxedData`.
+    /// Ownership of the `user_data` will be passed to the caller.
     /// # Returns
     /// * The user data that was registered with the callback using one of the
-    ///   hexchat hook functions. A clone of the data is returned, if possible.
-    ///   `NoData` is returned for `NoData` and `BoxedData` types.
+    ///   hexchat hook functions. 
     ///
     pub fn unhook(&self) -> UserData {
         unsafe {
@@ -141,11 +136,11 @@ impl Hook {
                     // Reconstitute the CallbackData Box.
                     let cd = ptr_data.cbd_box_ptr;
                     let cd = &mut (*(cd as *mut CallbackData));
-                    let cd = Box::from_raw(cd);
+                    let cd = &mut Box::from_raw(cd);
                     
                     // Give the caller the `user_data` the plugin registered 
                     // with the callback.
-                    return cd.get_data();
+                    return cd.take_data();
                 }
             }
             NoData
