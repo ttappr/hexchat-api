@@ -19,6 +19,7 @@ fn str2cstring(s: &str) -> CString {
 
 /// ```&str -> *const c_char```
 ///
+/// Used internally by the Rust Hexchat API.
 /// Creates a C compatible character buffer from the `&str` that can be passed
 /// as a parameter to a C call that takes a char pointer:
 /// `some_fn(cbuf!("hello"));`. The returned buffer is short-lived; don't
@@ -36,20 +37,20 @@ macro_rules! cbuf {
 /// `outp!(hc, "<format_string>", arg1, arg2, ...)`. To print from another 
 /// thread `outpth!()` can be used.
 /// ```
-/// outp!(obj, fmt, argv, ...)
+/// outp!(fmt, argv, ...);
+/// outp!(arg);            // <- Or with a single &str argument.
 /// ```
 /// # Arguments
-/// * `obj`     - The Hexchat struct reference.
 /// * `fmt`     - The format string.
 /// * `argv`    - The varibale length formatted arguments.
 /// 
 #[macro_export]
 macro_rules! outp {
-    ( $obj:ident, $fmt:expr, $( $argv:expr ),+ ) => {
-        $obj.print(&format!($fmt, $($argv),+))
+    ( $fmt:expr, $( $argv:expr ),+ ) => {
+        HEXCHAT.print(&format!($fmt, $($argv),+))
     };
-    ( $obj:ident, $( $argv:expr ),+ ) => {
-        $obj.print( $($argv),+ )
+    ( $arg:expr ) => {
+        HEXCHAT.print( $arg )
     };
 }
 
@@ -57,23 +58,23 @@ macro_rules! outp {
 /// the active Hexchat window. This should not be invoked from the Hexchat
 /// main thread.
 /// ```
-/// outpth!(obj, fmt, argv, ...)
+/// outpth!(fmt, argv, ...);
+/// outpth!(arg);             // <- Or with single &str argument.
 /// ```
 /// # Arguments
-/// * `obj`     - The Hexchat struct reference.
 /// * `fmt`     - The format string.
 /// * `argv`    - The varibale length formatted arguments.
 /// 
 #[macro_export]
 macro_rules! outpth {
-    ( $obj:ident, $msg:expr ) => {{
-        let rc_msg = std::sync::Arc::new($msg.to_string());
-        main_thread(move |$obj| $obj.print(&rc_msg));
+    ( $arg:expr ) => {{
+        let rc_msg = std::sync::Arc::new($arg.to_string());
+        main_thread(move |HEXCHAT| HEXCHAT.print(&rc_msg));
     }};
-    ( $obj:ident, $fmt:expr, $( $argv:expr ),+ ) => {{
+    ( $fmt:expr, $( $argv:expr ),+ ) => {{
         let fm_msg = format!($fmt, $($argv),+);
         let rc_msg = std::sync::Arc::new(fm_msg.to_string());
-        main_thread(move |$obj| $obj.print(&rc_msg));
+        main_thread(move |HEXCHAT| HEXCHAT.print(&rc_msg));
     }};
 }
 
