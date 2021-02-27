@@ -3,8 +3,6 @@
 use std::any::Any;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::ops::Deref;
-use std::ops::DerefMut;
 use std::sync::Arc;
 use std::sync::Mutex;
 
@@ -128,38 +126,6 @@ impl UserData {
                 f((*d.lock().unwrap()).downcast_mut::<D>().expect(ERRMSG))
             },
             NoData => { panic!("Can't downcast `NoData`.") },
-        }
-    }
-}
-
-impl Deref for UserData {
-    type Target = dyn Any;
-    
-    /// `UserData` objects can be dereferenced to get to the `dyn Any` content
-    /// within. `downcast_ref::<T>()` can then be used to cast the hosted object
-    /// to the required type.
-    ///
-    fn deref(&self) -> &Self::Target {
-        match self {
-            BoxedData(ref d) => d,
-            SharedData(ref d) => d,
-            SyncData(ref d) => d,
-            NoData => panic!("Can't deref `NoData`."),
-        }
-    }
-}
-
-impl DerefMut for UserData {
-    /// `UserData` objects can be dereferenced to get to the `dyn Any` content
-    /// within. `downcast_mut::<T>()` can then be used to cast the hosted object
-    /// to the required type.
-    ///
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        match self {
-            BoxedData(ref mut d) => d,
-            SharedData(ref mut d) => d,
-            SyncData(ref mut d) => d,
-            NoData => panic!("Can't deref `NoData`."),
         }
     }
 }
