@@ -299,7 +299,7 @@ impl Drop for ListIteratorData {
 /// * Pointer   - This will be updated to be Context soon.
 /// * Time      - Holds a `time_t` numeric value.
 ///
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum FieldValue {
     StringVal    (String),
     IntVal       (i32),
@@ -311,10 +311,10 @@ pub enum FieldValue {
 impl fmt::Display for FieldValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            StringVal(s)   => { write!(f, "StringVal(\"{}\")", s) },
-            IntVal(i)      => { write!(f, "IntVal({:?})", i) },
-            PointerVal(p)  => { write!(f, "PointerVal({:?})", p) },
-            TimeVal(t)     => { write!(f, "TimeVal({:?})", t) },
+            StringVal(s)   => { write!(f, "{}",   s) },
+            IntVal(i)      => { write!(f, "{:?}", i) },
+            PointerVal(p)  => { write!(f, "{:?}", p) },
+            TimeVal(t)     => { write!(f, "{:?}", t) },
             ContextVal(c)  => { write!(f, "ContextVal({})", c) },
         }
     }
@@ -332,7 +332,7 @@ impl fmt::Display for FieldValue {
 /// * `NotStarted`   - This indicates field names were accessed before the
 ///                    iterator had been. started. `next()` needs to be invoked
 ///                    before the fields of the current item can be accessed.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ListError {
     UnknownList(String),
     UnknownField(String),

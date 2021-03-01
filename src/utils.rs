@@ -38,14 +38,47 @@ macro_rules! cbuf {
 /// thread `outpth!()` can be used.
 /// ```
 /// outp!(fmt, argv, ...);
-/// outp!(arg);            // <- Or with a single &str argument.
+/// outp!(arg);
+/// outp!(ctx=(network, channel), argv, ...);
+/// outp!(ctx=(network, channel), arg);
 /// ```
 /// # Arguments
+/// * `ctx=(network, channel)` - Sets the context to print in.
 /// * `fmt`     - The format string.
 /// * `argv`    - The varibale length formatted arguments.
 /// 
 #[macro_export]
 macro_rules! outp {
+    ( ctx = ($network:expr, $channel:expr), $fmt:expr, $( $argv:expr ),+ ) => {
+        #[allow(unused_must_use)]
+        if let Some(orig_ctx) = HEXCHAT.get_context() {
+            if let Some(ctx) = hexchat_api::Context::find(&$network, &$channel) 
+            {
+                ctx.set();
+                HEXCHAT.print(&format!($fmt, $($argv),+));
+                orig_ctx.set();
+            } else {
+                panic!("Can't find context for ({}, {})", &$network, &$channel);
+            }
+        } else {
+            panic!("Unable to acquire local context.");
+        }
+    };
+    ( ctx = ($network:expr, $channel:expr), $arg:expr ) => {
+        #[allow(unused_must_use)]
+        if let Some(orig_ctx) = HEXCHAT.get_context() {
+            if let Some(ctx) = hexchat_api::Context::find(&$network, &$channel) 
+            {
+                ctx.set();
+                HEXCHAT.print( $arg );
+                orig_ctx.set();
+            } else {
+                panic!("Can't find context for ({}, {})", &$network, &$channel);
+            }
+        } else {
+            panic!("Unable to acquire local context.");
+        }
+    };
     ( $fmt:expr, $( $argv:expr ),+ ) => {
         HEXCHAT.print(&format!($fmt, $($argv),+))
     };
@@ -59,22 +92,68 @@ macro_rules! outp {
 /// main thread.
 /// ```
 /// outpth!(fmt, argv, ...);
-/// outpth!(arg);             // <- Or with single &str argument.
+/// outpth!(arg);
+/// outpth!(ctx=(network, channel), argv, ...);
+/// outpth!(ctx=(network, channel), arg);
 /// ```
 /// # Arguments
+/// * `ctx=(network, channel)` - Sets the context to print in.
 /// * `fmt`     - The format string.
 /// * `argv`    - The varibale length formatted arguments.
 /// 
 #[macro_export]
 macro_rules! outpth {
+    ( ctx = ($network:expr, $channel:expr), $arg:expr ) => {{
+        // TODO - Make a tuple for these string values instead of a separate
+        //        Arc for each one.
+        let data = std::sync::Arc::new(($arg.to_string(),
+                                        $network.to_string(),
+                                        $channel.to_string()));
+        #[allow(unused_must_use)]
+        hexchat_api::main_thread(move |HEXCHAT| {
+            if let Some(orig_ctx) = HEXCHAT.get_context() {
+                if let Some(ctx) = hexchat_api::Context::find(&data.1, &data.2) 
+                {
+                    ctx.set();
+                    HEXCHAT.print(&data.0);
+                    orig_ctx.set();
+                } else {
+                    panic!("Can't find context for ({}, {})", &data.1, &data.2);
+                }
+            } else {
+                panic!("Unable to acquire local context.");
+            }
+        });
+    }};
+    (  ctx = ($network:expr, $channel:expr), $fmt:expr, $( $argv:expr ),+ )=> {{
+        let fm_msg = format!($fmt, $($argv),+);
+        let data   = std::sync::Arc::new(($fm_msg.to_string(),
+                                          $network.to_string(),
+                                          $channel.to_string()));
+        #[allow(unused_must_use)]
+        hexchat_api::main_thread(move |HEXCHAT| {
+            if let Some(orig_ctx) = HEXCHAT.get_context() {
+                if let Some(ctx) = hexchat_api::Context::find(&data.1, &data.2) 
+                { 
+                    ctx.set();
+                    HEXCHAT.print(&data.0);
+                    orig_ctx.set();
+                } else {
+                    panic!("Can't find context for ({}, {})", &data.1, &data.2);
+                }
+            } else {
+                panic!("Unable to acquire local context.");
+            }
+        });
+    }};
     ( $arg:expr ) => {{
         let rc_msg = std::sync::Arc::new($arg.to_string());
-        main_thread(move |HEXCHAT| HEXCHAT.print(&rc_msg));
+        hexchat_api::main_thread(move |HEXCHAT| HEXCHAT.print(&rc_msg));
     }};
     ( $fmt:expr, $( $argv:expr ),+ ) => {{
         let fm_msg = format!($fmt, $($argv),+);
         let rc_msg = std::sync::Arc::new(fm_msg.to_string());
-        main_thread(move |HEXCHAT| HEXCHAT.print(&rc_msg));
+        hexchat_api::main_thread(move |HEXCHAT| HEXCHAT.print(&rc_msg));
     }};
 }
 
