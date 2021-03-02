@@ -19,11 +19,13 @@ use crate::callback_data::{CallbackData, TimerCallbackOnce};
 use crate::context::Context;
 use crate::context::ContextError;
 use crate::hexchat_callbacks::*;
+use crate::hexchat_entry_points::HEXCHAT;
 use crate::hook::Hook;
 use crate::list_iterator::ListIterator;
 use crate::plugin::Plugin;
 use crate::user_data::*;
 use crate::utils::*;
+use crate::threadsafe_hexchat::*;
 
 use crate::cbuf;
 
@@ -73,6 +75,10 @@ pub enum StripFlags {
 /// C function pointer which they wrap and marshal data/from.
 /// 
 impl Hexchat {
+    
+    pub fn threadsafe(&self) -> ThreadSafeHexchat {
+        ThreadSafeHexchat::new(unsafe { &*HEXCHAT })
+    }
 
     /// Prints the string passed to it to the active Hexchat window.
     /// # Arguments

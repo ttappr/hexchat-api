@@ -16,6 +16,9 @@ mod hexchat_entry_points;
 mod list_iterator;
 mod plugin;
 mod thread_facilities;
+mod threadsafe_context;
+mod threadsafe_hexchat;
+mod threadsafe_list_iterator;
 mod user_data;
 mod utils;
 
@@ -29,6 +32,9 @@ pub use hexchat_entry_points::*;
 pub use list_iterator::*;
 pub use plugin::*;
 pub use thread_facilities::*;
+pub use threadsafe_context::*;
+pub use threadsafe_hexchat::*;
+pub use threadsafe_list_iterator::*;
 pub use user_data::*;
 #[allow(unused_imports)]
 pub use utils::*;

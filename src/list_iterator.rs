@@ -207,7 +207,7 @@ impl ListIterator {
                         let ptr = (data.hc.c_list_str)(data.hc,
                                                        data.list_ptr,
                                                        c_name.as_ptr());
-                        Ok(PointerVal(ptr as *const c_void))
+                        Ok(PointerVal(ptr as u64))
                     }
                 },
                 116 /* 't' (time) */ => {
@@ -303,7 +303,7 @@ impl Drop for ListIteratorData {
 pub enum FieldValue {
     StringVal    (String),
     IntVal       (i32),
-    PointerVal   (*const c_void),
+    PointerVal   (u64),
     ContextVal   (Context),
     TimeVal      (time_t),
 }

@@ -131,12 +131,12 @@ macro_rules! outpth {
                                           $network.to_string(),
                                           $channel.to_string()));
         #[allow(unused_must_use)]
-        hexchat_api::main_thread(move |HEXCHAT| {
-            if let Some(orig_ctx) = HEXCHAT.get_context() {
+        hexchat_api::main_thread(move |hc| {
+            if let Some(orig_ctx) = hc.get_context() {
                 if let Some(ctx) = hexchat_api::Context::find(&data.1, &data.2) 
                 { 
                     ctx.set();
-                    HEXCHAT.print(&data.0);
+                    hc.print(&data.0);
                     orig_ctx.set();
                 } else {
                     panic!("Can't find context for ({}, {})", &data.1, &data.2);
@@ -148,12 +148,12 @@ macro_rules! outpth {
     }};
     ( $arg:expr ) => {{
         let rc_msg = std::sync::Arc::new($arg.to_string());
-        hexchat_api::main_thread(move |HEXCHAT| HEXCHAT.print(&rc_msg));
+        hexchat_api::main_thread(move |hc| hc.print(&rc_msg));
     }};
     ( $fmt:expr, $( $argv:expr ),+ ) => {{
         let fm_msg = format!($fmt, $($argv),+);
         let rc_msg = std::sync::Arc::new(fm_msg.to_string());
-        hexchat_api::main_thread(move |HEXCHAT| HEXCHAT.print(&rc_msg));
+        hexchat_api::main_thread(move |hc| hc.print(&rc_msg));
     }};
 }
 
