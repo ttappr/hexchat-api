@@ -18,7 +18,7 @@ use crate::threadsafe_list_iterator::*;
 ///
 #[derive(Clone, Copy)]
 pub struct ThreadSafeHexchat {
-    // hc: &'static Hexchat, <never used>
+    hc: &'static Hexchat,
 }
 
 unsafe impl Send for ThreadSafeHexchat {}
@@ -27,8 +27,8 @@ unsafe impl Sync for ThreadSafeHexchat {}
 impl ThreadSafeHexchat {
     /// Constructs a `ThreadSafeHexchat` object that wraps `Hexchat`.
     pub (crate) 
-    fn new(_hc: &'static Hexchat) -> Self {
-        ThreadSafeHexchat { /* hc <never used> */ }
+    fn new(hc: &'static Hexchat) -> Self {
+        ThreadSafeHexchat { hc }
     }
     
     /// Prints the string passed to it to the active Hexchat window.
@@ -92,13 +92,11 @@ impl ThreadSafeHexchat {
     ///   means the channel window the user has visible in the GUI.
     ///
     pub fn get_context(&self) -> Option<ThreadSafeContext> {
-        main_thread(|hc| {
-            if let Some(ctx) = hc.get_context() {
-                Some(ThreadSafeContext::new(ctx))
-            } else {
-                None
-            }
-        }).get()
+        if let Some(ctx) = self.hc.get_context() {
+            Some(ThreadSafeContext::new(ctx))
+        } else {
+            None
+        }
     }
         
     /// Retrieves the info data with the given `id`. It returns None on failure

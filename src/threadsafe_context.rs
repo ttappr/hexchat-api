@@ -10,6 +10,7 @@ use crate::context::*;
 use crate::thread_facilities::*;
 use crate::threadsafe_list_iterator::*;
 
+
 /// A thread-safe version of `Context`. Its methods automatically execute on
 /// the Hexchat main thread. The full set of methods of `Context` aren't 
 /// fully implemented for this struct because some can't be trusted to produce
@@ -43,13 +44,11 @@ impl ThreadSafeContext {
     ///
     pub fn get() -> Option<Self>
     {
-        main_thread(|_| {
-            if let Some(ctx) = Context::get() {
-                Some(Self::new(ctx))
-            } else {
-                None
-            }
-        }).get()
+        if let Some(ctx) = Context::get() {
+            Some(Self::new(ctx))
+        } else {
+            None
+        }
     }
     
     /// Gets a `ThreadSafeContext` object associated with the given channel.

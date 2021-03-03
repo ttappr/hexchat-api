@@ -4,6 +4,7 @@
 //! than the Hexchat main thread safely.
 
 use std::sync::Arc;
+//use std::sync::Mutex;
 use std::fmt;
 
 use crate::list_iterator::*;
@@ -52,14 +53,13 @@ impl ThreadSafeListIterator {
     /// * A thread-safe object representing one of Hexchat's internal lists.
     ///
     pub fn new(name: &str) -> Option<Self> {
-        let name = Arc::new(name.to_string());
-        main_thread(move |hc| {
-            if let Some(list) = hc.list_get(&name) {
-                Some(ThreadSafeListIterator { list_iter: Arc::new(list) })
-            } else {
-                None
-            }
-        }).get()
+        if let Some(list) = ListIterator::new(&name) {
+            Some(ThreadSafeListIterator { 
+                list_iter: Arc::new(list) 
+            })
+        } else {
+            None
+        }
     }
     
     /// Returns a vector of the names of the fields supported by the list
@@ -126,11 +126,11 @@ impl ThreadSafeListIterator {
 impl Iterator for ThreadSafeListIterator {
     type Item = Self;
     fn next(&mut self) -> Option<Self::Item> {
-        let mut me = self.clone();
+        let me = self.clone();
         main_thread(move |_| {
-            match Arc::get_mut(&mut me.list_iter).unwrap().next() {
+            match (&*me.list_iter).next() {
                 Some(iter) => {
-                    Some(ThreadSafeListIterator::create(iter))
+                    Some(ThreadSafeListIterator::create(iter.clone()))
                 },
                 None => None,
             }
@@ -141,9 +141,9 @@ impl Iterator for ThreadSafeListIterator {
 impl Iterator for &ThreadSafeListIterator {
     type Item = Self;
     fn next(&mut self) -> Option<Self::Item> {
-        let mut me = self.clone();
+        let me = self.clone();
         if main_thread(move |_| {
-            match Arc::get_mut(&mut me.list_iter).unwrap().next() {
+            match (&*me.list_iter).next() {
                 Some(_) => true,
                 None => false,
             }
