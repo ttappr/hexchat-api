@@ -285,7 +285,7 @@
     <span class="doccomment">/// # Arguments</span>
     <span class="doccomment">/// * `name` - The name of the list to iterate over.</span>
     <span class="doccomment">/// # Returns</span>
-    <span class="doccomment">/// * If the list exists, `Some(ListIterator)` is returned; `None`</span>
+    <span class="doccomment">/// * If the list exists, `Some(ThreadSafeListIterator)` is returned; `None`</span>
     <span class="doccomment">///   otherwise.</span>
     <span class="doccomment">///</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">list_get</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">list</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ThreadSafeListIterator</span><span class="op">&gt;</span> {
