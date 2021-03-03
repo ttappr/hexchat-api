@@ -15,10 +15,10 @@
 //! timer callbacks.
 
 use libc::c_void;
-use std::cell::RefCell;
-use std::rc::Rc;
 use std::ptr::null;
 use std::sync::RwLock;
+use std::sync::Arc;
+use std::sync::Mutex;
 
 use crate::callback_data::*;
 use crate::hexchat_entry_points::HEXCHAT;
@@ -43,7 +43,7 @@ struct HookData {
 ///
 #[derive(Clone)]
 pub struct Hook {
-    data: Rc<RefCell<HookData>>,
+    data: Arc<Mutex<HookData>>,
 }
 
 unsafe impl Send for Hook {}
@@ -56,8 +56,8 @@ impl Hook {
     pub (crate) fn new() -> Self {
 
         let hook = Hook { 
-            data: Rc::new(
-                    RefCell::new(
+            data: Arc::new(
+                    Mutex::new(
                         HookData {
                             hook_ptr    : null::<c_void>(),
                             cbd_box_ptr : null::<c_void>(),
@@ -70,7 +70,7 @@ impl Hook {
             let hook_list = &mut *wlock.unwrap();
             
             // Clean up dead hooks.
-            hook_list.retain(|h| !h.data.borrow().hook_ptr.is_null());
+            hook_list.retain(|h| !h.data.lock().unwrap().hook_ptr.is_null());
             
             // Store newly created hook in global list.
             hook_list.push(hook.clone());
@@ -86,7 +86,7 @@ impl Hook {
         if let Some(hl_rwlock) = unsafe { &HOOK_LIST } {
             // Lock the global list, and set the internal pointer.
             let _rlock = hl_rwlock.read();
-            self.data.borrow_mut().hook_ptr = ptr;
+            self.data.lock().unwrap().hook_ptr = ptr;
         }
     }
 
@@ -100,7 +100,7 @@ impl Hook {
         if let Some(hl_rwlock) = unsafe { &HOOK_LIST } {
             // Lock the global list, and set the internal pointer.
             let _rlock = hl_rwlock.read();
-            self.data.borrow_mut().cbd_box_ptr = ptr;
+            self.data.lock().unwrap().cbd_box_ptr = ptr;
         }
     }
 
@@ -117,7 +117,7 @@ impl Hook {
             if let Some(hl_rwlock) = &HOOK_LIST {
                 let _rlock = hl_rwlock.read();
                 
-                let ptr_data = &mut self.data.borrow_mut();
+                let ptr_data = &mut self.data.lock().unwrap();
                 
                 // Determine if the Hook is still alive (non-null ptr).
                 if !ptr_data.hook_ptr.is_null() {
