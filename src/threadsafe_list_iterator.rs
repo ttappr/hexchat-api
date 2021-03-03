@@ -37,8 +37,29 @@ impl ThreadSafeListIterator {
     /// * `list_iter` - The list iterator to wrap.
     ///
     pub (crate) 
-    fn new(list_iter: ListIterator) -> Self {
+    fn create(list_iter: ListIterator) -> Self {
         ThreadSafeListIterator { list_iter: Arc::new(list_iter) }
+    }
+    
+    /// This can give unpredictable results if executed from a thread that isn't
+    /// Hexchat's main thread. Use a `ThreadSafeContext` to get a list from
+    /// non-main threads. With that said, this method executed from the main
+    /// thread will produce the list from the current context which can then
+    /// be passed to another thread.
+    /// # Arguments
+    /// * `name` - The name of the list to get.
+    /// # Returns
+    /// * A thread-safe object representing one of Hexchat's internal lists.
+    ///
+    pub fn new(name: &str) -> Option<Self> {
+        let name = Arc::new(name.to_string());
+        main_thread(move |hc| {
+            if let Some(list) = hc.list_get(&name) {
+                Some(ThreadSafeListIterator { list_iter: Arc::new(list) })
+            } else {
+                None
+            }
+        }).get()
     }
     
     /// Returns a vector of the names of the fields supported by the list
@@ -109,7 +130,7 @@ impl Iterator for ThreadSafeListIterator {
         main_thread(move |_| {
             match Arc::get_mut(&mut me.list_iter).unwrap().next() {
                 Some(iter) => {
-                    Some(ThreadSafeListIterator::new(iter))
+                    Some(ThreadSafeListIterator::create(iter))
                 },
                 None => None,
             }

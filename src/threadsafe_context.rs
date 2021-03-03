@@ -140,7 +140,7 @@ impl ThreadSafeContext {
             match me.ctx.list_get(&name) {
                 Ok(opt) => {
                     if let Some(list) = opt {
-                        Ok(Some(ThreadSafeListIterator::new(list)))
+                        Ok(Some(ThreadSafeListIterator::create(list)))
                     } else {
                         Ok(None)
                     }

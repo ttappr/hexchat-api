@@ -126,9 +126,9 @@ impl ThreadSafeHexchat {
     /// after how Hexchat implements the listing feature: rather than load
     /// all the list items up front, an internal list pointer is advanced
     /// to the current item, and the fields of which are accessible through
-    /// the iterator's `.get_field()` function. List iterators can also be
-    /// created by invoking `ListIterator::new(<list-name>)`. See the Hexchat
-    /// Plugin Interface web page for more information on the related lists.
+    /// the iterator's `.get_field()` function. 
+    /// See the Hexchat Plugin Interface web page for more information on the
+    /// related lists.
     /// # Arguments
     /// * `name` - The name of the list to iterate over.
     /// # Returns
@@ -139,7 +139,7 @@ impl ThreadSafeHexchat {
         let list = Arc::new(list.to_string());
         main_thread(move |hc| {
             if let Some(list_iter) = hc.list_get(&list) {
-                Some(ThreadSafeListIterator::new(list_iter))
+                Some(ThreadSafeListIterator::create(list_iter))
             } else {
                 None
             }

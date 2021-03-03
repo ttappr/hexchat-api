@@ -106,6 +106,12 @@ where
 // TODO - At some point, figure out if both these functions are needed, or if
 //        only one of them serves for all use cases needed.
 
+// TODO - Test the thread safety of multiple threads hammering away on
+//        Hexchat's timer feature. If this turns out not to be safe, then
+//        create a lock to protect access to it. I believe I've tested this
+//        before with my Python lib and it turned out to be safe. I want to test
+//        it again with this new Rust lib.
+
 /// Serves the same purpose as `main_thread()` but takes a `FnOnce()` callback
 /// instead of `FnMut()`. With the other command, the callback will hold its
 /// state between uses. In this case, the callback will be newly initialized
