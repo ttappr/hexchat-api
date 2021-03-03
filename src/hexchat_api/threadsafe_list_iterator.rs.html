@@ -176,6 +176,27 @@
 <span id="173">173</span>
 <span id="174">174</span>
 <span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
 </pre><div class="example-wrap"><pre class="rust ">
 
 <span class="doccomment">//! This module provides a thread-safe wrapper class for the Hexchat </span>
@@ -216,8 +237,29 @@
     <span class="doccomment">/// * `list_iter` - The list iterator to wrap.</span>
     <span class="doccomment">///</span>
     <span class="kw">pub</span> (<span class="kw">crate</span>) 
-    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">list_iter</span>: <span class="ident">ListIterator</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">create</span>(<span class="ident">list_iter</span>: <span class="ident">ListIterator</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="ident">ThreadSafeListIterator</span> { <span class="ident">list_iter</span>: <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">list_iter</span>) }
+    }
+    
+    <span class="doccomment">/// This can give unpredictable results if executed from a thread that isn&#39;t</span>
+    <span class="doccomment">/// Hexchat&#39;s main thread. Use a `ThreadSafeContext` to get a list from</span>
+    <span class="doccomment">/// non-main threads. With that said, this method executed from the main</span>
+    <span class="doccomment">/// thread will produce the list from the current context which can then</span>
+    <span class="doccomment">/// be passed to another thread.</span>
+    <span class="doccomment">/// # Arguments</span>
+    <span class="doccomment">/// * `name` - The name of the list to get.</span>
+    <span class="doccomment">/// # Returns</span>
+    <span class="doccomment">/// * A thread-safe object representing one of Hexchat&#39;s internal lists.</span>
+    <span class="doccomment">///</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">name</span> <span class="op">=</span> <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">name</span>.<span class="ident">to_string</span>());
+        <span class="ident">main_thread</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">hc</span><span class="op">|</span> {
+            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">list</span>) <span class="op">=</span> <span class="ident">hc</span>.<span class="ident">list_get</span>(<span class="kw-2">&amp;</span><span class="ident">name</span>) {
+                <span class="prelude-val">Some</span>(<span class="ident">ThreadSafeListIterator</span> { <span class="ident">list_iter</span>: <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">list</span>) })
+            } <span class="kw">else</span> {
+                <span class="prelude-val">None</span>
+            }
+        }).<span class="ident">get</span>()
     }
     
     <span class="doccomment">/// Returns a vector of the names of the fields supported by the list</span>
@@ -288,7 +330,7 @@
         <span class="ident">main_thread</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
             <span class="kw">match</span> <span class="ident">Arc</span>::<span class="ident">get_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">me</span>.<span class="ident">list_iter</span>).<span class="ident">unwrap</span>().<span class="ident">next</span>() {
                 <span class="prelude-val">Some</span>(<span class="ident">iter</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                    <span class="prelude-val">Some</span>(<span class="ident">ThreadSafeListIterator</span>::<span class="ident">new</span>(<span class="ident">iter</span>))
+                    <span class="prelude-val">Some</span>(<span class="ident">ThreadSafeListIterator</span>::<span class="ident">create</span>(<span class="ident">iter</span>))
                 },
                 <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
             }

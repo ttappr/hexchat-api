@@ -131,6 +131,12 @@
 <span id="128">128</span>
 <span id="129">129</span>
 <span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
 </pre><div class="example-wrap"><pre class="rust ">
 
 <span class="doccomment">//! This module provides facilities for accessing Hexchat from routines  </span>
@@ -239,6 +245,12 @@
 
 <span class="comment">// TODO - At some point, figure out if both these functions are needed, or if</span>
 <span class="comment">//        only one of them serves for all use cases needed.</span>
+
+<span class="comment">// TODO - Test the thread safety of multiple threads hammering away on</span>
+<span class="comment">//        Hexchat&#39;s timer feature. If this turns out not to be safe, then</span>
+<span class="comment">//        create a lock to protect access to it. I believe I&#39;ve tested this</span>
+<span class="comment">//        before with my Python lib and it turned out to be safe. I want to test</span>
+<span class="comment">//        it again with this new Rust lib.</span>
 
 <span class="doccomment">/// Serves the same purpose as `main_thread()` but takes a `FnOnce()` callback</span>
 <span class="doccomment">/// instead of `FnMut()`. With the other command, the callback will hold its</span>

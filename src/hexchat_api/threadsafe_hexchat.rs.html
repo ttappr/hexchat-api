@@ -279,9 +279,9 @@
     <span class="doccomment">/// after how Hexchat implements the listing feature: rather than load</span>
     <span class="doccomment">/// all the list items up front, an internal list pointer is advanced</span>
     <span class="doccomment">/// to the current item, and the fields of which are accessible through</span>
-    <span class="doccomment">/// the iterator&#39;s `.get_field()` function. List iterators can also be</span>
-    <span class="doccomment">/// created by invoking `ListIterator::new(&lt;list-name&gt;)`. See the Hexchat</span>
-    <span class="doccomment">/// Plugin Interface web page for more information on the related lists.</span>
+    <span class="doccomment">/// the iterator&#39;s `.get_field()` function. </span>
+    <span class="doccomment">/// See the Hexchat Plugin Interface web page for more information on the</span>
+    <span class="doccomment">/// related lists.</span>
     <span class="doccomment">/// # Arguments</span>
     <span class="doccomment">/// * `name` - The name of the list to iterate over.</span>
     <span class="doccomment">/// # Returns</span>
@@ -292,7 +292,7 @@
         <span class="kw">let</span> <span class="ident">list</span> <span class="op">=</span> <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">list</span>.<span class="ident">to_string</span>());
         <span class="ident">main_thread</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">hc</span><span class="op">|</span> {
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">list_iter</span>) <span class="op">=</span> <span class="ident">hc</span>.<span class="ident">list_get</span>(<span class="kw-2">&amp;</span><span class="ident">list</span>) {
-                <span class="prelude-val">Some</span>(<span class="ident">ThreadSafeListIterator</span>::<span class="ident">new</span>(<span class="ident">list_iter</span>))
+                <span class="prelude-val">Some</span>(<span class="ident">ThreadSafeListIterator</span>::<span class="ident">create</span>(<span class="ident">list_iter</span>))
             } <span class="kw">else</span> {
                 <span class="prelude-val">None</span>
             }
