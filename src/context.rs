@@ -207,7 +207,7 @@ impl Context {
     /// If the list doesn't exist, the `OK()` result will contain `None`;
     /// otherwise it will hold the `listIterator` object for the requested
     /// list.
-    pub fn get_listiter(&self, list: &str)
+    pub fn list_get(&self, list: &str)
         -> Result<Option<ListIterator>, ContextError>
     {
         let data = &*self.data;

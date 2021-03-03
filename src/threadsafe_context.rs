@@ -7,6 +7,7 @@ use std::fmt;
 use crate::context::*;
 use crate::hexchat::Hexchat;
 use crate::thread_facilities::*;
+use crate::threadsafe_list_iterator::*;
 
 #[derive(Clone, Debug)]
 pub struct ThreadSafeContext {
@@ -64,6 +65,26 @@ impl ThreadSafeContext {
                                             .map(|s| s.as_str())
                                             .collect();
             me.ctx.emit_print(&data.0, var_args.as_slice())
+        }).get()
+    }
+    
+    pub fn list_get(&self, 
+                    name: &str
+                   ) -> Result<Option<ThreadSafeListIterator>, ContextError>
+    {
+        let name = Arc::new(name.to_string());
+        let me = self.clone();
+        main_thread(move |_| {
+            match me.ctx.list_get(&name) {
+                Ok(opt) => {
+                    if let Some(list) = opt {
+                        Ok(Some(ThreadSafeListIterator::new(list)))
+                    } else {
+                        Ok(None)
+                    }
+                },
+                Err(err) => Err(err),
+            }
         }).get()
     }
 }
