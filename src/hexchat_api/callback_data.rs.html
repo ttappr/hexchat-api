@@ -312,6 +312,17 @@
 <span id="309">309</span>
 <span id="310">310</span>
 <span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
 </pre><div class="example-wrap"><pre class="rust ">
 
 <span class="doccomment">//! The `CallbackData` object holds all the information about a callback </span>
@@ -443,6 +454,7 @@
     <span class="doccomment">/// * If the user data type was one of the shared types (`SharedData` or</span>
     <span class="doccomment">///   `SyncData`) a clone will be returned. `NoData` is returned otherwise.</span>
     <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
     <span class="kw">pub</span> (<span class="kw">crate</span>)
     <span class="kw">fn</span> <span class="ident">get_data</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">UserData</span> {
         <span class="comment">// mem::take(&amp;mut self.data) &lt;- This causes crashes when unloading</span>
@@ -453,6 +465,16 @@
             <span class="ident">BoxedData</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> { <span class="ident">NoData</span> },
             <span class="kw">_</span>            <span class="op">=</span><span class="op">&gt;</span> { <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">clone</span>() },
         }
+    }
+    
+    <span class="doccomment">/// Returns the `user_data` held by the `CallbackData` object, passing</span>
+    <span class="doccomment">/// ownership to the caller. The data field in the `CallbackData` object is</span>
+    <span class="doccomment">/// replaced with `NoData`.</span>
+    <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
+    <span class="kw">pub</span> (<span class="kw">crate</span>)
+    <span class="kw">fn</span> <span class="ident">take_data</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">UserData</span> {
+        <span class="ident">mem</span>::<span class="ident">take</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">data</span>)
     }
 
     <span class="doccomment">/// Invokes the callback held in the `callback` field.</span>
