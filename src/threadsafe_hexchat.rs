@@ -132,7 +132,7 @@ impl ThreadSafeHexchat {
     /// # Arguments
     /// * `name` - The name of the list to iterate over.
     /// # Returns
-    /// * If the list exists, `Some(ListIterator)` is returned; `None`
+    /// * If the list exists, `Some(ThreadSafeListIterator)` is returned; `None`
     ///   otherwise.
     ///
     pub fn list_get(&self, list: &str) -> Option<ThreadSafeListIterator> {
