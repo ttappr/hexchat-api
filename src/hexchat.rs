@@ -76,6 +76,9 @@ pub enum StripFlags {
 /// 
 impl Hexchat {
     
+    /// Returns a thread-safe wrapper for `Hexchat` that exposes thread-safe
+    /// methods wrapping several of `Hexchat`s methods.
+    ///
     pub fn threadsafe(&self) -> ThreadSafeHexchat {
         ThreadSafeHexchat::new(unsafe { &*HEXCHAT })
     }

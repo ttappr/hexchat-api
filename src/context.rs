@@ -131,6 +131,7 @@ impl Context {
 
     /// Sets the currently active context to the context the `Context` object
     /// points to internally.
+    ///
     pub fn set(&self) -> Result<(), ContextError> {
         let data = &*self.data;
         unsafe {
@@ -144,6 +145,7 @@ impl Context {
     /// Prints the message to the `Context` object's Hexchat context. This is
     /// how messages can be printed to Hexchat windows apart from the currently
     /// active one.
+    ///
     pub fn print(&self, message: &str) -> Result<(), ContextError> {
         let data = &*self.data;
         unsafe {
@@ -157,6 +159,7 @@ impl Context {
     }
 
     /// Issues a print event to the context held by the `Context` object.
+    ///
     pub fn emit_print(&self, event_name: &str, var_args: &[&str])
         -> Result<(), ContextError>
     {
@@ -176,6 +179,7 @@ impl Context {
     }
 
     /// Issues a command in the context held by the `Context` object.
+    ///
     pub fn command(&self, command: &str) -> Result<(), ContextError> {
         let data = &*self.data;
         unsafe {
@@ -190,6 +194,7 @@ impl Context {
 
     /// Gets information from the channel/window that the `Context` object
     /// holds an internal pointer to.
+    ///
     pub fn get_info(&self, list: &str) -> Result<Option<String>, ContextError>
     {
         let data = &*self.data;
@@ -207,6 +212,7 @@ impl Context {
     /// If the list doesn't exist, the `OK()` result will contain `None`;
     /// otherwise it will hold the `listIterator` object for the requested
     /// list.
+    ///
     pub fn list_get(&self, list: &str)
         -> Result<Option<ListIterator>, ContextError>
     {

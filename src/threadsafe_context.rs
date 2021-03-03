@@ -1,14 +1,24 @@
 
-#![allow(dead_code, unused_imports)]
+//! A thread-safe version of `Context`. The methods of these objects will 
+//! execute on the main thread of Hexchat. Invoking them is virutally the same 
+//! as with `Context` objects.
 
 use std::sync::Arc;
 use std::fmt;
 
 use crate::context::*;
-use crate::hexchat::Hexchat;
 use crate::thread_facilities::*;
 use crate::threadsafe_list_iterator::*;
 
+/// A thread-safe version of `Context`. Its methods automatically execute on
+/// the Hexchat main thread. The full set of methods of `Context` aren't 
+/// fully implemented for this struct because some can't be trusted to produce
+/// predictable results from other threads. For instance `.set()` from a thread
+/// would only cause Hexchat to momentarily set its context, but Hexchat's
+/// context could change again at any moment while the other thread is 
+/// executing.
+/// 
+///
 #[derive(Clone, Debug)]
 pub struct ThreadSafeContext {
     ctx : Arc<Context>,
@@ -18,13 +28,52 @@ unsafe impl Send for ThreadSafeContext {}
 unsafe impl Sync for ThreadSafeContext {}
 
 impl ThreadSafeContext {
-
+    /// Creates a new `ThreadSafeContext` object, which wraps a `Context` object
+    /// internally.
     pub (crate) 
     fn new(ctx: Context) -> Self 
     {
         ThreadSafeContext { ctx: Arc::new(ctx) }
     }
+    
+    /// Gets the current `Context` wrapped in a `ThreadSafeContext` object.
+    /// This method should be called from the Hexchat main thread for it
+    /// to contain a predictable `Context`. Executing it from a thread can
+    /// yield a wrapped `Context` for an unexpected channel.
+    ///
+    pub fn get() -> Option<Self>
+    {
+        main_thread(|_| {
+            if let Some(ctx) = Context::get() {
+                Some(Self::new(ctx))
+            } else {
+                None
+            }
+        }).get()
+    }
+    
+    /// Gets a `ThreadSafeContext` object associated with the given channel.
+    /// # Arguments
+    /// * `network` - The network of the channel to get the context for.
+    /// * `channel` - The channel to get the context of.
+    /// # Returns
+    /// * `Some(ThreadSafeContext)` on success, and `None` on failure.
+    ///
+    pub fn find(network: &str, channel: &str) -> Option<Self>
+    {
+        let data = Arc::new((network.to_string(), channel.to_string()));
+        main_thread(move |_| {
+            if let Some(ctx) = Context::find(&data.0, &data.1) {
+                Some(Self::new(ctx))
+            } else {
+                None
+            }
+        }).get()
+    }
 
+    /// Prints the message to the `ThreadSafeContext` object's Hexchat context.
+    /// This is how messages can be printed to Hexchat windows apart from the
+    /// currently active one.    
     pub fn print(&self, message: &str) -> Result<(), ContextError> 
     {
         let message = Arc::new(message.to_string());
@@ -34,6 +83,8 @@ impl ThreadSafeContext {
         }).get()
     }
     
+    /// Issues a command in the context held by the `ThreadSafeContext` object.
+    ///
     pub fn command(&self, command: &str) -> Result<(), ContextError> 
     {
         let command = Arc::new(command.to_string());
@@ -42,7 +93,10 @@ impl ThreadSafeContext {
             me.ctx.command(&command)
         }).get()
     }
-    
+
+    /// Gets information from the channel/window that the `ThreadSafeContext` 
+    /// object holds an internal pointer to.
+    ///
     pub fn get_info(&self, info: &str) -> Result<Option<String>, ContextError>
     {
         let info = Arc::new(info.to_string());
@@ -52,6 +106,9 @@ impl ThreadSafeContext {
         }).get()
     }
     
+    /// Issues a print event to the context held by the `ThreadSafeContext` 
+    /// object.    
+    ///
     pub fn emit_print(&self, event_name: &str, var_args: &[&str])
         -> Result<(), ContextError>
     {
@@ -68,6 +125,11 @@ impl ThreadSafeContext {
         }).get()
     }
     
+    /// Gets a `ListIterator` from the context held by the `Context` object.
+    /// If the list doesn't exist, the `OK()` result will contain `None`;
+    /// otherwise it will hold the `listIterator` object for the requested
+    /// list.
+    ///
     pub fn list_get(&self, 
                     name: &str
                    ) -> Result<Option<ThreadSafeListIterator>, ContextError>
