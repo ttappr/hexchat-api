@@ -15,6 +15,7 @@
 //! invoked on the result object; this call will block until the main thread
 //! has finished executing the callback.
 
+use std::collections::LinkedList;
 use std::sync::{Arc, Condvar, Mutex};
 
 use crate::hexchat::Hexchat;
@@ -22,6 +23,16 @@ use crate::hexchat_entry_points::HEXCHAT;
 use crate::user_data::*;
 
 use UserData::*;
+
+const TASK_SPURT_SIZE: i32 = 5;
+const TASK_REST_MSECS: i64 = 2;
+
+type Queue = LinkedList<Box<dyn FnMut()>>;
+
+/// The task queue that other threads use to schedule tasks to run on the
+/// main thread. It is guarded by a `Mutex`.
+///
+static mut TASK_QUEUE: Option<Arc<Mutex<Queue>>> = None;
 
 /// A result object that allows callbacks operating on a thread to send their
 /// return value to a receiver calling `get()` from another thread. Whether
@@ -77,6 +88,10 @@ impl<T: Clone + Send> AsyncResult<T> {
         cvar.notify_one();
     }
 }
+
+// TODO - Decide whether to retire the function below if the task queue handler
+//        solution pans out. It appears that it will pan out because it handles
+//        tasks faster than the previous solution.
 
 /// Executes a closure from the Hexchat main thread. This function returns
 /// immediately with an AsyncResult object that can be used to retrieve the
@@ -135,22 +150,12 @@ where
     res
 }
 
-// TODO - This is an idea to work out. Instead of trusting Hexchat's timer
-//        queue to be thread-safe, make a tasks that reads from a queue of
-//        callbacks and AsyncResult objects and executes the callbacks.
-//        It can set itself to wake up at varying timeouts according to how
-//        fast items are added to its queue. Its queue can be guarded by
-//        Mutex.
-//
-
-use std::collections::LinkedList;
-
-type Queue = LinkedList<Box<dyn FnMut()>>;
-const TASK_SPURT_SIZE: i32 = 5;
-const TASK_REST_MSECS: i64 = 2;
-
-static mut TASK_QUEUE: Option<Arc<Mutex<Queue>>> = None;
-
+/// This initializes the fundamental thread-safe features of this library.
+/// A mutex guarded task queue is created, and a timer function is registered
+/// that handles the queue at intervals. If a thread requires fast response,
+/// the handler will field its requests one after another for up to 
+/// `TASK_SPURT_SIZE` times without rest.
+///
 pub (crate)
 fn main_thread_init() {
     if unsafe { TASK_QUEUE.is_none() } {
@@ -163,7 +168,7 @@ fn main_thread_init() {
             TASK_REST_MSECS,
             move |_hc, _ud| {
                 if let Some(task_queue) = unsafe { &TASK_QUEUE } {
-                    let mut count = 0;
+                    let mut count = 1;
                     
                     while let Some(mut callback) = task_queue.lock()
                                                              .unwrap()
@@ -175,20 +180,32 @@ fn main_thread_init() {
                             break  
                         }
                     }
-                    1
-                } else {
-                    0
                 }
+                1
             },
             NoData);
     }
 }
 
+// TODO - Do something about threads blocked on a .get() on any outstanding
+//        AsyncResult's.
+
+/// Called when the an addon is being unloaded. This eliminates the task queue.
+/// Any holders of `AsyncResult` objects that are blocked on `.get()` may be
+/// waiting forever.
+///
 pub (crate)
 fn main_thread_deinit() {
     unsafe { TASK_QUEUE = None }
 }
 
+/// Executes a closure from the Hexchat main thread. This function returns
+/// immediately with an AsyncResult object that can be used to retrieve the
+/// result of the operation that will run on the main thread.
+/// 
+/// # Arguments
+/// * `callback` - The callback to execute on the main thread.
+/// 
 pub fn main_thread<F, R>(mut callback: F) -> AsyncResult<R>
 where 
     F: FnMut(&Hexchat) -> R,
