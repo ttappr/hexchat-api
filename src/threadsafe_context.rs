@@ -82,6 +82,26 @@ impl ThreadSafeContext {
         }).get()
     }
     
+    /// Prints without waiting for asynchronous completion. This will print
+    /// faster than `.print()` because it just stacks up print requests in the
+    /// timer queue and moves on without blocking. The downside is errors
+    /// will not be checked. Error messages will, however, still be printed
+    /// if any occur.
+    ///
+    pub fn aprint(&self, message: &str) {
+        let message = Arc::new(message.to_string());
+        let me = self.clone();
+        main_thread(move |hc| {
+            if let Err(err) = me.ctx.print(&message) {
+                hc.print(
+                    &format!("\x0313Context.aprint() failed to acquire \
+                              context: {}", err));
+                hc.print(
+                    &format!("\x0313{}", message));
+            }
+        });
+    }
+    
     /// Issues a command in the context held by the `ThreadSafeContext` object.
     ///
     pub fn command(&self, command: &str) -> Result<(), ContextError> 

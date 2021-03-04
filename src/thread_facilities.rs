@@ -85,7 +85,7 @@ impl<T: Clone + Send> AsyncResult<T> {
 /// # Arguments
 /// * `callback` - The callback to execute on the main thread.
 /// 
-pub fn main_thread<F, R>(mut callback: F) -> AsyncResult<R>
+pub fn _main_thread<F, R>(mut callback: F) -> AsyncResult<R>
 where
     F: FnMut(&Hexchat) -> R,
     F: 'static + Send,
@@ -134,3 +134,97 @@ where
                         NoData);
     res
 }
+
+// TODO - This is an idea to work out. Instead of trusting Hexchat's timer
+//        queue to be thread-safe, make a tasks that reads from a queue of
+//        callbacks and AsyncResult objects and executes the callbacks.
+//        It can set itself to wake up at varying timeouts according to how
+//        fast items are added to its queue. Its queue can be guarded by
+//        Mutex.
+//
+
+use std::collections::LinkedList;
+
+type Queue = LinkedList<Box<dyn FnMut()>>;
+const TASK_SPURT_SIZE: i32 = 5;
+const TASK_REST_MSECS: i64 = 2;
+
+static mut TASK_QUEUE: Option<Arc<Mutex<Queue>>> = None;
+
+pub (crate)
+fn main_thread_init() {
+    if unsafe { TASK_QUEUE.is_none() } {
+        unsafe { 
+            TASK_QUEUE = Some(Arc::new(Mutex::new(LinkedList::new()))); 
+        }
+        let hex = unsafe { &*HEXCHAT };
+        
+        hex.hook_timer(
+            TASK_REST_MSECS,
+            move |_hc, _ud| {
+                if let Some(task_queue) = unsafe { &TASK_QUEUE } {
+                    let mut count = 0;
+                    
+                    while let Some(mut callback) = task_queue.lock()
+                                                             .unwrap()
+                                                             .pop_front() 
+                    {
+                        callback();
+                        count += 1;
+                        if count > TASK_SPURT_SIZE { 
+                            break  
+                        }
+                    }
+                    1
+                } else {
+                    0
+                }
+            },
+            NoData);
+    }
+}
+
+pub (crate)
+fn main_thread_deinit() {
+    unsafe { TASK_QUEUE = None }
+}
+
+pub fn main_thread<F, R>(mut callback: F) -> AsyncResult<R>
+where 
+    F: FnMut(&Hexchat) -> R,
+    F: 'static + Send,
+    R: 'static + Clone + Send,
+{
+    let res = AsyncResult::new();
+    let cln = res.clone();
+    let hex = unsafe { &*HEXCHAT };
+    if let Some(task_queue) = unsafe { &TASK_QUEUE } {
+        let cbk = Box::new(
+            move || {
+                cln.set(callback(hex));
+            }
+        );
+        task_queue.lock().unwrap().push_back(cbk);
+    } else {
+        cln.set(callback(hex));
+    }
+    res
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
