@@ -323,6 +323,8 @@
 <span id="320">320</span>
 <span id="321">321</span>
 <span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
 </pre><div class="example-wrap"><pre class="rust ">
 
 <span class="doccomment">//! The `CallbackData` object holds all the information about a callback </span>
@@ -342,6 +344,7 @@
 <span class="doccomment">/// Holds the Rust-implemented function, or closure, of a registered Hexchat </span>
 <span class="doccomment">/// callback.</span>
 <span class="doccomment">///</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
 <span class="kw">enum</span> <span class="ident">UCallback</span> {
     <span class="ident">Command</span>     (<span class="ident">Box</span><span class="op">&lt;</span> <span class="ident">Callback</span> <span class="op">&gt;</span>           ),
     <span class="ident">Print</span>       (<span class="ident">Box</span><span class="op">&lt;</span> <span class="ident">PrintCallback</span> <span class="op">&gt;</span>      ),
@@ -418,7 +421,8 @@
         <span class="kw">let</span> <span class="ident">callback</span> <span class="op">=</span> <span class="ident">Timer</span>(<span class="ident">callback</span>);
         <span class="ident">CallbackData</span> { <span class="ident">callback</span>, <span class="ident">data</span>, <span class="ident">hook</span> }
     }
-
+    
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
     <span class="kw">pub</span> (<span class="kw">crate</span>)
     <span class="kw">fn</span> <span class="ident">new_timer_once_data</span>(<span class="ident">callback</span> : <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">TimerCallbackOnce</span><span class="op">&gt;</span>,
                            <span class="ident">data</span>     : <span class="ident">UserData</span>,

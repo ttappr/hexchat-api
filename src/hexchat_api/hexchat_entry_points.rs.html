@@ -330,6 +330,10 @@
 <span id="327">327</span>
 <span id="328">328</span>
 <span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
 </pre><div class="example-wrap"><pre class="rust ">
 
 <span class="doccomment">//! This module holds the DLL entry points for this plugin library.</span>
@@ -357,6 +361,7 @@
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">hexchat</span>::<span class="ident">Hexchat</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">hook</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">utils</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">thread_facilities</span>::<span class="kw-2">*</span>;
 
 <span class="doccomment">/// The signature for the init function that plugin authors need to register</span>
 <span class="doccomment">/// using `dll_entry_points!()`.</span>
@@ -545,6 +550,7 @@
     <span class="comment">// Invoke client lib&#39;s init function.</span>
     <span class="ident">catch_unwind</span>(<span class="op">|</span><span class="op">|</span> { 
         <span class="ident">Hook</span>::<span class="ident">init</span>();
+        <span class="ident">main_thread_init</span>();
         <span class="ident">init_cb</span>(<span class="ident">hexchat</span>) 
     }).<span class="ident">unwrap_or</span>(<span class="number">0</span>)
 }
@@ -563,6 +569,8 @@
     <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">catch_unwind</span>(<span class="op">|</span><span class="op">|</span> {
         <span class="comment">// Call user&#39;s deinit().</span>
         <span class="kw">let</span> <span class="ident">retval</span> <span class="op">=</span> <span class="ident">callback</span>(<span class="ident">hexchat</span>);
+        
+        <span class="ident">main_thread_deinit</span>();
         
         <span class="comment">// Cause the callback_data objects to drop and clean up.</span>
         <span class="ident">Hook</span>::<span class="ident">deinit</span>();   

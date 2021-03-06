@@ -195,8 +195,6 @@
 <span id="192">192</span>
 <span id="193">193</span>
 <span id="194">194</span>
-<span id="195">195</span>
-<span id="196">196</span>
 </pre><div class="example-wrap"><pre class="rust ">
 
 <span class="doccomment">//! This module provides a thread-safe wrapper class for the Hexchat </span>
@@ -204,6 +202,7 @@
 <span class="doccomment">//! than the Hexchat main thread safely.</span>
 
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::<span class="ident">Arc</span>;
+<span class="comment">//use std::sync::Mutex;</span>
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">list_iterator</span>::<span class="kw-2">*</span>;
@@ -252,14 +251,13 @@
     <span class="doccomment">/// * A thread-safe object representing one of Hexchat&#39;s internal lists.</span>
     <span class="doccomment">///</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">name</span> <span class="op">=</span> <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">name</span>.<span class="ident">to_string</span>());
-        <span class="ident">main_thread</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">hc</span><span class="op">|</span> {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">list</span>) <span class="op">=</span> <span class="ident">hc</span>.<span class="ident">list_get</span>(<span class="kw-2">&amp;</span><span class="ident">name</span>) {
-                <span class="prelude-val">Some</span>(<span class="ident">ThreadSafeListIterator</span> { <span class="ident">list_iter</span>: <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">list</span>) })
-            } <span class="kw">else</span> {
-                <span class="prelude-val">None</span>
-            }
-        }).<span class="ident">get</span>()
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">list</span>) <span class="op">=</span> <span class="ident">ListIterator</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="ident">name</span>) {
+            <span class="prelude-val">Some</span>(<span class="ident">ThreadSafeListIterator</span> { 
+                <span class="ident">list_iter</span>: <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">list</span>) 
+            })
+        } <span class="kw">else</span> {
+            <span class="prelude-val">None</span>
+        }
     }
     
     <span class="doccomment">/// Returns a vector of the names of the fields supported by the list</span>
@@ -268,7 +266,7 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_field_names</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">me</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone</span>();
         <span class="ident">main_thread</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
-            <span class="ident">me</span>.<span class="ident">list_iter</span>.<span class="ident">get_field_names</span>().<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">clone</span>()).<span class="ident">collect</span>()
+            <span class="ident">me</span>.<span class="ident">list_iter</span>.<span class="ident">get_field_names</span>().<span class="ident">to_vec</span>()
         }).<span class="ident">get</span>()
     }
     
@@ -326,11 +324,11 @@
 <span class="kw">impl</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">ThreadSafeListIterator</span> {
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="self">Self</span>;
     <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Item</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">me</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone</span>();
+        <span class="kw">let</span> <span class="ident">me</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone</span>();
         <span class="ident">main_thread</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
-            <span class="kw">match</span> <span class="ident">Arc</span>::<span class="ident">get_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">me</span>.<span class="ident">list_iter</span>).<span class="ident">unwrap</span>().<span class="ident">next</span>() {
+            <span class="kw">match</span> (<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">me</span>.<span class="ident">list_iter</span>).<span class="ident">next</span>() {
                 <span class="prelude-val">Some</span>(<span class="ident">iter</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                    <span class="prelude-val">Some</span>(<span class="ident">ThreadSafeListIterator</span>::<span class="ident">create</span>(<span class="ident">iter</span>))
+                    <span class="prelude-val">Some</span>(<span class="ident">ThreadSafeListIterator</span>::<span class="ident">create</span>(<span class="ident">iter</span>.<span class="ident">clone</span>()))
                 },
                 <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
             }
@@ -341,13 +339,11 @@
 <span class="kw">impl</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">ThreadSafeListIterator</span> {
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="self">Self</span>;
     <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Item</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">me</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone</span>();
-        <span class="kw">if</span> <span class="ident">main_thread</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
-            <span class="kw">match</span> <span class="ident">Arc</span>::<span class="ident">get_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">me</span>.<span class="ident">list_iter</span>).<span class="ident">unwrap</span>().<span class="ident">next</span>() {
-                <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
-                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
-            }
-        }).<span class="ident">get</span>() {
+        <span class="kw">let</span> <span class="ident">me</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone</span>();
+        <span class="kw">let</span> <span class="ident">has_more</span> <span class="op">=</span> <span class="ident">main_thread</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
+            (<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">me</span>.<span class="ident">list_iter</span>).<span class="ident">next</span>().<span class="ident">is_some</span>()
+        }).<span class="ident">get</span>();
+        <span class="kw">if</span> <span class="ident">has_more</span> {
             <span class="prelude-val">Some</span>(<span class="self">self</span>)
         } <span class="kw">else</span> {
             <span class="prelude-val">None</span>

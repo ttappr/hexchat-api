@@ -1214,6 +1214,7 @@
 <span id="1211">1211</span>
 <span id="1212">1212</span>
 <span id="1213">1213</span>
+<span id="1214">1214</span>
 </pre><div class="example-wrap"><pre class="rust ">
 
 <span class="doccomment">//! This file holds the Hexchat struct used to interface with Hexchat. Its</span>
@@ -1575,6 +1576,7 @@
     <span class="doccomment">/// * A `Hook` object that is used to deregister the callback after it&#39;s</span>
     <span class="doccomment">///   invoked.</span>
     <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
     <span class="kw">pub</span> (<span class="kw">crate</span>)
     <span class="kw">fn</span> <span class="ident">hook_timer_once</span>(<span class="kw-2">&amp;</span><span class="self">self</span>,
                        <span class="ident">timeout</span>   : <span class="ident">i64</span>,

@@ -133,10 +133,9 @@ the <code>dll_entry_points()</code> macro generates code that calls this.</p>
 </td></tr><tr class="module-item"><td><a class="fn" href="fn.main_thread.html" title="hexchat_api::main_thread fn">main_thread</a></td><td class="docblock-short"><p>Executes a closure from the Hexchat main thread. This function returns
 immediately with an AsyncResult object that can be used to retrieve the
 result of the operation that will run on the main thread.</p>
-</td></tr><tr class="module-item"><td><a class="fn" href="fn.main_thread_once.html" title="hexchat_api::main_thread_once fn">main_thread_once</a></td><td class="docblock-short"><p>Serves the same purpose as <code>main_thread()</code> but takes a <code>FnOnce()</code> callback
-instead of <code>FnMut()</code>. With the other command, the callback will hold its
-state between uses. In this case, the callback will be newly initialized
-each time this command is invoked.</p>
+</td></tr><tr class="module-item"><td><a class="fn" href="fn.turn_off_threadsafe_features.html" title="hexchat_api::turn_off_threadsafe_features fn">turn_off_threadsafe_features</a></td><td class="docblock-short"><p>Stops and removes the main thread task queue handler. Otherwise it will
+keep checking the queue while doing nothing useful - which isn't 
+necessarily bad. Performance is unaffected either way.</p>
 </td></tr></table><h2 id="types" class="section-header"><a href="#types">Type Definitions</a></h2>
 <table><tr class="module-item"><td><a class="type" href="type.DeinitFn.html" title="hexchat_api::DeinitFn type">DeinitFn</a></td><td class="docblock-short"><p>The signature for the deinit function plugin authors need to register using
 <code>dll_entry_points!()</code>.</p>
