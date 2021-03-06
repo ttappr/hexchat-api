@@ -65,7 +65,11 @@ look as if the loaded scripts are actual plugins. By creating a <code>Plugin</co
 object for such a script, an entry is made in Hexchat's list of loaded
 plugins. When one of these scripts is unloaded, the fictitious plugin entry
 can be removed from Hexchat by dropping the associated <code>Plugin</code> object.</p>
-</td></tr><tr class="module-item"><td><a class="struct" href="struct.PluginInfo.html" title="hexchat_api::PluginInfo struct">PluginInfo</a></td><td class="docblock-short"></td></tr><tr class="module-item"><td><a class="struct" href="struct.ThreadSafeContext.html" title="hexchat_api::ThreadSafeContext struct">ThreadSafeContext</a></td><td class="docblock-short"><p>A thread-safe version of <code>Context</code>. Its methods automatically execute on
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.PluginInfo.html" title="hexchat_api::PluginInfo struct">PluginInfo</a></td><td class="docblock-short"><p>Hexchat addons need to return an instance of this struct from their
+<code>plugin_info()</code> function, which gets called when Hexchat loads the addons.
+The <code>PluginInfo</code> object holds pinned internal buffers that Hexchat can
+read from at its leisure.</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.ThreadSafeContext.html" title="hexchat_api::ThreadSafeContext struct">ThreadSafeContext</a></td><td class="docblock-short"><p>A thread-safe version of <code>Context</code>. Its methods automatically execute on
 the Hexchat main thread. The full set of methods of <code>Context</code> aren't 
 fully implemented for this struct because some can't be trusted to produce
 predictable results from other threads. For instance <code>.set()</code> from a thread

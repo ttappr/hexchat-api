@@ -334,6 +334,11 @@
 <span id="331">331</span>
 <span id="332">332</span>
 <span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
 </pre><div class="example-wrap"><pre class="rust ">
 
 <span class="doccomment">//! This module holds the DLL entry points for this plugin library.</span>
@@ -469,6 +474,11 @@
     <span class="ident">_pin</span>         : <span class="ident">PhantomPinned</span>,
 }
 
+<span class="doccomment">/// Hexchat addons need to return an instance of this struct from their</span>
+<span class="doccomment">/// `plugin_info()` function, which gets called when Hexchat loads the addons.</span>
+<span class="doccomment">/// The `PluginInfo` object holds pinned internal buffers that Hexchat can</span>
+<span class="doccomment">/// read from at its leisure.</span>
+<span class="doccomment">///</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PluginInfo</span> {
     <span class="ident">data</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="ident">PluginInfoData</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
