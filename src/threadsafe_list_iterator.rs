@@ -68,7 +68,7 @@ impl ThreadSafeListIterator {
     pub fn get_field_names(&self) -> Vec<String> {
         let me = self.clone();
         main_thread(move |_| {
-            me.list_iter.get_field_names().iter().map(|s| s.clone()).collect()
+            me.list_iter.get_field_names().to_vec()
         }).get()
     }
     
@@ -142,12 +142,10 @@ impl Iterator for &ThreadSafeListIterator {
     type Item = Self;
     fn next(&mut self) -> Option<Self::Item> {
         let me = self.clone();
-        if main_thread(move |_| {
-            match (&*me.list_iter).next() {
-                Some(_) => true,
-                None => false,
-            }
-        }).get() {
+        let has_more = main_thread(move |_| {
+            (&*me.list_iter).next().is_some()
+        }).get();
+        if has_more {
             Some(self)
         } else {
             None

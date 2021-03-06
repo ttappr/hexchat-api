@@ -16,6 +16,7 @@ use UCallback::*;
 /// Holds the Rust-implemented function, or closure, of a registered Hexchat 
 /// callback.
 ///
+#[allow(dead_code)]
 enum UCallback {
     Command     (Box< Callback >           ),
     Print       (Box< PrintCallback >      ),
@@ -92,7 +93,8 @@ impl CallbackData {
         let callback = Timer(callback);
         CallbackData { callback, data, hook }
     }
-
+    
+    #[allow(dead_code)]
     pub (crate)
     fn new_timer_once_data(callback : Box<TimerCallbackOnce>,
                            data     : UserData,

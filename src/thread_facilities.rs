@@ -27,12 +27,29 @@ use UserData::*;
 const TASK_SPURT_SIZE: i32 = 5;
 const TASK_REST_MSECS: i64 = 2;
 
-type Queue = LinkedList<Box<dyn FnMut()>>;
+// The type of the queue that closures will be added to and pulled from to run 
+// on the main thread of Hexchat.
+type TaskQueue = LinkedList<Box<dyn FnMut()>>;
 
 /// The task queue that other threads use to schedule tasks to run on the
 /// main thread. It is guarded by a `Mutex`.
 ///
-static mut TASK_QUEUE: Option<Arc<Mutex<Queue>>> = None;
+static mut TASK_QUEUE: Option<Arc<Mutex<TaskQueue>>> = None;
+
+/// Stops and removes the main thread task queue handler. Otherwise it will
+/// keep checking the queue while doing nothing useful - which isn't 
+/// necessarily bad. Performance is unaffected either way.
+///
+/// Support for `main_thread()` is on by default. After this function is 
+/// invoked, `main_thread()` should not be used and threads in general risk
+/// crashing the software if they try to access Hexchat directly without
+/// the `main_thread()`. `ThreadSafeContext` and `ThreadSafeListIterator` 
+/// should also not be used after this function is called, since they rely on 
+/// `main_thread()` internally.
+///
+pub fn turn_off_threadsafe_features() {
+    main_thread_deinit();
+}
 
 /// A result object that allows callbacks operating on a thread to send their
 /// return value to a receiver calling `get()` from another thread. Whether
@@ -89,10 +106,6 @@ impl<T: Clone + Send> AsyncResult<T> {
     }
 }
 
-// TODO - Decide whether to retire the function below if the task queue handler
-//        solution pans out. It appears that it will pan out because it handles
-//        tasks faster than the previous solution.
-
 /// Executes a closure from the Hexchat main thread. This function returns
 /// immediately with an AsyncResult object that can be used to retrieve the
 /// result of the operation that will run on the main thread.
@@ -100,8 +113,8 @@ impl<T: Clone + Send> AsyncResult<T> {
 /// # Arguments
 /// * `callback` - The callback to execute on the main thread.
 /// 
-pub fn _main_thread<F, R>(mut callback: F) -> AsyncResult<R>
-where
+pub fn main_thread<F, R>(mut callback: F) -> AsyncResult<R>
+where 
     F: FnMut(&Hexchat) -> R,
     F: 'static + Send,
     R: 'static + Clone + Send,
@@ -109,44 +122,16 @@ where
     let res = AsyncResult::new();
     let cln = res.clone();
     let hex = unsafe { &*HEXCHAT };
-    hex.hook_timer(0,
-                   move |hc, _ud| {
-                        cln.set(callback(hc));
-                        0 // Returning 0 disposes of the callback.
-                    }, 
-                    NoData);
-    res
-}
-
-// TODO - At some point, figure out if both these functions are needed, or if
-//        only one of them serves for all use cases needed.
-
-// TODO - Test the thread safety of multiple threads hammering away on
-//        Hexchat's timer feature. If this turns out not to be safe, then
-//        create a lock to protect access to it. I believe I've tested this
-//        before with my Python lib and it turned out to be safe. I want to test
-//        it again with this new Rust lib.
-
-/// Serves the same purpose as `main_thread()` but takes a `FnOnce()` callback
-/// instead of `FnMut()`. With the other command, the callback will hold its
-/// state between uses. In this case, the callback will be newly initialized
-/// each time this command is invoked.
-pub fn main_thread_once<F, R>(callback: F) -> AsyncResult<R>
-where
-    F: FnOnce(&Hexchat) -> R,
-    F: 'static + Send,
-    R: 'static + Clone + Send,
-{
-    let res = AsyncResult::new();
-    let cln = res.clone();
-    let hex = unsafe { &*HEXCHAT };
-    hex.hook_timer_once(0,
-                        Box::new(
-                            move |hc, _ud| {
-                                cln.set(callback(hc));
-                                0 // Returning 0 disposes of the callback.
-                        }),
-                        NoData);
+    if let Some(task_queue) = unsafe { &TASK_QUEUE } {
+        let cbk = Box::new(
+            move || {
+                cln.set(callback(hex));
+            }
+        );
+        task_queue.lock().unwrap().push_back(cbk);
+    } else {
+        cln.set(callback(hex));
+    }
     res
 }
 
@@ -180,53 +165,32 @@ fn main_thread_init() {
                             break  
                         }
                     }
+                    1 // Keep going.
+                } else {
+                    0 // Task queue is gone, remove timer callback.
                 }
-                1
             },
             NoData);
     }
 }
+
+// TODO - Make the thread-safe features optional, so we won't have the queue
+//        timer handler needlessly running if an addon doesn't use threads.
 
 // TODO - Do something about threads blocked on a .get() on any outstanding
 //        AsyncResult's.
 
 /// Called when the an addon is being unloaded. This eliminates the task queue.
 /// Any holders of `AsyncResult` objects that are blocked on `.get()` may be
-/// waiting forever.
+/// waiting forever. This can be called from addons if the thread-safe
+/// features aren't going to be utilized. No need to have a timer callback
+/// being invoked endlessly doing nothing.
 ///
 pub (crate)
 fn main_thread_deinit() {
     unsafe { TASK_QUEUE = None }
 }
 
-/// Executes a closure from the Hexchat main thread. This function returns
-/// immediately with an AsyncResult object that can be used to retrieve the
-/// result of the operation that will run on the main thread.
-/// 
-/// # Arguments
-/// * `callback` - The callback to execute on the main thread.
-/// 
-pub fn main_thread<F, R>(mut callback: F) -> AsyncResult<R>
-where 
-    F: FnMut(&Hexchat) -> R,
-    F: 'static + Send,
-    R: 'static + Clone + Send,
-{
-    let res = AsyncResult::new();
-    let cln = res.clone();
-    let hex = unsafe { &*HEXCHAT };
-    if let Some(task_queue) = unsafe { &TASK_QUEUE } {
-        let cbk = Box::new(
-            move || {
-                cln.set(callback(hex));
-            }
-        );
-        task_queue.lock().unwrap().push_back(cbk);
-    } else {
-        cln.set(callback(hex));
-    }
-    res
-}
 
 
 

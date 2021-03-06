@@ -358,6 +358,7 @@ impl Hexchat {
     /// * A `Hook` object that is used to deregister the callback after it's
     ///   invoked.
     ///
+    #[allow(dead_code)]
     pub (crate)
     fn hook_timer_once(&self,
                        timeout   : i64,
