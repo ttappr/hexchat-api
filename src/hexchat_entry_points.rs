@@ -132,6 +132,11 @@ struct PluginInfoData {
     _pin         : PhantomPinned,
 }
 
+/// Hexchat addons need to return an instance of this struct from their
+/// `plugin_info()` function, which gets called when Hexchat loads the addons.
+/// The `PluginInfo` object holds pinned internal buffers that Hexchat can
+/// read from at its leisure.
+///
 pub struct PluginInfo {
     data: Pin<Box<PluginInfoData>>,
 }

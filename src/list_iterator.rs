@@ -27,6 +27,7 @@ use std::ffi::{CString, CStr};
 use crate::context::*;
 use crate::hexchat::Hexchat;
 use crate::hexchat_entry_points::HEXCHAT;
+use crate::list_item::ListItem;
 use crate::utils::*;
 use crate::cbuf;
 
@@ -97,6 +98,19 @@ impl ListIterator {
         } else {
             None
         }
+    }
+    
+    /// Eagerly constructs a vector of `ListItem`s.
+    ///
+    pub fn to_vec(&self) -> Vec<ListItem> {
+        self.map(|item| ListItem::from(item)).collect()
+    }
+
+    /// Creates a `ListItem` from the field data at the current position in 
+    /// the list.
+    ///
+    pub fn get_item(&self) -> ListItem {
+        ListItem::from(self)
     }
 
     /// Returns a slice containing the field names of the list items.

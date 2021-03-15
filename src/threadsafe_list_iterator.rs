@@ -7,6 +7,7 @@ use std::sync::Arc;
 //use std::sync::Mutex;
 use std::fmt;
 
+use crate::list_item::*;
 use crate::list_iterator::*;
 use crate::thread_facilities::*;
 use crate::threadsafe_context::*;
@@ -69,6 +70,25 @@ impl ThreadSafeListIterator {
         let me = self.clone();
         main_thread(move |_| {
             me.list_iter.get_field_names().to_vec()
+        }).get()
+    }
+    
+    /// Constructs a vector of list items on the main thread all at once.
+    ///
+    pub fn to_vec(&self) -> Vec<ListItem> {
+        let me = self.clone();
+        main_thread(move |_| {
+            me.list_iter.to_vec()
+        }).get()
+    }
+    
+    /// Creates a `ListItem` from the field data at the current position in the
+    /// list.
+    ///
+    pub fn get_item(&self) -> ListItem {
+        let me = self.clone();
+        main_thread(move |_| {
+            me.list_iter.get_item()
         }).get()
     }
     
