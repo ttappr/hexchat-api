@@ -359,6 +359,20 @@
 <span id="356">356</span>
 <span id="357">357</span>
 <span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
+<span id="366">366</span>
+<span id="367">367</span>
+<span id="368">368</span>
+<span id="369">369</span>
+<span id="370">370</span>
+<span id="371">371</span>
+<span id="372">372</span>
 </pre><div class="example-wrap"><pre class="rust ">
 
 <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">dead_code</span>, <span class="ident">unused_imports</span>)]</span>
@@ -389,6 +403,7 @@
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">context</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">hexchat</span>::<span class="ident">Hexchat</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">hexchat_entry_points</span>::<span class="ident">HEXCHAT</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">list_item</span>::<span class="ident">ListItem</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">utils</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">cbuf</span>;
 
@@ -459,6 +474,19 @@
         } <span class="kw">else</span> {
             <span class="prelude-val">None</span>
         }
+    }
+    
+    <span class="doccomment">/// Eagerly constructs a vector of `ListItem`s.</span>
+    <span class="doccomment">///</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_vec</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ListItem</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">item</span><span class="op">|</span> <span class="ident">ListItem</span>::<span class="ident">from</span>(<span class="ident">item</span>)).<span class="ident">collect</span>()
+    }
+
+    <span class="doccomment">/// Creates a `ListItem` from the field data at the current position in </span>
+    <span class="doccomment">/// the list.</span>
+    <span class="doccomment">///</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_item</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ListItem</span> {
+        <span class="ident">ListItem</span>::<span class="ident">from</span>(<span class="self">self</span>)
     }
 
     <span class="doccomment">/// Returns a slice containing the field names of the list items.</span>
