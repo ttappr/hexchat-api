@@ -71,11 +71,7 @@ impl ThreadSafeHexchat {
         let data = Arc::new((network.to_string(),
                              channel.to_string()));
         main_thread(move |hc| {
-            if let Some(ctx) = hc.find_context(&data.0, &data.1) {
-                Some(ThreadSafeContext::new(ctx))
-            } else {
-                None
-            }
+            hc.find_context(&data.0, &data.1).map(ThreadSafeContext::new)
         }).get()
     }
 
@@ -92,11 +88,7 @@ impl ThreadSafeHexchat {
     ///   means the channel window the user has visible in the GUI.
     ///
     pub fn get_context(&self) -> Option<ThreadSafeContext> {
-        if let Some(ctx) = self.hc.get_context() {
-            Some(ThreadSafeContext::new(ctx))
-        } else {
-            None
-        }
+        self.hc.get_context().map(ThreadSafeContext::new)
     }
         
     /// Retrieves the info data with the given `id`. It returns None on failure
@@ -136,11 +128,7 @@ impl ThreadSafeHexchat {
     pub fn list_get(&self, list: &str) -> Option<ThreadSafeListIterator> {
         let list = Arc::new(list.to_string());
         main_thread(move |hc| {
-            if let Some(list_iter) = hc.list_get(&list) {
-                Some(ThreadSafeListIterator::create(list_iter))
-            } else {
-                None
-            }
+            hc.list_get(&list).map(ThreadSafeListIterator::create)
         }).get()
     }
 }

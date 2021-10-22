@@ -100,10 +100,11 @@ impl ListIterator {
         }
     }
     
-    /// Eagerly constructs a vector of `ListItem`s.
+    /// Eagerly constructs a vector of `ListItem`s. The iterator will be spent
+    /// afterward.
     ///
     pub fn to_vec(&self) -> Vec<ListItem> {
-        self.map(|item| ListItem::from(item)).collect()
+        self.map(ListItem::from).collect()
     }
 
     /// Creates a `ListItem` from the field data at the current position in 
@@ -215,7 +216,8 @@ impl ListIterator {
                         {
                             Ok(ContextVal(c))
                         } else {
-                            Err(NotAvailable("Context unavailable".to_string()))
+                            Err(NotAvailable("Context unavailable."
+                                             .to_string()))
                         }
                     } else {
                         let ptr = (data.hc.c_list_str)(data.hc,

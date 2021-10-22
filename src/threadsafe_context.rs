@@ -44,11 +44,7 @@ impl ThreadSafeContext {
     ///
     pub fn get() -> Option<Self>
     {
-        if let Some(ctx) = Context::get() {
-            Some(Self::new(ctx))
-        } else {
-            None
-        }
+        Context::get().map(Self::new)
     }
     
     /// Gets a `ThreadSafeContext` object associated with the given channel.
@@ -62,11 +58,7 @@ impl ThreadSafeContext {
     {
         let data = Arc::new((network.to_string(), channel.to_string()));
         main_thread(move |_| {
-            if let Some(ctx) = Context::find(&data.0, &data.1) {
-                Some(Self::new(ctx))
-            } else {
-                None
-            }
+            Context::find(&data.0, &data.1).map(Self::new)
         }).get()
     }
 

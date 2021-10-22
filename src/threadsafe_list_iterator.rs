@@ -54,13 +54,9 @@ impl ThreadSafeListIterator {
     /// * A thread-safe object representing one of Hexchat's internal lists.
     ///
     pub fn new(name: &str) -> Option<Self> {
-        if let Some(list) = ListIterator::new(&name) {
-            Some(ThreadSafeListIterator { 
-                list_iter: Arc::new(list) 
-            })
-        } else {
-            None
-        }
+        ListIterator::new(name).map(|list| ThreadSafeListIterator {
+            list_iter: Arc::new(list)
+        })
     }
     
     /// Returns a vector of the names of the fields supported by the list
@@ -73,7 +69,8 @@ impl ThreadSafeListIterator {
         }).get()
     }
     
-    /// Constructs a vector of list items on the main thread all at once.
+    /// Constructs a vector of list items on the main thread all at once. The
+    /// iterator will be spent after the operation.
     ///
     pub fn to_vec(&self) -> Vec<ListItem> {
         let me = self.clone();
@@ -148,12 +145,8 @@ impl Iterator for ThreadSafeListIterator {
     fn next(&mut self) -> Option<Self::Item> {
         let me = self.clone();
         main_thread(move |_| {
-            match (&*me.list_iter).next() {
-                Some(iter) => {
-                    Some(ThreadSafeListIterator::create(iter.clone()))
-                },
-                None => None,
-            }
+            (&*me.list_iter).next()
+                .map(|iter| ThreadSafeListIterator::create(iter.clone()))
         }).get()
     }
 }
