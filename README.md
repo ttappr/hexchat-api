@@ -30,7 +30,7 @@ Interaction between threads and Hexchat is facilitated by `main_thread()`, which
 uses Hexchat's timer event loop to delegate tasks, such as printing output
 to the active Hexchat window.
 
-```rust,no_run
+``` rust no_run
 hexchat.hook_command(
     "runthread",
     Priority::Norm,
@@ -71,7 +71,7 @@ The code below can be copied to start a new plugin project. The TOML file
 content is also included below.
 
 
-```rust,no_run
+``` rust no_run
 // FILE: lib.rs
 
 //! A starter project template that can be copied and modified.
@@ -143,7 +143,7 @@ fn plugin_deinit(hc: &Hexchat) -> i32 {
 fn hello_world(hc        : &Hexchat, 
                word      : &[String], 
                word_eol  : &[String], 
-               user_data : &mut UserData
+               user_data : &UserData
               ) -> Eat
 {
     hc.print("Hello, world!");
