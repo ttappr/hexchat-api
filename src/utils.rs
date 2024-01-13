@@ -17,19 +17,6 @@ fn str2cstring(s: &str) -> CString {
     CString::new(s).unwrap()
 }
 
-/// ```&str -> *const c_char```
-///
-/// Used internally by the Rust Hexchat API.
-/// Creates a C compatible character buffer from the `&str` that can be passed
-/// as a parameter to a C call that takes a char pointer:
-/// `some_fn(cbuf!("hello"));`. The returned buffer is short-lived; don't
-/// assign its return value to a variable - only use this macro function
-/// parameters in place.
-#[macro_export]
-macro_rules! cbuf {
-    ( $s:expr ) => { CString::new( $s ).unwrap().as_ptr() };
-}
-
 /// Reduces the syntax required to output formatted text to the current
 /// hexchat window. Internally it invokes 
 /// `hexchat.print(&format!("<format-string>", arg1, arg2, ...)`.
@@ -37,6 +24,7 @@ macro_rules! cbuf {
 /// `outp!(hc, "<format_string>", arg1, arg2, ...)`. To print from another 
 /// thread `outpth!()` can be used.
 /// ```
+/// use hexchat_api::outpth;
 /// outp!(fmt, argv, ...);
 /// outp!(arg);
 /// outp!(ctx=(network, channel), argv, ...);
@@ -91,6 +79,7 @@ macro_rules! outp {
 /// the active Hexchat window. This should not be invoked from the Hexchat
 /// main thread.
 /// ```
+/// use hexchat_api::outpth;
 /// outpth!(fmt, argv, ...);
 /// outpth!(arg);
 /// outpth!(ctx=(network, channel), argv, ...);

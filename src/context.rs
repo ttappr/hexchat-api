@@ -20,7 +20,6 @@ use crate::hexchat::{Hexchat, hexchat_context, HexchatError};
 use crate::hexchat_entry_points::HEXCHAT;
 use crate::list_iterator::ListIterator;
 use crate::utils::*;
-use crate::cbuf;
 
 use ContextError::*;
 use HexchatError::*;
@@ -88,8 +87,10 @@ impl Context {
             let hc = &*HEXCHAT;
             let ctx_ptr = (hc.c_get_context)(hc);
             if !ctx_ptr.is_null() {
-                let network = (hc.c_get_info)(hc, cbuf!("network"));
-                let channel = (hc.c_get_info)(hc, cbuf!("channel"));
+                let nwstr = CString::new("network").unwrap();
+                let chstr = CString::new("channel").unwrap();
+                let network = (hc.c_get_info)(hc, nwstr.as_ptr());
+                let channel = (hc.c_get_info)(hc, chstr.as_ptr());
                 let ctx = Context {
                     data: Rc::new(
                         ContextData {

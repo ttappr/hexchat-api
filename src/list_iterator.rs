@@ -29,7 +29,6 @@ use crate::hexchat::Hexchat;
 use crate::hexchat_entry_points::HEXCHAT;
 use crate::list_item::ListItem;
 use crate::utils::*;
-use crate::cbuf;
 
 // Local types.
 use FieldValue::*;
@@ -204,13 +203,17 @@ impl ListIterator {
                     Ok(IntVal(val))
                 },
                 112 /* 'p' (pointer) */ => {
+                    let networkcstr = CString::new("network").unwrap();
+                    let channelcstr = CString::new("channel").unwrap();
                     if name.to_lowercase() == "context" {
                         let network = (data.hc.c_list_str)(data.hc,
                                                            data.list_ptr,
-                                                           cbuf!("network"));
+                                                           networkcstr
+                                                           .as_ptr());
                         let channel = (data.hc.c_list_str)(data.hc,
                                                            data.list_ptr,
-                                                           cbuf!("channel"));
+                                                           channelcstr
+                                                           .as_ptr());
                         if let Some(c) = Context::find(&pchar2string(network),
                                                        &pchar2string(channel))
                         {

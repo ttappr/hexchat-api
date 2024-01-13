@@ -27,8 +27,6 @@ use crate::user_data::*;
 use crate::utils::*;
 use crate::threadsafe_hexchat::*;
 
-use crate::cbuf;
-
 /// Value used in example from the Hexchat Plugin Interface doc web page.
 const MAX_PREF_VALUE_SIZE: usize =  512;
 
@@ -88,7 +86,8 @@ impl Hexchat {
     /// * `text` - The text to print.
     ///
     pub fn print(&self, text: &str) {
-        unsafe { (self.c_print)(self, cbuf!(text)); }
+        let text = CString::new(text).unwrap();
+        unsafe { (self.c_print)(self, text.as_ptr()); }
     }
 
     /// Invokes the Hexchat command specified by `command`.
@@ -96,7 +95,8 @@ impl Hexchat {
     /// * `command` - The Hexchat command to invoke.
     ///
     pub fn command(&self, command: &str) {
-        unsafe { (self.c_command)(self, cbuf!(command)); }
+        let command = CString::new(command).unwrap();
+        unsafe { (self.c_command)(self, command.as_ptr()); }
     }
 
     /// Registeres a command callback with Hexchat. This will add a user
@@ -148,14 +148,16 @@ impl Hexchat {
         } else {
             "No help available for this command."
         };
+        let name = CString::new(name).unwrap();
+        let help = CString::new(help).unwrap();
         unsafe {
             // TODO - Consider making an empty help string cause a NULL to be
             //        used as hook_command()'s 5th argument.
             hook.set((self.c_hook_command)(self,
-                                           cbuf!(name),
+                                           name.as_ptr(),
                                            pri as i32,
                                            c_callback,
-                                           cbuf!(help),
+                                           help.as_ptr(),
                                            ud));
         }
         hook
@@ -199,10 +201,10 @@ impl Hexchat {
         let ud = Box::into_raw(ud) as *mut c_void;
         
         hook.set_cbd(ud);
-        
+        let name = CString::new(name).unwrap();
         unsafe {
             hook.set((self.c_hook_server)(self,
-                                          cbuf!(name),
+                                          name.as_ptr(),
                                           pri as i32,
                                           c_callback,
                                           ud));
@@ -245,10 +247,10 @@ impl Hexchat {
         let ud = Box::into_raw(ud) as *mut c_void;
         
         hook.set_cbd(ud);
-        
+        let event_name = CString::new(event_name).unwrap();
         unsafe {
             hook.set((self.c_hook_print)(self,
-                                         cbuf!(event_name),
+                                         event_name.as_ptr(),
                                          pri as i32,
                                          c_print_callback,
                                          ud));
@@ -294,10 +296,10 @@ impl Hexchat {
         let ud = Box::into_raw(ud) as *mut c_void;
         
         hook.set_cbd(ud);
-        
+        let name = CString::new(name).unwrap();
         unsafe {
             hook.set((self.c_hook_print_attrs)(self,
-                                               cbuf!(name),
+                                               name.as_ptr(),
                                                pri as i32,
                                                c_print_attrs_callback,
                                                ud));
@@ -548,8 +550,10 @@ impl Hexchat {
     ///   postive value is returned. 0 is returned if they match.
     ///
     pub fn nickcmp(&self, s1: &str, s2: &str) -> i32 {
+        let s1 = CString::new(s1).unwrap();
+        let s2 = CString::new(s2).unwrap();
         unsafe {
-            (self.c_nickcmp)(self, cbuf!(s1), cbuf!(s2))
+            (self.c_nickcmp)(self, s1.as_ptr(), s2.as_ptr())
         }
     }
 
@@ -565,8 +569,9 @@ impl Hexchat {
     ///
     pub fn strip(&self, text: &str, flags: StripFlags) -> Option<String> {
         let length = text.len() as i32;
+        let text  = CString::new(text).unwrap();
         let result = unsafe {
-            (self.c_strip)(self, cbuf!(text), length, flags as i32)
+            (self.c_strip)(self, text.as_ptr(), length, flags as i32)
         };
         if !result.is_null() {
             let stripped = pchar2string(result);
@@ -635,7 +640,8 @@ impl Hexchat {
     ///   `id`.
     ///
     pub fn get_info(&self, id: &str) -> Option<String> {
-        let info = unsafe { (self.c_get_info)(self, cbuf!(id)) };
+        let idstr = CString::new(id).unwrap();
+        let info  = unsafe { (self.c_get_info)(self, idstr.as_ptr()) };
         if !info.is_null() {
             match id {
                 "win_ptr"  | "gtkwin_ptr"  => { 
@@ -659,11 +665,12 @@ impl Hexchat {
     /// * `Some(PrefValue)` if the pref exists, `None` otherwise.
     ///
     pub fn get_prefs(&self, name: &str) -> Option<PrefValue> {
+        let namecstr = CString::new(name).unwrap();
         unsafe {
             let mut str_ptr: *const c_char = ptr::null();
             let mut int_loc: c_int = 0;
             let result = (self.c_get_prefs)(self,
-                                            cbuf!(name),
+                                            namecstr.as_ptr(),
                                             &mut str_ptr,
                                             &mut int_loc);
             match result {
@@ -707,6 +714,8 @@ impl Hexchat {
     ///
     pub fn pluginpref_set(&self, name: &str, value: &PrefValue) -> bool {
         let sval = value.simple_ser();
+        let namecstr = CString::new(name).unwrap();
+        let svalcstr = CString::new(sval.clone()).unwrap();
         if sval.len() > MAX_PREF_VALUE_SIZE {
             panic!("`hexchat.pluginpref_set({}, <overflow>)`: the value \
                     exceeds the max allowable size of {:?} bytes.",
@@ -714,8 +723,8 @@ impl Hexchat {
         }
         unsafe {
             (self.c_pluginpref_set_str)(self,
-                                        cbuf!(name),
-                                        cbuf!(sval.as_str())) > 0
+                                        namecstr.as_ptr(),
+                                        svalcstr.as_ptr()) > 0
         }
     }
 
@@ -730,8 +739,9 @@ impl Hexchat {
     ///
     pub fn pluginpref_get(&self, name: &str) -> Option<PrefValue> {
         let mut buf = [0i8; MAX_PREF_VALUE_SIZE];
+        let name = CString::new(name).unwrap();
         if unsafe { (self.c_pluginpref_get_str)(self,
-                                                cbuf!(name),
+                                                name.as_ptr(),
                                                 buf.as_mut_ptr()) > 0 }
         {
             let sval = pchar2string(buf.as_ptr());

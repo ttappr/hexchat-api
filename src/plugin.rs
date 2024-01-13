@@ -2,7 +2,6 @@
 
 use std::ffi::{CString, c_void};
 use crate::{str2cstring, HEXCHAT};
-use crate::cbuf;
 use std::ptr;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -47,17 +46,22 @@ impl Plugin {
         unsafe {
             let hc   = &*HEXCHAT;
             let null = ptr::null::<c_void>();
+            let file_name   = str2cstring(file_name);
+            let plugin_name = str2cstring(plugin_name);
+            let description = str2cstring(description);
+            let version     = str2cstring(version);
+
             let handle = (hc.c_plugingui_add)(hc,
-                                              cbuf!(file_name),
-                                              cbuf!(plugin_name),
-                                              cbuf!(description),
-                                              cbuf!(version),
+                                              file_name.as_ptr(),
+                                              plugin_name.as_ptr(),
+                                              description.as_ptr(),
+                                              version.as_ptr(),
                                               null.cast());
             let pd = PluginData {
-                file_name   : str2cstring(file_name),
-                plugin_name : str2cstring(plugin_name),
-                description : str2cstring(description),
-                version     : str2cstring(version),
+                file_name,
+                plugin_name,
+                description,
+                version,
                 handle      : handle.cast(),
                 removed     : false,
             };
