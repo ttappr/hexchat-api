@@ -29,7 +29,7 @@ extern "C" fn c_callback(word        : *const *const c_char,
         unsafe {
             let cd = user_data as *mut CallbackData;
             let hc = &*HEXCHAT;
-            (*cd).command_cb(hc, &word, &word_eol, (*cd).get_data_mut())
+            (*cd).command_cb(hc, &word, &word_eol, (*cd).get_user_data())
         }
     }) {
         Ok(result) => result as i32,
@@ -52,7 +52,7 @@ extern "C" fn c_print_callback(word      : *const *const c_char,
         unsafe {
             let cd = user_data as *mut CallbackData;
             let hc = &*HEXCHAT;
-            (*cd).print_cb(hc, &word, (*cd).get_data_mut())
+            (*cd).print_cb(hc, &word, (*cd).get_user_data())
         }
     }) {
         Ok(result) => result as i32,
@@ -75,7 +75,7 @@ extern "C" fn c_print_attrs_callback(word      : *const *const c_char,
         unsafe {
             let cd = user_data as *mut CallbackData;
             let hc = &*HEXCHAT;
-            (*cd).print_attrs_cb(hc, &word, &*attrs, (*cd).get_data_mut())
+            (*cd).print_attrs_cb(hc, &word, &*attrs, (*cd).get_user_data())
         }
     }) {
         Ok(result) => result as i32,
@@ -93,7 +93,7 @@ extern "C" fn c_timer_callback(user_data: *mut c_void) -> c_int
         unsafe {
             let cd = user_data as *mut CallbackData;
             let hc = &*HEXCHAT;
-            (*cd).timer_cb(hc, (*cd).get_data_mut())
+            (*cd).timer_cb(hc, (*cd).get_user_data())
         }
     }) {
         Ok(result) => result as i32,
@@ -113,7 +113,7 @@ extern "C" fn c_timer_callback_once(user_data: *mut c_void) -> c_int
         unsafe {
             let cd = user_data as *mut CallbackData;
             let hc = &*HEXCHAT;
-            (*cd).timer_once_cb(hc, (*cd).get_data_mut())
+            (*cd).timer_once_cb(hc, (*cd).get_user_data())
         }
     }) {
         Ok(result) => result as i32,
@@ -132,7 +132,7 @@ extern "C" fn c_fd_callback(fd: c_int, flags: c_int, user_data: *mut c_void)
         unsafe {
             let cd = user_data as *mut CallbackData;
             let hc = &*HEXCHAT;
-            (*cd).fd_cb(hc, fd, flags, &mut (*cd).get_data_mut())
+            (*cd).fd_cb(hc, fd, flags, &mut (*cd).get_user_data())
         }
     }) {
         Ok(result) => result as i32,

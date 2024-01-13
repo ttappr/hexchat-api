@@ -128,7 +128,7 @@ impl Hexchat {
                                     user_data   : UserData
                                    ) -> Hook
     where 
-        F: FnMut(&Hexchat, &[String], &[String], &mut UserData)
+        F: FnMut(&Hexchat, &[String], &[String], &UserData)
            -> Eat
     {
         let hook = Hook::new();
@@ -188,7 +188,7 @@ impl Hexchat {
                                    user_data   : UserData
                                   ) -> Hook
     where 
-        F: FnMut(&Hexchat, &[String], &[String], &mut UserData)
+        F: FnMut(&Hexchat, &[String], &[String], &UserData)
            -> Eat
     {
         let hook = Hook::new();
@@ -235,7 +235,7 @@ impl Hexchat {
                                   user_data   : UserData
                                  ) -> Hook
     where 
-        F: FnMut(&Hexchat, &[String], &mut UserData) -> Eat
+        F: FnMut(&Hexchat, &[String], &UserData) -> Eat
     {
         let hook = Hook::new();
         let ud   = Box::new(
@@ -283,7 +283,7 @@ impl Hexchat {
                                         user_data   : UserData
                                        ) -> Hook
     where 
-        F: FnMut(&Hexchat, &[String], &EventAttrs, &mut UserData)
+        F: FnMut(&Hexchat, &[String], &EventAttrs, &UserData)
            -> Eat
     {
         let hook = Hook::new();
@@ -327,7 +327,7 @@ impl Hexchat {
                                   user_data : UserData
                                  ) -> Hook
     where 
-        F: FnMut(&Hexchat, &mut UserData) -> i32
+        F: FnMut(&Hexchat, &UserData) -> i32
     {
         let hook = Hook::new();
         let ud   = Box::new(CallbackData::new_timer_data(
@@ -397,7 +397,7 @@ impl Hexchat {
                                user_data : UserData
                               ) -> Hook
     where 
-        F: FnMut(&Hexchat, i32, i32, &mut UserData) -> Eat
+        F: FnMut(&Hexchat, i32, i32, &UserData) -> Eat
     {
         let hook = Hook::new();
         let ud   = Box::new(CallbackData::new_fd_data(

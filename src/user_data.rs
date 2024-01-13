@@ -32,7 +32,7 @@ use std::sync::Mutex;
 ///
 #[derive(Debug)]
 pub enum UserData {
-    BoxedData  (       Box     < dyn Any >   ),
+    BoxedData  ( Box < RefCell < dyn Any > > ),
     SharedData ( Rc  < RefCell < dyn Any > > ),
     SyncData   ( Arc < Mutex   < dyn Any > > ),
     NoData,
@@ -49,7 +49,7 @@ impl UserData {
     /// * `BoxedData(user_data)`.
     ///
     pub fn boxed<D:'static>(user_data: D) -> Self {
-        BoxedData(Box::new(user_data))
+        BoxedData(Box::new(RefCell::new(user_data)))
     }
 
     /// Creates a `SharedData` variant instance. The type to use if the user
@@ -95,7 +95,7 @@ impl UserData {
         const ERRMSG: &str = "Unable to downcast to requested type.";
         match self {
             BoxedData(d) => {
-                f(d.downcast_ref::<D>().expect(ERRMSG))
+                f(d.borrow().downcast_ref::<D>().expect(ERRMSG))
             },
             SharedData(d) => {
                 f(d.borrow().downcast_ref::<D>().expect(ERRMSG))
@@ -110,14 +110,14 @@ impl UserData {
     /// Same as the `apply()` function except allows mutable access to the
     /// user data contents.
     ///
-    pub fn apply_mut<D:'static, F, R>(&mut self, f: F) -> R
+    pub fn apply_mut<D:'static, F, R>(&self, f: F) -> R
     where
         F: FnOnce(&mut D) -> R
     {
         const ERRMSG: &str = "Unable to downcast to requested type.";
         match self {
             BoxedData(d) => {
-                f(d.downcast_mut::<D>().expect(ERRMSG))
+                f(d.borrow_mut().downcast_mut::<D>().expect(ERRMSG))
             },
             SharedData(d) => {
                 f(d.borrow_mut().downcast_mut::<D>().expect(ERRMSG))

@@ -8,7 +8,6 @@ use crate::hook::Hook;
 use crate::hexchat::{ Hexchat, Eat, EventAttrs };
 use crate::user_data::*;
 
-use UserData::*;
 use core::mem;
 
 use UCallback::*;
@@ -121,26 +120,8 @@ impl CallbackData {
     /// registered with the callback.    
     #[inline]
     pub (crate)
-    fn get_data_mut(&mut self) -> &mut UserData {
-        &mut self.data
-    }
-    
-    /// Returns the `data` (Rust facing user_data) field of the object. 
-    /// # Returns
-    /// * If the user data type was one of the shared types (`SharedData` or
-    ///   `SyncData`) a clone will be returned. `NoData` is returned otherwise.
-    ///
-    #[allow(dead_code)]
-    pub (crate)
-    fn get_data(&self) -> UserData {
-        // mem::take(&mut self.data) <- This causes crashes when unloading
-        // the plugin. Box's can't clone or copy, so can't return them from 
-        // here - A NoData will be returned instead. The other variants will
-        // return a clone.
-        match self.data {
-            BoxedData(_) => { NoData },
-            _            => { self.data.clone() },
-        }
+    fn get_user_data(&self) -> &UserData {
+        &self.data
     }
     
     /// Returns the `user_data` held by the `CallbackData` object, passing
@@ -160,7 +141,7 @@ impl CallbackData {
                          hc       : &Hexchat, 
                          word     : &[String], 
                          word_eol : &[String], 
-                         ud       : &mut UserData
+                         ud       : &UserData
                         ) -> Eat
     {
         if let Command(callback) = &mut self.callback {
@@ -178,7 +159,7 @@ impl CallbackData {
     unsafe fn print_cb(&mut self,
                        hc       : &Hexchat, 
                        word     : &[String], 
-                       ud       : &mut UserData
+                       ud       : &UserData
                       ) -> Eat 
     {
         if let Print(callback) = &mut self.callback {
@@ -196,7 +177,7 @@ impl CallbackData {
                              hc    : &Hexchat,
                              word  : &[String],
                              attrs : &EventAttrs,
-                             ud    : &mut UserData
+                             ud    : &UserData
                             ) -> Eat
     {
         if let PrintAttrs(callback) = &mut self.callback {
@@ -210,7 +191,7 @@ impl CallbackData {
     /// c_timer_callback()`.
     #[inline]
     pub (crate)
-    unsafe fn timer_cb(&mut self, hc: &Hexchat, ud: &mut UserData) -> i32
+    unsafe fn timer_cb(&mut self, hc: &Hexchat, ud: &UserData) -> i32
     {
         if let Timer(callback) = &mut self.callback {
             let keep_going = (*callback)(hc, ud);
@@ -230,7 +211,7 @@ impl CallbackData {
     /// unhook itself after one use.
     #[inline]
     pub (crate)
-    unsafe fn timer_once_cb(&mut self, hc: &Hexchat, ud: &mut UserData) -> i32
+    unsafe fn timer_once_cb(&mut self, hc: &Hexchat, ud: &UserData) -> i32
     {
         let variant = mem::take(&mut self.callback);
         match variant {
@@ -257,7 +238,7 @@ impl CallbackData {
                     hc    : &Hexchat, 
                     fd    : i32, 
                     flags : i32, 
-                    ud    : &mut UserData) -> Eat
+                    ud    : &UserData) -> Eat
     {
         if let FD(callback) = &mut self.callback {
             (*callback)(hc, fd, flags, ud)
@@ -275,7 +256,7 @@ pub (crate)
 type Callback = dyn FnMut(&Hexchat,
                           &[String],
                           &[String],
-                          &mut UserData
+                          &UserData
                          ) -> Eat;
 
 /// The Rust-facing function signature corresponding to the C-facing  
@@ -286,7 +267,7 @@ pub (crate)
 type PrintCallback 
               = dyn FnMut(&Hexchat,
                           &[String],
-                          &mut UserData
+                          &UserData
                          ) -> Eat;
 
 /// The Rust-facing function signature corresponding to the C-facing  
@@ -298,7 +279,7 @@ type PrintAttrsCallback
               = dyn FnMut(&Hexchat,
                           &[String],
                           &EventAttrs,
-                          &mut UserData
+                          &UserData
                          ) -> Eat;
 
 /// The Rust-facing function signature corresponding to the C-facing  
@@ -307,11 +288,11 @@ type PrintAttrsCallback
 /// convenience.
 pub (crate)
 type TimerCallback 
-              = dyn FnMut(&Hexchat, &mut UserData) -> i32;
+              = dyn FnMut(&Hexchat, &UserData) -> i32;
               
 pub (crate)
 type TimerCallbackOnce 
-              = dyn FnOnce(&Hexchat, &mut UserData) -> i32;
+              = dyn FnOnce(&Hexchat, &UserData) -> i32;
 
 
 /// The Rust-facing function signature corresponding to the C-facing  
@@ -320,5 +301,5 @@ type TimerCallbackOnce
 /// convenience.
 pub (crate)
 type FdCallback 
-              = dyn FnMut(&Hexchat, i32, i32, &mut UserData) -> Eat;
+              = dyn FnMut(&Hexchat, i32, i32, &UserData) -> Eat;
               
