@@ -86,7 +86,7 @@ impl Hexchat {
     /// * `text` - The text to print.
     ///
     pub fn print(&self, text: &str) {
-        let text = CString::new(text).unwrap();
+        let text = str2cstring(text);
         unsafe { (self.c_print)(self, text.as_ptr()); }
     }
 
@@ -95,7 +95,7 @@ impl Hexchat {
     /// * `command` - The Hexchat command to invoke.
     ///
     pub fn command(&self, command: &str) {
-        let command = CString::new(command).unwrap();
+        let command = str2cstring(command);
         unsafe { (self.c_command)(self, command.as_ptr()); }
     }
 
@@ -148,8 +148,8 @@ impl Hexchat {
         } else {
             "No help available for this command."
         };
-        let name = CString::new(name).unwrap();
-        let help = CString::new(help).unwrap();
+        let name = str2cstring(name);
+        let help = str2cstring(help);
         unsafe {
             // TODO - Consider making an empty help string cause a NULL to be
             //        used as hook_command()'s 5th argument.
@@ -201,7 +201,7 @@ impl Hexchat {
         let ud = Box::into_raw(ud) as *mut c_void;
         
         hook.set_cbd(ud);
-        let name = CString::new(name).unwrap();
+        let name = str2cstring(name);
         unsafe {
             hook.set((self.c_hook_server)(self,
                                           name.as_ptr(),
@@ -247,7 +247,7 @@ impl Hexchat {
         let ud = Box::into_raw(ud) as *mut c_void;
         
         hook.set_cbd(ud);
-        let event_name = CString::new(event_name).unwrap();
+        let event_name = str2cstring(event_name);
         unsafe {
             hook.set((self.c_hook_print)(self,
                                          event_name.as_ptr(),
@@ -296,7 +296,7 @@ impl Hexchat {
         let ud = Box::into_raw(ud) as *mut c_void;
         
         hook.set_cbd(ud);
-        let name = CString::new(name).unwrap();
+        let name = str2cstring(name);
         unsafe {
             hook.set((self.c_hook_print_attrs)(self,
                                                name.as_ptr(),
@@ -550,8 +550,8 @@ impl Hexchat {
     ///   postive value is returned. 0 is returned if they match.
     ///
     pub fn nickcmp(&self, s1: &str, s2: &str) -> i32 {
-        let s1 = CString::new(s1).unwrap();
-        let s2 = CString::new(s2).unwrap();
+        let s1 = str2cstring(s1);
+        let s2 = str2cstring(s2);
         unsafe {
             (self.c_nickcmp)(self, s1.as_ptr(), s2.as_ptr())
         }
@@ -569,7 +569,7 @@ impl Hexchat {
     ///
     pub fn strip(&self, text: &str, flags: StripFlags) -> Option<String> {
         let length = text.len() as i32;
-        let text  = CString::new(text).unwrap();
+        let text  = str2cstring(text);
         let result = unsafe {
             (self.c_strip)(self, text.as_ptr(), length, flags as i32)
         };
@@ -640,7 +640,7 @@ impl Hexchat {
     ///   `id`.
     ///
     pub fn get_info(&self, id: &str) -> Option<String> {
-        let idstr = CString::new(id).unwrap();
+        let idstr = str2cstring(id);
         let info  = unsafe { (self.c_get_info)(self, idstr.as_ptr()) };
         if !info.is_null() {
             match id {
@@ -665,7 +665,7 @@ impl Hexchat {
     /// * `Some(PrefValue)` if the pref exists, `None` otherwise.
     ///
     pub fn get_prefs(&self, name: &str) -> Option<PrefValue> {
-        let namecstr = CString::new(name).unwrap();
+        let namecstr = str2cstring(name);
         unsafe {
             let mut str_ptr: *const c_char = ptr::null();
             let mut int_loc: c_int = 0;
@@ -714,7 +714,7 @@ impl Hexchat {
     ///
     pub fn pluginpref_set(&self, name: &str, value: &PrefValue) -> bool {
         let sval = value.simple_ser();
-        let namecstr = CString::new(name).unwrap();
+        let namecstr = str2cstring(name);
         let svalcstr = CString::new(sval.clone()).unwrap();
         if sval.len() > MAX_PREF_VALUE_SIZE {
             panic!("`hexchat.pluginpref_set({}, <overflow>)`: the value \
@@ -739,7 +739,7 @@ impl Hexchat {
     ///
     pub fn pluginpref_get(&self, name: &str) -> Option<PrefValue> {
         let mut buf = [0i8; MAX_PREF_VALUE_SIZE];
-        let name = CString::new(name).unwrap();
+        let name = str2cstring(name);
         if unsafe { (self.c_pluginpref_get_str)(self,
                                                 name.as_ptr(),
                                                 buf.as_mut_ptr()) > 0 }
