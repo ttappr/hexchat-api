@@ -45,11 +45,8 @@ macro_rules! hc_print {
     ( ctx = ($network:expr, $channel:expr), $arg:expr ) => {
         hexchat_api::print_with_ctx_inner(&$network, &$channel, $arg);
     };
-    ( $fmt:literal, $( $argv:expr ),+ ) => {
-        hexchat_api::print_inner(&format!($fmt, $($argv),+))
-    };
-    ( $arg:literal ) => {
-        hexchat_api::print_inner( $arg )
+    ( $( $arg:tt )* ) => {
+        hexchat_api::print_inner(&format!( $( $arg )* ))
     };
 }
 
@@ -96,7 +93,7 @@ pub fn print_inner(msg: &str) {
 /// 
 #[macro_export]
 macro_rules! hc_print_th {
-    ( ctx = ($network:expr, $channel:expr), $arg:expr ) => {{
+    ( ctx = ($network:expr, $channel:expr), $arg:expr ) => {
         // TODO - Make a tuple for these string values instead of a separate
         //        Arc for each one.
         let data = std::sync::Arc::new(($arg.to_string(),
@@ -105,9 +102,9 @@ macro_rules! hc_print_th {
         hexchat_api::main_thread(move |_| {
             hexchat_api::print_with_ctx_inner(&data.1, &data.2, &data.0);
         });
-    }};
+    };
     (  ctx = ($network:expr, $channel:expr), $fmt:literal, $( $argv:expr ),+ )
-    => {{
+    => {
         let fm_msg = format!($fmt, $($argv),+);
         let data   = std::sync::Arc::new(($fm_msg.to_string(),
                                           $network.to_string(),
@@ -115,16 +112,12 @@ macro_rules! hc_print_th {
         hexchat_api::main_thread(move |_| {
             hexchat_api::print_with_ctx_inner(&data.1, &data.2, &data.0);
         });
-    }};
-    ( $arg:expr ) => {{
-        let rc_msg = std::sync::Arc::new($arg.to_string());
-        hexchat_api::main_thread(move |_| hexchat_api::print_inner(&rc_msg));
-    }};
-    ( $fmt:literal, $( $argv:expr ),+ ) => {{
-        let fm_msg = format!($fmt, $($argv),+);
+    };
+    ( $( $arg:tt )* ) => {
+        let fm_msg = format!( $( $arg )* );
         let rc_msg = std::sync::Arc::new(fm_msg.to_string());
         hexchat_api::main_thread(move |_| hexchat_api::print_inner(&rc_msg));
-    }};
+    };
 }
 
 /// Executes a command in the active Hexchat window. Provided for convenience
@@ -132,11 +125,8 @@ macro_rules! hc_print_th {
 /// 
 #[macro_export]
 macro_rules! hc_command {
-    ( $fmt:literal, $( $argv:expr ),+ ) => {
-        hexchat_api::command_inner(&format!($fmt, $($argv),+));
-    };
-    ( $cmd:literal ) => {
-        hexchat_api::command_inner($cmd);
+    ( $( $arg:tt )* ) => {
+        hexchat_api::command_inner(&format!( $( $arg )* ));
     };
 }
 
