@@ -103,7 +103,9 @@ impl ThreadSafeContext {
         let command = command.to_string();
         let me = self.clone();
         main_thread(move |_| {
-            me.ctx.read().unwrap().as_ref().unwrap().command(&command)
+            me.ctx.read().unwrap().as_ref()
+                  .expect("Context dropped from threadsafe context.")
+                  .command(&command)
         }).get()
     }
 
