@@ -45,9 +45,8 @@ impl ThreadSafeContext {
     /// to contain a predictable `Context`. Executing it from a thread can
     /// yield a wrapped `Context` for an unexpected channel.
     ///
-    pub fn get() -> Option<Self>
-    {
-        Context::get().map(Self::new)
+    pub fn get() -> Option<Self> {
+        main_thread(|_| Context::get().map(Self::new)).get()
     }
     
     /// Gets a `ThreadSafeContext` object associated with the given channel.
@@ -57,8 +56,7 @@ impl ThreadSafeContext {
     /// # Returns
     /// * `Some(ThreadSafeContext)` on success, and `None` on failure.
     ///
-    pub fn find(network: &str, channel: &str) -> Option<Self>
-    {
+    pub fn find(network: &str, channel: &str) -> Option<Self> {
         let data = (network.to_string(), channel.to_string());
         main_thread(move |_| {
             Context::find(&data.0, &data.1).map(Self::new)
@@ -68,8 +66,7 @@ impl ThreadSafeContext {
     /// Prints the message to the `ThreadSafeContext` object's Hexchat context.
     /// This is how messages can be printed to Hexchat windows apart from the
     /// currently active one.    
-    pub fn print(&self, message: &str) -> Result<(), ContextError> 
-    {
+    pub fn print(&self, message: &str) -> Result<(), ContextError> {
         let message = message.to_string();
         let me = self.clone();
         main_thread(move |_| {
@@ -102,8 +99,7 @@ impl ThreadSafeContext {
     
     /// Issues a command in the context held by the `ThreadSafeContext` object.
     ///
-    pub fn command(&self, command: &str) -> Result<(), ContextError> 
-    {
+    pub fn command(&self, command: &str) -> Result<(), ContextError> {
         let command = command.to_string();
         let me = self.clone();
         main_thread(move |_| {
@@ -114,8 +110,7 @@ impl ThreadSafeContext {
     /// Gets information from the channel/window that the `ThreadSafeContext` 
     /// object holds an internal pointer to.
     ///
-    pub fn get_info(&self, info: &str) -> Result<Option<String>, ContextError>
-    {
+    pub fn get_info(&self, info: &str) -> Result<Option<String>, ContextError> {
         let info = info.to_string();
         let me = self.clone();
         main_thread(move |_| {
