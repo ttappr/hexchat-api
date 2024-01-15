@@ -3,10 +3,8 @@
 
 use libc::c_char;
 use std::ffi::{CString, CStr};
-#[allow(unused_imports)]
-use std::sync::Arc;
 
-use crate::{Context, Hexchat, PHEXCHAT};
+use crate::{Context, PHEXCHAT};
 
 /// ```&str -> CString``` (provides a C compatible character buffer)
 ///
@@ -59,7 +57,7 @@ macro_rules! hc_print {
 /// not intended to be used directly.
 /// 
 pub fn print_with_ctx_inner(network: &str, channel: &str, msg: &str) {
-    let hc = unsafe { &*PHEXCHAT as &Hexchat };
+    let hc = unsafe { &*PHEXCHAT };
     if let Some(orig_ctx) = hc.get_context() {
         if let Some(ctx) = Context::find(network, channel) {
             let _ = ctx.set();
@@ -77,7 +75,7 @@ pub fn print_with_ctx_inner(network: &str, channel: &str, msg: &str) {
 /// is not intended to be used directly.
 /// 
 pub fn print_inner(msg: &str) {
-    let hc = unsafe { &*PHEXCHAT as &Hexchat };
+    let hc = unsafe { &*PHEXCHAT };
     hc.print(msg);
 }
 
