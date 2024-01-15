@@ -125,8 +125,8 @@ impl Hexchat {
                                     pri         : Priority,
                                     callback    : F,
                                     help        : &str,
-                                    user_data   : UserData
-                                   ) -> Hook
+                                    user_data   : UserData) 
+        -> Hook
     where 
         F: FnMut(&Hexchat, &[String], &[String], &UserData)
            -> Eat
@@ -136,8 +136,7 @@ impl Hexchat {
                     CallbackData::new_command_data(
                                       Box::new(callback),
                                       user_data,
-                                      hook.clone()
-                                  ));
+                                      hook.clone()));
                                   
         let ud   = Box::into_raw(ud) as *mut c_void;
         
@@ -185,8 +184,8 @@ impl Hexchat {
                                    name        : &str,
                                    pri         : Priority,
                                    callback    : F,
-                                   user_data   : UserData
-                                  ) -> Hook
+                                   user_data   : UserData) 
+        -> Hook
     where 
         F: FnMut(&Hexchat, &[String], &[String], &UserData)
            -> Eat
@@ -232,8 +231,8 @@ impl Hexchat {
                                   event_name  : &str,
                                   pri         : Priority,
                                   callback    : F,
-                                  user_data   : UserData
-                                 ) -> Hook
+                                  user_data   : UserData) 
+        -> Hook
     where 
         F: FnMut(&Hexchat, &[String], &UserData) -> Eat
     {
@@ -280,8 +279,8 @@ impl Hexchat {
                                         name        : &str,
                                         pri         : Priority,
                                         callback    : F,
-                                        user_data   : UserData
-                                       ) -> Hook
+                                        user_data   : UserData) 
+        -> Hook
     where 
         F: FnMut(&Hexchat, &[String], &EventAttrs, &UserData)
            -> Eat
@@ -324,8 +323,8 @@ impl Hexchat {
     pub fn hook_timer<F: 'static>(&self,
                                   timeout   : i64,
                                   callback  : F,
-                                  user_data : UserData
-                                 ) -> Hook
+                                  user_data : UserData) 
+        -> Hook
     where 
         F: FnMut(&Hexchat, &UserData) -> i32
     {
@@ -365,8 +364,8 @@ impl Hexchat {
     fn hook_timer_once(&self,
                        timeout   : i64,
                        callback  : Box<TimerCallbackOnce>,
-                       user_data : UserData
-                      ) -> Hook
+                       user_data : UserData) 
+        -> Hook
     {
         // TODO - Put the function signatures somewhere logical (?)
 
@@ -394,8 +393,8 @@ impl Hexchat {
                                fd        : i32,
                                flags     : i32,
                                callback  : F,
-                               user_data : UserData
-                              ) -> Hook
+                               user_data : UserData) 
+        -> Hook
     where 
         F: FnMut(&Hexchat, i32, i32, &UserData) -> Eat
     {
@@ -429,8 +428,7 @@ impl Hexchat {
     /// * The user data that was registered with the callback using one of the
     ///   hook commands. Ownership of this object is transferred to the caller.
     ///
-    pub fn unhook(&self, hook: &mut Hook) -> UserData
-    {
+    pub fn unhook(&self, hook: &mut Hook) -> UserData {
         hook.unhook()
     }
 
@@ -463,8 +461,8 @@ impl Hexchat {
     pub fn emit_print_attrs(&self,
                             event_attrs : &EventAttrs,
                             event_name  : &str,
-                            var_args    : &[&str]
-                           ) -> Result<(), HexchatError>
+                            var_args    : &[&str]) 
+        -> Result<(), HexchatError>
     {
         self.emit_print_impl(1, event_attrs, event_name, var_args)
     }
@@ -485,8 +483,8 @@ impl Hexchat {
                        ver          : i32,
                        event_attrs  : &EventAttrs,
                        event_name   : &str,
-                       var_args     : &[&str]
-                      ) -> Result<(), HexchatError>
+                       var_args     : &[&str]) 
+        -> Result<(), HexchatError>
     {
         let mut args   = vec![];
         let     name   = str2cstring(event_name);
@@ -796,8 +794,8 @@ impl Hexchat {
                          filename : &str,
                          name     : &str,
                          desc     : &str,
-                         version  : &str,
-                        ) -> Plugin
+                         version  : &str) 
+        -> Plugin
     {
         Plugin::new(filename, name, desc, version)
     }

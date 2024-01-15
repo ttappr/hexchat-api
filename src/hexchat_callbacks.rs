@@ -19,8 +19,8 @@ use crate::utils::*;
 pub (crate)
 extern "C" fn c_callback(word        : *const *const c_char,
                          word_eol    : *const *const c_char,
-                         user_data   : *mut c_void
-                        ) -> c_int
+                         user_data   : *mut c_void) 
+    -> c_int
 {
     catch_unwind(|| {
         let word     = argv2svec(word, 1);
@@ -78,8 +78,7 @@ extern "C" fn c_print_attrs_callback(word      : *const *const c_char,
 /// An actual callback registered with Hexchat, which proxies for client plugin
 /// callbacks.
 pub (crate)
-extern "C" fn c_timer_callback(user_data: *mut c_void) -> c_int
-{
+extern "C" fn c_timer_callback(user_data: *mut c_void) -> c_int {
     catch_unwind(|| {
         unsafe {
             let cd = user_data as *mut CallbackData;
@@ -95,8 +94,7 @@ extern "C" fn c_timer_callback(user_data: *mut c_void) -> c_int
 /// after a one-time callback is executed.
 #[allow(dead_code)]
 pub (crate)
-extern "C" fn c_timer_callback_once(user_data: *mut c_void) -> c_int
-{
+extern "C" fn c_timer_callback_once(user_data: *mut c_void) -> c_int {
     catch_unwind(|| {
         unsafe {
             let cd = user_data as *mut CallbackData;

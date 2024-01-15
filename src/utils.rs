@@ -91,16 +91,16 @@ pub fn print_inner(msg: &str) {
 macro_rules! hc_print_th {
     (  ctx = ($network:expr, $channel:expr), $( $arg:tt )* ) => {
         let fm_msg = format!( $( $arg )* );
-        let data   = std::sync::Arc::new(($fm_msg.to_string(),
-                                          $network.to_string(),
-                                          $channel.to_string()));
+        let data   = ($fm_msg.to_string(),
+                      $network.to_string(),
+                      $channel.to_string());
         hexchat_api::main_thread(move |_| {
             hexchat_api::print_with_ctx_inner(&data.1, &data.2, &data.0);
         });
     };
     ( $( $arg:tt )* ) => {
         let fm_msg = format!( $( $arg )* );
-        let rc_msg = std::sync::Arc::new(fm_msg.to_string());
+        let rc_msg = fm_msg.to_string();
         hexchat_api::main_thread(move |_| hexchat_api::print_inner(&rc_msg));
     };
 }

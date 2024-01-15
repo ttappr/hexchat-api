@@ -64,8 +64,8 @@ impl ThreadSafeHexchat {
     ///
     pub fn find_context(&self, 
                         network : &str, 
-                        channel : &str
-                       ) -> Option<ThreadSafeContext>
+                        channel : &str) 
+        -> Option<ThreadSafeContext>
     {
         let data = (network.to_string(), channel.to_string());
         main_thread(move |hc| {

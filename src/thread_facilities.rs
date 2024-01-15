@@ -170,10 +170,8 @@ fn main_thread_init() {
                 if let Some(task_queue) = unsafe { &TASK_QUEUE } {
                     let mut count = 1;
                     
-                    while let Some(mut callback) = task_queue.lock()
-                                                             .unwrap()
-                                                             .pop_front() 
-                    {
+                    while let Some(mut callback) 
+                        = task_queue.lock().unwrap().pop_front() {
                         callback();
                         count += 1;
                         if count > TASK_SPURT_SIZE { 

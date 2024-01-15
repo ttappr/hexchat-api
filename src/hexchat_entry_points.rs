@@ -203,8 +203,8 @@ pub fn lib_hexchat_plugin_init(hexchat   : &'static Hexchat,
                                desc      : *mut *const c_char,
                                version   : *mut *const c_char,
                                init_cb   : Box<InitFn>,
-                               info_cb   : Box<InfoFn>
-                              ) -> i32
+                               info_cb   : Box<InfoFn>) 
+    -> i32
 {
     // Store the global Hexchat pointer.
     unsafe { PHEXCHAT = hexchat; }
@@ -229,8 +229,8 @@ pub fn lib_hexchat_plugin_init(hexchat   : &'static Hexchat,
 /// because `dll_entry_points()` generates code that needs this.
 ///
 pub fn lib_hexchat_plugin_deinit(hexchat  : &'static Hexchat, 
-                                 callback : Box<DeinitFn>
-                                ) -> i32
+                                 callback : Box<DeinitFn>) 
+    -> i32
 {
     let result = catch_unwind(|| {
         // Call user's deinit().
@@ -280,8 +280,7 @@ pub fn lib_get_info(name     : *mut *const c_char,
 /// Sets the panic hook so panic info will be printed to the active Hexchat 
 /// window. The debug build includes a stack trace using  
 /// [Backtrace](https://crates.io/crates/backtrace)
-fn set_panic_hook(hexchat: &'static Hexchat) 
-{
+fn set_panic_hook(hexchat: &'static Hexchat) {
     panic::set_hook(Box::new(move |panic_info| {
         #[cfg(debug_assertions)]
         let mut loc = String::new();

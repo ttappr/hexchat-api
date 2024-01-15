@@ -145,7 +145,7 @@ impl Clone for UserData {
             BoxedData(_)  => { 
                 panic!("Can't clone `BoxedData`. If user data needs to be \
                         shared, The `SharedData` or `SyncData` variants of \
-                        `UserData` should be used.")
+                       `UserData` should be used.")
             },
         }
     }

@@ -35,8 +35,7 @@ impl ThreadSafeContext {
     /// Creates a new `ThreadSafeContext` object, which wraps a `Context` object
     /// internally.
     pub (crate) 
-    fn new(ctx: Context) -> Self 
-    {
+    fn new(ctx: Context) -> Self {
         Self { ctx: Arc::new(RwLock::new(Some(SendWrapper::new(ctx)))) }
     }
     
@@ -149,8 +148,8 @@ impl ThreadSafeContext {
     /// list.
     ///
     pub fn list_get(&self, 
-                    name: &str
-                   ) -> Result<Option<ThreadSafeListIterator>, ContextError>
+                    name: &str) 
+        -> Result<Option<ThreadSafeListIterator>, ContextError>
     {
         let name = name.to_string();
         let me = self.clone();

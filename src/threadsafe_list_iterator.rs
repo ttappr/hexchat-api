@@ -4,7 +4,6 @@
 //! than the Hexchat main thread safely.
 
 use std::sync::Arc;
-//use std::sync::Mutex;
 use std::fmt;
 use std::sync::RwLock;
 

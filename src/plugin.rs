@@ -40,8 +40,8 @@ impl Plugin {
     pub fn new(file_name    : &str,
                plugin_name  : &str,
                description  : &str,
-               version      : &str
-              ) -> Plugin
+               version      : &str) 
+        -> Plugin
     {
         unsafe {
             let hc   = &*PHEXCHAT;
