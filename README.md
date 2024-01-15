@@ -14,7 +14,7 @@ Rust friendly features such as:
 
 ## Documentation
 Documentation can be found 
-[here](https://ttappr.github.io/hexchat_api/hexchat_api/index.html).
+[here](https://ttappr.github.io/hexchat-api/hexchat_api/index.html).
 
 ## Examples
 
