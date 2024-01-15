@@ -21,7 +21,7 @@ use std::sync::Arc;
 use std::sync::Mutex;
 
 use crate::callback_data::*;
-use crate::hexchat_entry_points::HEXCHAT;
+use crate::hexchat_entry_points::PHEXCHAT;
 use crate::user_data::*;
 
 /// A synchronized global list of the hooks. This gets initialized when a 
@@ -123,7 +123,7 @@ impl Hook {
                 if !ptr_data.hook_ptr.is_null() {
                 
                     // Unhook the callback.
-                    let hc = &*HEXCHAT;
+                    let hc = &*PHEXCHAT;
                     let _  = (hc.c_unhook)(hc, ptr_data.hook_ptr);
                     
                     // ^ _ should be our user_data, but we can't rely on Hexchat

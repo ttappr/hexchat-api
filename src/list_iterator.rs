@@ -26,7 +26,7 @@ use std::ffi::{CString, CStr};
 
 use crate::context::*;
 use crate::hexchat::Hexchat;
-use crate::hexchat_entry_points::HEXCHAT;
+use crate::hexchat_entry_points::PHEXCHAT;
 use crate::list_item::ListItem;
 use crate::utils::*;
 
@@ -57,7 +57,7 @@ impl ListIterator {
     ///
     pub fn new(list_name: &str) -> Option<Self> {
         let name     = str2cstring(list_name);
-        let hc       = unsafe { &*HEXCHAT };
+        let hc       = unsafe { &*PHEXCHAT };
         let list_ptr = unsafe { (hc.c_list_get)(hc, name.as_ptr()) };
         if !list_ptr.is_null() {
             let mut field_types = vec![];

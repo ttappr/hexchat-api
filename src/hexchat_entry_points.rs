@@ -36,15 +36,13 @@ pub type DeinitFn = dyn FnOnce(&'static Hexchat) -> i32 + UnwindSafe;
 
 /// The signature of the info function plugin authors need to register using
 /// `dll_entry_points!()`.
-pub type InfoFn   = dyn FnOnce()                 -> PluginInfo
-                                                        + UnwindSafe;
+pub type InfoFn   = dyn FnOnce() -> PluginInfo + UnwindSafe;
 
 /// Holds persistent client plugin info strings.
 static mut PLUGIN_INFO: Option<PluginInfo> = None;
 
 /// The global Hexchat pointer obtained from `hexchat_plugin_init()`.
-pub (crate)
-static mut HEXCHAT: *const Hexchat = null::<Hexchat>();
+pub(crate) static mut PHEXCHAT: *const Hexchat = null::<Hexchat>();
 
 /// `dll_entry_points()` makes it very easy to set up your plugin's DLL
 /// interface required by the Hexchat loader. This macro generates the necessary
@@ -209,7 +207,7 @@ pub fn lib_hexchat_plugin_init(hexchat   : &'static Hexchat,
                               ) -> i32
 {
     // Store the global Hexchat pointer.
-    unsafe { HEXCHAT = hexchat; }
+    unsafe { PHEXCHAT = hexchat; }
 
     set_panic_hook(hexchat);
 

@@ -10,7 +10,7 @@ use std::panic::catch_unwind;
 use crate::callback_data::CallbackData;
 use crate::hexchat::Eat;
 use crate::hexchat::EventAttrs;
-use crate::hexchat_entry_points::HEXCHAT;
+use crate::hexchat_entry_points::PHEXCHAT;
 use crate::utils::*;
 
 /// An actual callback registered with Hexchat, which proxies for client plugin
@@ -28,7 +28,7 @@ extern "C" fn c_callback(word        : *const *const c_char,
 
         unsafe {
             let cd = user_data as *mut CallbackData;
-            let hc = &*HEXCHAT;
+            let hc = &*PHEXCHAT;
             (*cd).command_cb(hc, &word, &word_eol, (*cd).get_user_data())
         }
     }) {
@@ -51,7 +51,7 @@ extern "C" fn c_print_callback(word      : *const *const c_char,
 
         unsafe {
             let cd = user_data as *mut CallbackData;
-            let hc = &*HEXCHAT;
+            let hc = &*PHEXCHAT;
             (*cd).print_cb(hc, &word, (*cd).get_user_data())
         }
     }) {
@@ -74,7 +74,7 @@ extern "C" fn c_print_attrs_callback(word      : *const *const c_char,
         
         unsafe {
             let cd = user_data as *mut CallbackData;
-            let hc = &*HEXCHAT;
+            let hc = &*PHEXCHAT;
             (*cd).print_attrs_cb(hc, &word, &*attrs, (*cd).get_user_data())
         }
     }) {
@@ -92,7 +92,7 @@ extern "C" fn c_timer_callback(user_data: *mut c_void) -> c_int
     match catch_unwind(|| {
         unsafe {
             let cd = user_data as *mut CallbackData;
-            let hc = &*HEXCHAT;
+            let hc = &*PHEXCHAT;
             (*cd).timer_cb(hc, (*cd).get_user_data())
         }
     }) {
@@ -112,7 +112,7 @@ extern "C" fn c_timer_callback_once(user_data: *mut c_void) -> c_int
     match catch_unwind(|| {
         unsafe {
             let cd = user_data as *mut CallbackData;
-            let hc = &*HEXCHAT;
+            let hc = &*PHEXCHAT;
             (*cd).timer_once_cb(hc, (*cd).get_user_data())
         }
     }) {
@@ -131,7 +131,7 @@ extern "C" fn c_fd_callback(fd: c_int, flags: c_int, user_data: *mut c_void)
     match catch_unwind(|| {
         unsafe {
             let cd = user_data as *mut CallbackData;
-            let hc = &*HEXCHAT;
+            let hc = &*PHEXCHAT;
             (*cd).fd_cb(hc, fd, flags, &mut (*cd).get_user_data())
         }
     }) {

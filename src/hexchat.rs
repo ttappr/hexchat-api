@@ -19,7 +19,7 @@ use crate::callback_data::{CallbackData, TimerCallbackOnce};
 use crate::context::Context;
 use crate::context::ContextError;
 use crate::hexchat_callbacks::*;
-use crate::hexchat_entry_points::HEXCHAT;
+use crate::hexchat_entry_points::PHEXCHAT;
 use crate::hook::Hook;
 use crate::list_iterator::ListIterator;
 use crate::plugin::Plugin;
@@ -78,7 +78,7 @@ impl Hexchat {
     /// methods wrapping several of `Hexchat`s methods.
     ///
     pub fn threadsafe(&self) -> ThreadSafeHexchat {
-        ThreadSafeHexchat::new(unsafe { &*HEXCHAT })
+        ThreadSafeHexchat::new(unsafe { &*PHEXCHAT })
     }
 
     /// Prints the string passed to it to the active Hexchat window.
@@ -971,6 +971,7 @@ impl Error for HexchatError {
 /// unless there has been a change to the layout of it in the Hexchat C code
 /// base.
 #[repr(C)]
+#[derive(Clone, Copy)]
 pub struct Hexchat {
     pub (crate)
     c_hook_command       : unsafe extern "C"

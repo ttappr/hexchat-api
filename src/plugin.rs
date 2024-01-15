@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use std::ffi::{CString, c_void};
-use crate::{str2cstring, HEXCHAT};
+use crate::{str2cstring, PHEXCHAT};
 use std::ptr;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -44,7 +44,7 @@ impl Plugin {
               ) -> Plugin
     {
         unsafe {
-            let hc   = &*HEXCHAT;
+            let hc   = &*PHEXCHAT;
             let null = ptr::null::<c_void>();
             let file_name   = str2cstring(file_name);
             let plugin_name = str2cstring(plugin_name);
@@ -77,7 +77,7 @@ impl Plugin {
         let data = &mut *cell.borrow_mut();
         if !data.removed {
             unsafe {
-                let hc = &*HEXCHAT;
+                let hc = &*PHEXCHAT;
                 (hc.c_plugingui_remove)(hc, data.handle.cast());
             }
             data.removed = true;
@@ -90,7 +90,7 @@ impl Drop for PluginData {
     fn drop(&mut self) {
         if !self.removed {
             unsafe {
-                let hc = &*HEXCHAT;
+                let hc = &*PHEXCHAT;
                 (hc.c_plugingui_remove)(hc, self.handle.cast());
             }
         }

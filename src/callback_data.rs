@@ -116,7 +116,7 @@ impl CallbackData {
         CallbackData { callback, data, hook }
     }
 
-    /// Returns a mutable reference to the Rust-facing `user_data` that was
+    /// Returns a reference to the Rust-facing `user_data` that was
     /// registered with the callback.    
     #[inline]
     pub (crate)

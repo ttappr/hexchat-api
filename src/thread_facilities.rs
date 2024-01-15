@@ -19,7 +19,7 @@ use std::collections::LinkedList;
 use std::sync::{Arc, Condvar, Mutex};
 
 use crate::hexchat::Hexchat;
-use crate::hexchat_entry_points::HEXCHAT;
+use crate::hexchat_entry_points::PHEXCHAT;
 use crate::user_data::*;
 
 use UserData::*;
@@ -121,7 +121,7 @@ where
 {
     let res = AsyncResult::new();
     let cln = res.clone();
-    let hex = unsafe { &*HEXCHAT };
+    let hex = unsafe { &*PHEXCHAT };
     if let Some(task_queue) = unsafe { &TASK_QUEUE } {
         let cbk = Box::new(
             move || {
@@ -147,7 +147,7 @@ fn main_thread_init() {
         unsafe { 
             TASK_QUEUE = Some(Arc::new(Mutex::new(LinkedList::new()))); 
         }
-        let hex = unsafe { &*HEXCHAT };
+        let hex = unsafe { &*PHEXCHAT };
         
         hex.hook_timer(
             TASK_REST_MSECS,

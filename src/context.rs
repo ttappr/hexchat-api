@@ -17,7 +17,7 @@ use std::ffi::CString;
 use std::rc::Rc;
 
 use crate::hexchat::{Hexchat, hexchat_context, HexchatError};
-use crate::hexchat_entry_points::HEXCHAT;
+use crate::hexchat_entry_points::PHEXCHAT;
 use crate::list_iterator::ListIterator;
 use crate::utils::*;
 
@@ -57,7 +57,7 @@ impl Context {
     pub fn find(network: &str, channel: &str) -> Option<Self> {
         let csnetwork = str2cstring(network);
         let cschannel = str2cstring(channel);
-        let hc = unsafe { &*HEXCHAT };
+        let hc = unsafe { &*PHEXCHAT };
         let context_ptr;
         unsafe {
             context_ptr = (hc.c_find_context)(hc,
@@ -84,11 +84,11 @@ impl Context {
     /// error result if it coulnd't be obtained.
     pub fn get() -> Option<Self> {
         unsafe {
-            let hc = &*HEXCHAT;
+            let hc = &*PHEXCHAT;
             let ctx_ptr = (hc.c_get_context)(hc);
             if !ctx_ptr.is_null() {
-                let nwstr = CString::new("network").unwrap();
-                let chstr = CString::new("channel").unwrap();
+                let nwstr = str2cstring("network");
+                let chstr = str2cstring("channel");
                 let network = (hc.c_get_info)(hc, nwstr.as_ptr());
                 let channel = (hc.c_get_info)(hc, chstr.as_ptr());
                 let ctx = Context {
