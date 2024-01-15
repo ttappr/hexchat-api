@@ -14,7 +14,7 @@ Rust friendly features such as:
 
 ## Documentation
 Documentation can be found 
-[here](ttappr.github.io/hexchat-api/doc/hexchat_api/index.html)
+[here](https://ttappr.github.io/hexchat-api/doc/hexchat_api/index.html)
 
 ## Examples
 
@@ -41,10 +41,10 @@ hexchat.hook_command(
             // Send a task to the main thread to have executed and get its
             // AsyncResult object.
             let async_result = main_thread(
-                                    |hc| {
-                                        hc.print("Hello from main thread!");
-                                        "This is the return value from main!"
-                                    });
+                                |hc| {
+                                    hc.print("Hello from main thread!");
+                                    "This is the return value from main!"
+                                });
             // Get the return data from the main thread callback (blocks).
             let result = async_result.get();
             hc_print_th!("Spawned thread received from main thread: {}", 
@@ -136,8 +136,8 @@ fn plugin_deinit(hc: &Hexchat) -> i32 {
 /// * `hc`        - The Hexchat API object reference.
 /// * `word`      - A list of parameters passed to the command.
 /// * `word_eol`  - Like `word`, but catenates the word args decrementally.
-/// * `user_data` - The user data to be passed back to the command when invoked
-///                 by Hexchat.
+/// * `user_data` - The user data to be passed back to the command when 
+///                 invoked by Hexchat.
 /// # Returns
 /// * One of `Eat::All`, `Eat::Hexchat`, `Eat::Plugin`, `Eat::None`. 
 ///
