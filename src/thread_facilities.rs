@@ -29,7 +29,7 @@ const TASK_REST_MSECS: i64 = 2;
 
 // The type of the queue that closures will be added to and pulled from to run 
 // on the main thread of Hexchat.
-type TaskQueue = LinkedList<Box<dyn FnMut()>>;
+type TaskQueue = LinkedList<Box<dyn FnMut() + Sync + Send>>;
 
 /// The task queue that other threads use to schedule tasks to run on the
 /// main thread. It is guarded by a `Mutex`.
@@ -115,7 +115,7 @@ impl<T: Clone + Send> AsyncResult<T> {
 /// 
 pub fn main_thread<F, R>(mut callback: F) -> AsyncResult<R>
 where 
-    F: FnMut(&Hexchat) -> R,
+    F: FnMut(&Hexchat) -> R + Sync + Send,
     F: 'static + Send,
     R: 'static + Clone + Send,
 {

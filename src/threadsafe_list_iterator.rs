@@ -107,7 +107,7 @@ impl ThreadSafeListIterator {
         use FieldValue as FV;
         use ThreadSafeFieldValue as TSFV;
         
-        let name = Arc::new(name.to_string());
+        let name = name.to_string();
         let me = self.clone();
         main_thread(move |_| {
             match me.list_iter.get_field(&name) {

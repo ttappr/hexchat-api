@@ -4,8 +4,6 @@
 //! The client code doesn't have to worry about synchronization; that's taken
 //! care of internally by `ThreadSafeHexchat`.
 
-use std::sync::Arc;
-
 use crate::hexchat::*;
 use crate::thread_facilities::*;
 use crate::threadsafe_context::*;
@@ -36,7 +34,7 @@ impl ThreadSafeHexchat {
     /// * `text` - The text to print.
     ///
     pub fn print(&self, text: &str) {
-        let text = std::sync::Arc::new(text.to_string());
+        let text = text.to_string();
         let result = main_thread(move |hc| hc.print(&text));
         result.get();
     }
@@ -46,7 +44,7 @@ impl ThreadSafeHexchat {
     /// * `command` - The Hexchat command to invoke.
     ///
     pub fn command(&self, command: &str) {
-        let command = std::sync::Arc::new(command.to_string());
+        let command = command.to_string();
         let result = main_thread(move |hc| hc.command(&command));
         result.get();
     }
@@ -68,8 +66,7 @@ impl ThreadSafeHexchat {
                         channel : &str
                        ) -> Option<ThreadSafeContext>
     {
-        let data = Arc::new((network.to_string(),
-                             channel.to_string()));
+        let data = (network.to_string(), channel.to_string());
         main_thread(move |hc| {
             hc.find_context(&data.0, &data.1).map(ThreadSafeContext::new)
         }).get()
@@ -106,7 +103,7 @@ impl ThreadSafeHexchat {
     ///   `id`.
     ///
     pub fn get_info(&self, id: &str) -> Option<String> {
-        let id = Arc::new(id.to_string());
+        let id = id.to_string();
         main_thread(move |hc| {
             hc.get_info(&id)
         }).get()
@@ -126,7 +123,7 @@ impl ThreadSafeHexchat {
     ///   otherwise.
     ///
     pub fn list_get(&self, list: &str) -> Option<ThreadSafeListIterator> {
-        let list = Arc::new(list.to_string());
+        let list = list.to_string();
         main_thread(move |hc| {
             hc.list_get(&list).map(ThreadSafeListIterator::create)
         }).get()

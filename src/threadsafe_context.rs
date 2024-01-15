@@ -56,7 +56,7 @@ impl ThreadSafeContext {
     ///
     pub fn find(network: &str, channel: &str) -> Option<Self>
     {
-        let data = Arc::new((network.to_string(), channel.to_string()));
+        let data = (network.to_string(), channel.to_string());
         main_thread(move |_| {
             Context::find(&data.0, &data.1).map(Self::new)
         }).get()
@@ -67,7 +67,7 @@ impl ThreadSafeContext {
     /// currently active one.    
     pub fn print(&self, message: &str) -> Result<(), ContextError> 
     {
-        let message = Arc::new(message.to_string());
+        let message = message.to_string();
         let me = self.clone();
         main_thread(move |_| {
             me.ctx.print(&message)
@@ -81,7 +81,7 @@ impl ThreadSafeContext {
     /// if any occur.
     ///
     pub fn aprint(&self, message: &str) {
-        let message = Arc::new(message.to_string());
+        let message = message.to_string();
         let me = self.clone();
         main_thread(move |hc| {
             if let Err(err) = me.ctx.print(&message) {
@@ -98,7 +98,7 @@ impl ThreadSafeContext {
     ///
     pub fn command(&self, command: &str) -> Result<(), ContextError> 
     {
-        let command = Arc::new(command.to_string());
+        let command = command.to_string();
         let me = self.clone();
         main_thread(move |_| {
             me.ctx.command(&command)
@@ -110,7 +110,7 @@ impl ThreadSafeContext {
     ///
     pub fn get_info(&self, info: &str) -> Result<Option<String>, ContextError>
     {
-        let info = Arc::new(info.to_string());
+        let info = info.to_string();
         let me = self.clone();
         main_thread(move |_| {
             me.ctx.get_info(&info)
@@ -126,7 +126,7 @@ impl ThreadSafeContext {
         let var_args: Vec<String> = var_args.iter()
                                             .map(|s| s.to_string())
                                             .collect();
-        let data = Arc::new((event_name.to_string(), var_args));
+        let data = (event_name.to_string(), var_args);
         let me = self.clone();
         main_thread(move |_| {
             let var_args: Vec<&str> = data.1.iter()
@@ -145,7 +145,7 @@ impl ThreadSafeContext {
                     name: &str
                    ) -> Result<Option<ThreadSafeListIterator>, ContextError>
     {
-        let name = Arc::new(name.to_string());
+        let name = name.to_string();
         let me = self.clone();
         main_thread(move |_| {
             match me.ctx.list_get(&name) {
