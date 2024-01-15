@@ -6,6 +6,8 @@ use std::ffi::{CString, CStr};
 #[allow(unused_imports)]
 use std::sync::Arc;
 
+use crate::{Context, Hexchat, PHEXCHAT};
+
 /// ```&str -> CString``` (provides a C compatible character buffer)
 ///
 /// Wrapper function that creates a `CString` from a `&str`. This is a
@@ -21,14 +23,14 @@ fn str2cstring(s: &str) -> CString {
 /// hexchat window. Internally it invokes 
 /// `hexchat.print(&format!("<format-string>", arg1, arg2, ...)`.
 /// Using the macro, this becomes 
-/// `outp!(hc, "<format_string>", arg1, arg2, ...)`. To print from another 
-/// thread `outpth!()` can be used.
+/// `hc_print!(hc, "<format_string>", arg1, arg2, ...)`. To print from another 
+/// thread `hc_print_th!()` can be used.
 /// ```
-/// use hexchat_api::outpth;
-/// outp!(fmt, argv, ...);
-/// outp!(arg);
-/// outp!(ctx=(network, channel), argv, ...);
-/// outp!(ctx=(network, channel), arg);
+/// use hexchat_api::hc_print;
+/// hc_print!(fmt, argv, ...);
+/// hc_print!(arg);
+/// hc_print!(ctx=(network, channel), argv, ...);
+/// hc_print!(ctx=(network, channel), arg);
 /// ```
 /// # Arguments
 /// * `ctx=(network, channel)` - Sets the context to print in.
@@ -36,54 +38,58 @@ fn str2cstring(s: &str) -> CString {
 /// * `argv`    - The varibale length formatted arguments.
 /// 
 #[macro_export]
-macro_rules! outp {
-    ( ctx = ($network:expr, $channel:expr), $fmt:expr, $( $argv:expr ),+ ) => {
-        #[allow(unused_must_use)]
-        if let Some(orig_ctx) = HEXCHAT.get_context() {
-            if let Some(ctx) = hexchat_api::Context::find(&$network, &$channel) 
-            {
-                ctx.set();
-                HEXCHAT.print(&format!($fmt, $($argv),+));
-                orig_ctx.set();
-            } else {
-                panic!("Can't find context for ({}, {})", &$network, &$channel);
-            }
-        } else {
-            panic!("Unable to acquire local context.");
-        }
+macro_rules! hc_print {
+    ( ctx = ($network:expr, $channel:expr), $fmt:literal, $( $argv:expr ),+ ) 
+    => {
+        hexchat_api::
+        print_with_ctx_inner(&$network, &$channel, &format!($fmt, $($argv),+));
     };
     ( ctx = ($network:expr, $channel:expr), $arg:expr ) => {
-        #[allow(unused_must_use)]
-        if let Some(orig_ctx) = HEXCHAT.get_context() {
-            if let Some(ctx) = hexchat_api::Context::find(&$network, &$channel) 
-            {
-                ctx.set();
-                HEXCHAT.print( $arg );
-                orig_ctx.set();
-            } else {
-                panic!("Can't find context for ({}, {})", &$network, &$channel);
-            }
-        } else {
-            panic!("Unable to acquire local context.");
-        }
+        hexchat_api::print_with_ctx_inner(&$network, &$channel, $arg);
     };
-    ( $fmt:expr, $( $argv:expr ),+ ) => {
-        HEXCHAT.print(&format!($fmt, $($argv),+))
+    ( $fmt:literal, $( $argv:expr ),+ ) => {
+        hexchat_api::print_inner(&format!($fmt, $($argv),+))
     };
-    ( $arg:expr ) => {
-        HEXCHAT.print( $arg )
+    ( $arg:literal ) => {
+        hexchat_api::print_inner( $arg )
     };
 }
 
-/// Similar to `outp!()`, that can be used from spawned threads to print to
+/// Used by `hc_print!()` to print to a specific context. This function is
+/// not intended to be used directly.
+/// 
+pub fn print_with_ctx_inner(network: &str, channel: &str, msg: &str) {
+    let hc = unsafe { &*PHEXCHAT as &Hexchat };
+    if let Some(orig_ctx) = hc.get_context() {
+        if let Some(ctx) = Context::find(network, channel) {
+            let _ = ctx.set();
+            hc.print(msg);
+            let _ = orig_ctx.set();
+        } else {
+            panic!("Can't find context for ({}, {})", network, channel);
+        }
+    } else {
+        panic!("Unable to acquire local context.");
+    }
+}
+
+/// Used by `hc_print!()` to print to the active Hexchat window. This function
+/// is not intended to be used directly.
+/// 
+pub fn print_inner(msg: &str) {
+    let hc = unsafe { &*PHEXCHAT as &Hexchat };
+    hc.print(msg);
+}
+
+/// Similar to `hc_print!()`, that can be used from spawned threads to print to
 /// the active Hexchat window. This should not be invoked from the Hexchat
 /// main thread.
 /// ```
-/// use hexchat_api::outpth;
-/// outpth!(fmt, argv, ...);
-/// outpth!(arg);
-/// outpth!(ctx=(network, channel), argv, ...);
-/// outpth!(ctx=(network, channel), arg);
+/// use hexchat_api::hc_print_th;
+/// hc_print_th!(fmt, argv, ...);
+/// hc_print_th!(arg);
+/// hc_print_th!(ctx=(network, channel), argv, ...);
+/// hc_print_th!(ctx=(network, channel), arg);
 /// ```
 /// # Arguments
 /// * `ctx=(network, channel)` - Sets the context to print in.
@@ -91,58 +97,35 @@ macro_rules! outp {
 /// * `argv`    - The varibale length formatted arguments.
 /// 
 #[macro_export]
-macro_rules! outpth {
+macro_rules! hc_print_th {
     ( ctx = ($network:expr, $channel:expr), $arg:expr ) => {{
         // TODO - Make a tuple for these string values instead of a separate
         //        Arc for each one.
         let data = std::sync::Arc::new(($arg.to_string(),
                                         $network.to_string(),
                                         $channel.to_string()));
-        #[allow(unused_must_use)]
-        hexchat_api::main_thread(move |HEXCHAT| {
-            if let Some(orig_ctx) = HEXCHAT.get_context() {
-                if let Some(ctx) = hexchat_api::Context::find(&data.1, &data.2) 
-                {
-                    ctx.set();
-                    HEXCHAT.print(&data.0);
-                    orig_ctx.set();
-                } else {
-                    panic!("Can't find context for ({}, {})", &data.1, &data.2);
-                }
-            } else {
-                panic!("Unable to acquire local context.");
-            }
+        hexchat_api::main_thread(move |_| {
+            hexchat_api::print_with_ctx_inner(&data.1, &data.2, &data.0);
         });
     }};
-    (  ctx = ($network:expr, $channel:expr), $fmt:expr, $( $argv:expr ),+ )=> {{
+    (  ctx = ($network:expr, $channel:expr), $fmt:literal, $( $argv:expr ),+ )
+    => {{
         let fm_msg = format!($fmt, $($argv),+);
         let data   = std::sync::Arc::new(($fm_msg.to_string(),
                                           $network.to_string(),
                                           $channel.to_string()));
-        #[allow(unused_must_use)]
-        hexchat_api::main_thread(move |hc| {
-            if let Some(orig_ctx) = hc.get_context() {
-                if let Some(ctx) = hexchat_api::Context::find(&data.1, &data.2) 
-                { 
-                    ctx.set();
-                    hc.print(&data.0);
-                    orig_ctx.set();
-                } else {
-                    panic!("Can't find context for ({}, {})", &data.1, &data.2);
-                }
-            } else {
-                panic!("Unable to acquire local context.");
-            }
+        hexchat_api::main_thread(move |_| {
+            hexchat_api::print_with_ctx_inner(&data.1, &data.2, &data.0);
         });
     }};
     ( $arg:expr ) => {{
         let rc_msg = std::sync::Arc::new($arg.to_string());
-        hexchat_api::main_thread(move |hc| hc.print(&rc_msg));
+        hexchat_api::main_thread(move |_| hexchat_api::print_inner(&rc_msg));
     }};
-    ( $fmt:expr, $( $argv:expr ),+ ) => {{
+    ( $fmt:literal, $( $argv:expr ),+ ) => {{
         let fm_msg = format!($fmt, $($argv),+);
         let rc_msg = std::sync::Arc::new(fm_msg.to_string());
-        hexchat_api::main_thread(move |hc| hc.print(&rc_msg));
+        hexchat_api::main_thread(move |_| hexchat_api::print_inner(&rc_msg));
     }};
 }
 
