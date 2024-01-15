@@ -971,7 +971,6 @@ impl Error for HexchatError {
 /// unless there has been a change to the layout of it in the Hexchat C code
 /// base.
 #[repr(C)]
-#[derive(Clone, Copy)]
 pub struct Hexchat {
     pub (crate)
     c_hook_command       : unsafe extern "C"
