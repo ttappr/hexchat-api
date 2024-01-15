@@ -14,7 +14,7 @@ Rust friendly features such as:
 
 ## Documentation
 Documentation can be found 
-[here](https://ttappr.github.io/hexchat-api/hexchat_api/index.html).
+[here](ttappr.github.io/hexchat-api/doc/hexchat_api/index.html)
 
 ## Examples
 
@@ -63,7 +63,7 @@ Simply include an entry in your Rust project's `Cargo.toml` file:
 
 ```toml
 [dependencies]
-hexchat_api = { git = "https://github.com/ttappr/hexchat_api.git", branch = "main" }
+hexchat-api = "0.2"
 ```
 
 ## Template
@@ -159,12 +159,12 @@ And the Cargo.toml file.
 name = "hexchat_plugin_template"
 version = "0.1.0"
 authors = ["you <your@email.com>"]
-edition = "2018"
+edition = "2021"
 
 [lib]
 name = "hexchat_plugin_template"
 crate-type = ["cdylib"]
 
 [dependencies]
-hexchat_api = { git = "https://github.com/ttappr/hexchat_api.git", branch = "main" }
+hexchat-api = "0.2"
 ```

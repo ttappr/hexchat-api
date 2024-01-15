@@ -1,9 +1,9 @@
 [package]
 name = "hexchat-api"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["ttappr <tmtappr@gmail.com>"]
 description = "A Rust API for HexChat plugin development"
-documentation = "https://ttapper.github.io/hexchat-api/doc/hexchat_api/index.html"
+documentation = "https://ttappr.github.io/hexchat-api/doc/hexchat_api/index.html"
 repository = "https://github.com/ttappr/hexchat-api"
 readme = "README.md"
 exclude = [".idea", "docs"]
