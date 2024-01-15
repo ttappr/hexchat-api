@@ -188,7 +188,7 @@ impl Iterator for &ThreadSafeListIterator {
 
 impl Drop for ThreadSafeListIterator {
     fn drop(&mut self) {
-        if Arc::strong_count(&self.list_iter) == 1
+        if Arc::strong_count(&self.list_iter) <= 1
             && self.list_iter.read().unwrap().is_some() {
             let me = self.clone();
             main_thread(move |_| {

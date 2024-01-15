@@ -181,7 +181,7 @@ impl fmt::Display for ThreadSafeContext {
 
 impl Drop for ThreadSafeContext {
     fn drop(&mut self) {
-        if Arc::strong_count(&self.ctx) == 1 
+        if Arc::strong_count(&self.ctx) <= 1 
             && self.ctx.read().unwrap().is_some() {
             let me = self.clone();
             main_thread(move |_| {
