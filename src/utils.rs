@@ -99,8 +99,7 @@ macro_rules! hc_print_th {
         });
     };
     ( $( $arg:tt )* ) => {
-        let fm_msg = format!( $( $arg )* );
-        let rc_msg = fm_msg.to_string();
+        let rc_msg = format!( $( $arg )* );
         hexchat_api::main_thread(move |_| hexchat_api::print_inner(&rc_msg));
     };
 }
@@ -115,6 +114,17 @@ macro_rules! hc_command {
     };
 }
 
+/// Executes a command on the main thread. This is useful for executing
+/// commands from spawned threads.
+/// 
+#[macro_export]
+macro_rules! hc_command_th {
+    ( $( $arg:tt )* ) => {
+        let rc_cmd = format!( $( $arg )* );
+        hexchat_api::main_thread(move |_| hexchat_api::command_inner(&rc_cmd));
+    };
+}
+
 /// Executes a command in the active Hexchat window. This function is not
 /// intended to be used directly.
 /// 
@@ -122,6 +132,7 @@ pub fn command_inner(cmd: &str) {
     let hc = unsafe { &*PHEXCHAT };
     hc.command(cmd);
 }
+
 
 /// ```*const c_char -> CString```
 ///
