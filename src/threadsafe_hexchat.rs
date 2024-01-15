@@ -16,6 +16,7 @@ use crate::threadsafe_list_iterator::*;
 ///
 #[derive(Clone, Copy)]
 pub struct ThreadSafeHexchat {
+    #[allow(dead_code)] // Never read...yet.
     hc: &'static Hexchat,
 }
 
@@ -85,7 +86,10 @@ impl ThreadSafeHexchat {
     ///   means the channel window the user has visible in the GUI.
     ///
     pub fn get_context(&self) -> Option<ThreadSafeContext> {
-        self.hc.get_context().map(ThreadSafeContext::new)
+        //self.hc.get_context().map(ThreadSafeContext::new)
+        main_thread(|hc| {
+            hc.get_context().map(ThreadSafeContext::new)
+        }).get()
     }
         
     /// Retrieves the info data with the given `id`. It returns None on failure

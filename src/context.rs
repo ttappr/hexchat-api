@@ -254,6 +254,7 @@ impl fmt::Display for Context {
 pub enum ContextError {
     AcquisitionFailed(String, String),
     OperationFailed(String),
+    ContextDropped(String),
 }
 
 impl error::Error for ContextError {}
@@ -267,6 +268,9 @@ impl fmt::Display for ContextError {
             },
             OperationFailed(reason) => {
                 write!(f, "OperationFailed(\"{}\")", reason)
+            },
+            ContextDropped(reason) => {
+                write!(f, "ContextDropped(\"{}\")", reason)
             },
         }
     }

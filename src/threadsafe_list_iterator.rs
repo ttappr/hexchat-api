@@ -6,6 +6,9 @@
 use std::sync::Arc;
 //use std::sync::Mutex;
 use std::fmt;
+use std::sync::RwLock;
+
+use send_wrapper::SendWrapper;
 
 use crate::list_item::*;
 use crate::list_iterator::*;
@@ -27,7 +30,7 @@ use crate::threadsafe_context::*;
 ///
 #[derive(Clone)]
 pub struct ThreadSafeListIterator {
-    list_iter: Arc<ListIterator>,
+    list_iter: Arc<RwLock<Option<SendWrapper<ListIterator>>>>,
 }
 
 unsafe impl Send for ThreadSafeListIterator {}
@@ -40,7 +43,9 @@ impl ThreadSafeListIterator {
     ///
     pub (crate) 
     fn create(list_iter: ListIterator) -> Self {
-        ThreadSafeListIterator { list_iter: Arc::new(list_iter) }
+        Self { 
+            list_iter: Arc::new(RwLock::new(Some(SendWrapper::new(list_iter)))) 
+        }
     }
     
     /// This can give unpredictable results if executed from a thread that isn't
@@ -55,7 +60,7 @@ impl ThreadSafeListIterator {
     ///
     pub fn new(name: &str) -> Option<Self> {
         ListIterator::new(name).map(|list| ThreadSafeListIterator {
-            list_iter: Arc::new(list)
+            list_iter: Arc::new(RwLock::new(Some(SendWrapper::new(list))))
         })
     }
     
@@ -65,7 +70,9 @@ impl ThreadSafeListIterator {
     pub fn get_field_names(&self) -> Vec<String> {
         let me = self.clone();
         main_thread(move |_| {
-            me.list_iter.get_field_names().to_vec()
+            me.list_iter.read().unwrap().as_ref()
+                        .expect("ListIterator dropped from threadsafe context.")
+                        .get_field_names().to_vec()
         }).get()
     }
     
@@ -75,7 +82,9 @@ impl ThreadSafeListIterator {
     pub fn to_vec(&self) -> Vec<ListItem> {
         let me = self.clone();
         main_thread(move |_| {
-            me.list_iter.to_vec()
+            me.list_iter.read().unwrap().as_ref()
+                        .expect("ListIterator dropped from threadsafe context.")
+                        .to_vec()
         }).get()
     }
     
@@ -85,7 +94,9 @@ impl ThreadSafeListIterator {
     pub fn get_item(&self) -> ListItem {
         let me = self.clone();
         main_thread(move |_| {
-            me.list_iter.get_item()
+            me.list_iter.read().unwrap().as_ref()
+                        .expect("ListIterator dropped from threadsafe context.")
+                        .get_item()
         }).get()
     }
     
@@ -110,31 +121,37 @@ impl ThreadSafeListIterator {
         let name = name.to_string();
         let me = self.clone();
         main_thread(move |_| {
-            match me.list_iter.get_field(&name) {
-                Ok(field_val) => {
-                    match field_val {
-                        FV::StringVal(s) => {
-                            Ok(TSFV::StringVal(s))
-                        },
-                        FV::IntVal(i) => {
-                            Ok(TSFV::IntVal(i))
-                        },
-                        FV::PointerVal(pv) => {
-                            Ok(TSFV::PointerVal(pv))
-                        },
-                        FV::ContextVal(ctx) => {
-                            Ok(TSFV::ContextVal(
-                                ThreadSafeContext::new(ctx)
-                            ))
-                        },
-                        FV::TimeVal(time) => {
-                            Ok(TSFV::TimeVal(time))
+            if let Some(iter) = me.list_iter.read().unwrap().as_ref() {
+                match iter.get_field(&name) {
+                    Ok(field_val) => {
+                        match field_val {
+                            FV::StringVal(s) => {
+                                Ok(TSFV::StringVal(s))
+                            },
+                            FV::IntVal(i) => {
+                                Ok(TSFV::IntVal(i))
+                            },
+                            FV::PointerVal(pv) => {
+                                Ok(TSFV::PointerVal(pv))
+                            },
+                            FV::ContextVal(ctx) => {
+                                Ok(TSFV::ContextVal(
+                                    ThreadSafeContext::new(ctx)
+                                ))
+                            },
+                            FV::TimeVal(time) => {
+                                Ok(TSFV::TimeVal(time))
+                            }
                         }
-                    }
-                },
-                Err(err) => {
-                    Err(err)
-                },
+                    },
+                    Err(err) => {
+                        Err(err)
+                    },
+                }
+            } else {
+                Err(ListError::ListIteratorDropped(
+                    "ListIterator dropped from threadsafe context."
+                    .to_string()))
             }
         }).get()
     }
@@ -145,8 +162,11 @@ impl Iterator for ThreadSafeListIterator {
     fn next(&mut self) -> Option<Self::Item> {
         let me = self.clone();
         main_thread(move |_| {
-            (&*me.list_iter).next()
-                .map(|iter| ThreadSafeListIterator::create(iter.clone()))
+            if let Some(iter) = me.list_iter.write().unwrap().as_mut() {
+                iter.next().map(|it| ThreadSafeListIterator::create(it.clone()))
+            } else {
+                None
+            }
         }).get()
     }
 }
@@ -156,12 +176,25 @@ impl Iterator for &ThreadSafeListIterator {
     fn next(&mut self) -> Option<Self::Item> {
         let me = self.clone();
         let has_more = main_thread(move |_| {
-            (&*me.list_iter).next().is_some()
+            me.list_iter.write().unwrap().as_mut()
+                        .map_or(false, |it| it.next().is_some())
         }).get();
         if has_more {
             Some(self)
         } else {
             None
+        }
+    }
+}
+
+impl Drop for ThreadSafeListIterator {
+    fn drop(&mut self) {
+        if Arc::strong_count(&self.list_iter) == 1
+            && self.list_iter.read().unwrap().is_some() {
+            let me = self.clone();
+            main_thread(move |_| {
+                me.list_iter.write().unwrap().take();
+            });
         }
     }
 }

@@ -5,6 +5,9 @@
 
 use std::sync::Arc;
 use std::fmt;
+use std::sync::RwLock;
+
+use send_wrapper::SendWrapper;
 
 use crate::context::*;
 use crate::thread_facilities::*;
@@ -22,7 +25,7 @@ use crate::threadsafe_list_iterator::*;
 ///
 #[derive(Clone, Debug)]
 pub struct ThreadSafeContext {
-    ctx : Arc<Context>,
+    ctx : Arc<RwLock<Option<SendWrapper<Context>>>>,
 }
 
 unsafe impl Send for ThreadSafeContext {}
@@ -34,7 +37,7 @@ impl ThreadSafeContext {
     pub (crate) 
     fn new(ctx: Context) -> Self 
     {
-        ThreadSafeContext { ctx: Arc::new(ctx) }
+        Self { ctx: Arc::new(RwLock::new(Some(SendWrapper::new(ctx)))) }
     }
     
     /// Gets the current `Context` wrapped in a `ThreadSafeContext` object.
@@ -70,7 +73,9 @@ impl ThreadSafeContext {
         let message = message.to_string();
         let me = self.clone();
         main_thread(move |_| {
-            me.ctx.print(&message)
+            me.ctx.read().unwrap().as_ref()
+                  .expect("Context dropped from threadsafe context.")
+                  .print(&message)
         }).get()
     }
     
@@ -84,7 +89,8 @@ impl ThreadSafeContext {
         let message = message.to_string();
         let me = self.clone();
         main_thread(move |hc| {
-            if let Err(err) = me.ctx.print(&message) {
+            if let Err(err) 
+                = me.ctx.read().unwrap().as_ref().unwrap().print(&message) {
                 hc.print(
                     &format!("\x0313Context.aprint() failed to acquire \
                               context: {}", err));
@@ -101,7 +107,7 @@ impl ThreadSafeContext {
         let command = command.to_string();
         let me = self.clone();
         main_thread(move |_| {
-            me.ctx.command(&command)
+            me.ctx.read().unwrap().as_ref().unwrap().command(&command)
         }).get()
     }
 
@@ -113,7 +119,9 @@ impl ThreadSafeContext {
         let info = info.to_string();
         let me = self.clone();
         main_thread(move |_| {
-            me.ctx.get_info(&info)
+            me.ctx.read().unwrap().as_ref()
+                  .expect("Context dropped from threadsafe context.")
+                  .get_info(&info)
         }).get()
     }
     
@@ -132,7 +140,9 @@ impl ThreadSafeContext {
             let var_args: Vec<&str> = data.1.iter()
                                             .map(|s| s.as_str())
                                             .collect();
-            me.ctx.emit_print(&data.0, var_args.as_slice())
+            me.ctx.read().unwrap().as_ref()
+                  .expect("Context dropped from threadsafe context.")
+                  .emit_print(&data.0, var_args.as_slice())
         }).get()
     }
     
@@ -148,15 +158,20 @@ impl ThreadSafeContext {
         let name = name.to_string();
         let me = self.clone();
         main_thread(move |_| {
-            match me.ctx.list_get(&name) {
-                Ok(opt) => {
-                    if let Some(list) = opt {
-                        Ok(Some(ThreadSafeListIterator::create(list)))
-                    } else {
-                        Ok(None)
-                    }
-                },
-                Err(err) => Err(err),
+            if let Some(ctx) = me.ctx.read().unwrap().as_ref() {
+                match ctx.list_get(&name) {
+                    Ok(opt) => {
+                        if let Some(list) = opt {
+                            Ok(Some(ThreadSafeListIterator::create(list)))
+                        } else {
+                            Ok(None)
+                        }
+                    },
+                    Err(err) => Err(err),
+                }
+            } else {
+                Err(ContextError::ContextDropped(
+                    "Context dropped from threadsafe context.".to_string()))
             }
         }).get()
     }
@@ -164,6 +179,18 @@ impl ThreadSafeContext {
 
 impl fmt::Display for ThreadSafeContext {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.ctx)
+        write!(f, "{:?}", self.ctx)
+    }
+}
+
+impl Drop for ThreadSafeContext {
+    fn drop(&mut self) {
+        if Arc::strong_count(&self.ctx) == 1 
+            && self.ctx.read().unwrap().is_some() {
+            let me = self.clone();
+            main_thread(move |_| {
+                me.ctx.write().unwrap().take();
+            });
+        }
     }
 }

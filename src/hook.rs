@@ -47,7 +47,7 @@ pub struct Hook {
 }
 
 unsafe impl Send for Hook {}
-unsafe impl Sync for Hook {}
+unsafe impl Send for HookData {}
 
 impl Hook {
     /// Constructor. `hook` is a hook returned by Hexchat when registering a

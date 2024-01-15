@@ -17,6 +17,7 @@
 
 use std::collections::LinkedList;
 use std::sync::{Arc, Condvar, Mutex};
+use std::thread;
 
 use crate::hexchat::Hexchat;
 use crate::hexchat_entry_points::PHEXCHAT;
@@ -35,6 +36,12 @@ type TaskQueue = LinkedList<Box<dyn FnMut() + Sync + Send>>;
 /// main thread. It is guarded by a `Mutex`.
 ///
 static mut TASK_QUEUE: Option<Arc<Mutex<TaskQueue>>> = None;
+
+/// The main thread's ID is captured and used by `main_thread()` to determine
+/// whether it is being called from the main thread or not. If not, the
+/// callback can be invoked right away. Otherwise, it gets scheduled.
+/// 
+static mut MAIN_THREAD_ID: Option<thread::ThreadId> = None;
 
 /// Stops and removes the main thread task queue handler. Otherwise it will
 /// keep checking the queue while doing nothing useful - which isn't 
@@ -119,20 +126,27 @@ where
     F: 'static + Send,
     R: 'static + Clone + Send,
 {
-    let res = AsyncResult::new();
-    let cln = res.clone();
-    let hex = unsafe { &*PHEXCHAT };
-    if let Some(task_queue) = unsafe { &TASK_QUEUE } {
-        let cbk = Box::new(
-            move || {
-                cln.set(callback(hex));
-            }
-        );
-        task_queue.lock().unwrap().push_back(cbk);
+    if Some(thread::current().id()) == unsafe { MAIN_THREAD_ID } {
+        let result = callback(unsafe { &*PHEXCHAT });
+        let res = AsyncResult::new();
+        res.set(result);
+        res
     } else {
-        cln.set(callback(hex));
+        let res = AsyncResult::new();
+        let cln = res.clone();
+        let hex = unsafe { &*PHEXCHAT };
+        if let Some(task_queue) = unsafe { &TASK_QUEUE } {
+            let cbk = Box::new(
+                move || {
+                    cln.set(callback(hex));
+                }
+            );
+            task_queue.lock().unwrap().push_back(cbk);
+        } else {
+            cln.set(callback(hex));
+        }
+        res
     }
-    res
 }
 
 /// This initializes the fundamental thread-safe features of this library.
@@ -143,6 +157,7 @@ where
 ///
 pub (crate)
 fn main_thread_init() {
+    unsafe { MAIN_THREAD_ID = Some(thread::current().id()) }
     if unsafe { TASK_QUEUE.is_none() } {
         unsafe { 
             TASK_QUEUE = Some(Arc::new(Mutex::new(LinkedList::new()))); 

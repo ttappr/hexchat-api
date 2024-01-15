@@ -358,6 +358,7 @@ pub enum ListError {
     UnknownType(i8),
     NotStarted(String),
     NotAvailable(String),
+    ListIteratorDropped(String),
 }
 
 impl error::Error for ListError {}
@@ -370,6 +371,9 @@ impl fmt::Display for ListError {
             UnknownType(msg)  => { write!(f, "UnknownType(\"{:?}\")", msg) },
             NotStarted(msg)   => { write!(f, "NotStarted(\"{}\")", msg) },
             NotAvailable(msg) => { write!(f, "NotAvailable(\"{}\")", msg) },
+            ListIteratorDropped(msg) => {
+                write!(f, "ListIteratorDropped(\"{}\")", msg)
+            },
         }
     }
 }
