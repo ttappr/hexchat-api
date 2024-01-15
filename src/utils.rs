@@ -127,6 +127,27 @@ macro_rules! hc_print_th {
     }};
 }
 
+/// Executes a command in the active Hexchat window. Provided for convenience
+/// to support formatted string commands.
+/// 
+#[macro_export]
+macro_rules! hc_command {
+    ( $fmt:literal, $( $argv:expr ),+ ) => {
+        hexchat_api::command_inner(&format!($fmt, $($argv),+));
+    };
+    ( $cmd:literal ) => {
+        hexchat_api::command_inner($cmd);
+    };
+}
+
+/// Executes a command in the active Hexchat window. This function is not
+/// intended to be used directly.
+/// 
+pub fn command_inner(cmd: &str) {
+    let hc = unsafe { &*PHEXCHAT };
+    hc.command(cmd);
+}
+
 /// ```*const c_char -> CString```
 ///
 /// Creates an owned `CString` from the character buffer. Useful for saving
