@@ -1,20 +1,24 @@
 [package]
-name = "hexchat_api"
-version = "0.1.1"
+name = "hexchat-api"
+version = "0.2.1"
 authors = ["ttappr <tmtappr@gmail.com>"]
+description = "A Rust API for HexChat plugin development"
+documentation = "https://ttapper.github.io/hexchat-api/doc/hexchat_api/index.html"
+repository = "https://github.com/ttappr/hexchat-api"
+readme = "README.md"
+exclude = ["docs"]
+keywords = ["hexchat", "plugin", "api", "rust", "ffi", "wrapper", "irc", "chat"]
+categories = ["api-bindings"]
 license = "MIT"
-edition = "2018"
+edition = "2021"
 
 [lib]
 name = "hexchat_api"
-#crate-type = ["cdylib"]
 
 [dependencies]
 libc = "0.2.84"
 backtrace = "0.3"
 send_wrapper = "0.6.0"
-#lazy_static = "1.4"
-#once_cell = "1.6"
 
 [profile.release]
 opt-level = "s"
