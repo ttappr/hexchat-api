@@ -47,7 +47,8 @@ hexchat.hook_command(
                                     });
             // Get the return data from the main thread callback (blocks).
             let result = async_result.get();
-            outpth!("Spawned thread received from main thread: {}", result);
+            hc_print_th!("Spawned thread received from main thread: {}", 
+                         result);
         });
         Eat::All
     },
