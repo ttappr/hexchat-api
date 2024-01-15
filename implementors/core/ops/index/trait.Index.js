@@ -1,4 +1,0 @@
-(function() {var implementors = {};
-implementors["gimli"] = [{"text":"impl&lt;'input, Endian&gt; Index&lt;usize&gt; for EndianSlice&lt;'input, Endian&gt; <span class=\"where fmt-newline\">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Endian: Endianity,&nbsp;</span>","synthetic":false,"types":[]},{"text":"impl&lt;'input, Endian&gt; Index&lt;RangeFrom&lt;usize&gt;&gt; for EndianSlice&lt;'input, Endian&gt; <span class=\"where fmt-newline\">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Endian: Endianity,&nbsp;</span>","synthetic":false,"types":[]}];
-implementors["hexchat_api"] = [{"text":"impl Index&lt;&amp;'_ str&gt; for ListItem","synthetic":false,"types":[]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

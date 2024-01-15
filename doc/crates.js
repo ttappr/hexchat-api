@@ -1,1 +1,1 @@
-window.ALL_CRATES = ["backtrace","cfg_if","hexchat_api","libc","rustc_demangle","send_wrapper"];
+window.ALL_CRATES = ["hexchat_api"];
