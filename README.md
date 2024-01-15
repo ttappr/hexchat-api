@@ -38,22 +38,26 @@ hexchat.hook_command(
     |hc, word, word_eol, ud| {
         // Spawn a new thread.
         thread::spawn(|| {
-            // Send a task to the main thread to have executed and get its
-            // AsyncResult object.
-            let async_result = main_thread(
-                                |hc| {
-                                    hc.print("Hello from main thread!");
-                                    "This is the return value from main!"
-                                });
-            // Get the return data from the main thread callback (blocks).
+            // Send a task to the main thread to have executed and 
+            // get its AsyncResult object.
+            let async_result  
+                    = main_thread(|hc| {
+                        hc.print("Hello from main thread!");
+                        
+                        "This is the return value from main!"
+                    });
+            // Get the return data from the main thread callback 
+            // (blocks).
             let result = async_result.get();
-            hc_print_th!("Spawned thread received from main thread: {}", 
-                         result);
+
+            hc_print_th!("Spawned thread received from main \
+                          thread: {}", result);
         });
         Eat::All
     },
 
-    "Runs a new thread that sets up a closure to run on the main thread.",
+    "Runs a new thread that sets up a closure to run on the main \
+     thread.",
     NoData);
 ```
 
@@ -115,11 +119,13 @@ fn plugin_init(hc: &Hexchat) -> i32 {
                     
                         hc.print("Hello, Hexchat!");
     
-                        user_data.apply(|msg: &&str| { hc.print(msg); });
+                        user_data.apply(|msg: &&str| { 
+                            hc.print(msg); 
+                        });
     
                         Eat::All
                     }, 
-                    "Prints \"Hello, Hexchat!\", and the user data.", 
+                    "Prints \"Hello, Hexchat!\", and the user data.",
                     udata);
     1
 }
@@ -135,9 +141,10 @@ fn plugin_deinit(hc: &Hexchat) -> i32 {
 /// # Arguments
 /// * `hc`        - The Hexchat API object reference.
 /// * `word`      - A list of parameters passed to the command.
-/// * `word_eol`  - Like `word`, but catenates the word args decrementally.
-/// * `user_data` - The user data to be passed back to the command when 
-///                 invoked by Hexchat.
+/// * `word_eol`  - Like `word`, but catenates the word args 
+///                 decrementally.
+/// * `user_data` - The user data to be passed back to the command 
+///                 when invoked by Hexchat.
 /// # Returns
 /// * One of `Eat::All`, `Eat::Hexchat`, `Eat::Plugin`, `Eat::None`. 
 ///
