@@ -90,10 +90,10 @@ impl<T: Clone + Send> AsyncResult<T> {
     pub fn get(&self) -> T {
         let (mtx, cvar) = &*self.data;
         let mut guard   = mtx.lock().unwrap();
-        while !(*guard).1 {
+        while !guard.1 {
             guard = cvar.wait(guard).unwrap();
         }
-        (*guard).0.as_ref().unwrap().clone()
+        guard.0.as_ref().unwrap().clone()
     }
     /// Sets the return data for the async result. This will unblock the
     /// receiver waiting on the result from `get()`.

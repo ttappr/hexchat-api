@@ -167,7 +167,7 @@ impl ListIterator {
             let data = &*cell.borrow();
             let mut start = true;
             for (field_name, field_type) in &data.field_types {
-                let value = self.get_field_pvt(&*data, field_name, *field_type)
+                let value = self.get_field_pvt(data, field_name, *field_type)
                                 .unwrap();
                 if !visitor(field_name, &value, start) {
                     break 'main;

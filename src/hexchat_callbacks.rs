@@ -22,19 +22,16 @@ extern "C" fn c_callback(word        : *const *const c_char,
                          user_data   : *mut c_void
                         ) -> c_int
 {
-    match catch_unwind(|| {
+    catch_unwind(|| {
         let word     = argv2svec(word, 1);
         let word_eol = argv2svec(word_eol, 1);
 
         unsafe {
             let cd = user_data as *mut CallbackData;
             let hc = &*PHEXCHAT;
-            (*cd).command_cb(hc, &word, &word_eol, (*cd).get_user_data())
+            (*cd).command_cb(hc, &word, &word_eol, (*cd).get_user_data()) as _
         }
-    }) {
-        Ok(result) => result as i32,
-        Err(_)     => Eat::None as i32,
-    }
+    }).unwrap_or(Eat::None as i32)
 }
 
 /// An actual callback registered with Hexchat, which proxies for client plugin
@@ -43,21 +40,18 @@ extern "C" fn c_callback(word        : *const *const c_char,
 /// `user_data`.
 pub (crate)
 extern "C" fn c_print_callback(word      : *const *const c_char,
-                               user_data : *mut c_void
-                              ) -> c_int
+                               user_data : *mut c_void) 
+    -> c_int
 {
-    match catch_unwind(|| {
+    catch_unwind(|| {
         let word = argv2svec(word, 1);
-
+        
         unsafe {
             let cd = user_data as *mut CallbackData;
             let hc = &*PHEXCHAT;
-            (*cd).print_cb(hc, &word, (*cd).get_user_data())
+            (*cd).print_cb(hc, &word, (*cd).get_user_data()) as _
         }
-    }) {
-        Ok(result) => result as i32,
-        Err(_)     => Eat::None as i32,
-    }
+    }).unwrap_or(Eat::None as i32)
 }
 
 /// An actual callback registered with Hexchat, which proxies for client plugin
@@ -66,21 +60,18 @@ extern "C" fn c_print_callback(word      : *const *const c_char,
 pub (crate)
 extern "C" fn c_print_attrs_callback(word      : *const *const c_char,
                                      attrs     : *const EventAttrs,
-                                     user_data : *mut c_void
-                                    ) -> c_int
+                                     user_data : *mut c_void) 
+    -> c_int
 {
-    match catch_unwind(|| {
+    catch_unwind(|| {
         let word = argv2svec(word, 1);
         
         unsafe {
             let cd = user_data as *mut CallbackData;
             let hc = &*PHEXCHAT;
-            (*cd).print_attrs_cb(hc, &word, &*attrs, (*cd).get_user_data())
+            (*cd).print_attrs_cb(hc, &word, &*attrs, (*cd).get_user_data()) as _
         }
-    }) {
-        Ok(result) => result as i32,
-        Err(_)     => Eat::None as i32,
-    }
+    }).unwrap_or(Eat::None as i32)
 }
 
 
@@ -89,16 +80,13 @@ extern "C" fn c_print_attrs_callback(word      : *const *const c_char,
 pub (crate)
 extern "C" fn c_timer_callback(user_data: *mut c_void) -> c_int
 {
-    match catch_unwind(|| {
+    catch_unwind(|| {
         unsafe {
             let cd = user_data as *mut CallbackData;
             let hc = &*PHEXCHAT;
             (*cd).timer_cb(hc, (*cd).get_user_data())
         }
-    }) {
-        Ok(result) => result as i32,
-        Err(_)     => 0,
-    }
+    }).unwrap_or(0)
 }
 
 /// A special case callback. This is used by the multi threading support to
@@ -109,17 +97,13 @@ extern "C" fn c_timer_callback(user_data: *mut c_void) -> c_int
 pub (crate)
 extern "C" fn c_timer_callback_once(user_data: *mut c_void) -> c_int
 {
-    match catch_unwind(|| {
+    catch_unwind(|| {
         unsafe {
             let cd = user_data as *mut CallbackData;
             let hc = &*PHEXCHAT;
             (*cd).timer_once_cb(hc, (*cd).get_user_data())
         }
-    }) {
-        Ok(result) => result as i32,
-        Err(_)     => 0,  // TODO - consider not using this value here.
-                          //        It has the effect: command not found...
-    }
+    }).unwrap_or(0)
 }
 
 /// An actual callback registered with Hexchat, which proxies for client plugin
@@ -128,14 +112,11 @@ pub (crate)
 extern "C" fn c_fd_callback(fd: c_int, flags: c_int, user_data: *mut c_void)
     -> c_int 
 {
-    match catch_unwind(|| {
+    catch_unwind(|| {
         unsafe {
             let cd = user_data as *mut CallbackData;
             let hc = &*PHEXCHAT;
-            (*cd).fd_cb(hc, fd, flags, &mut (*cd).get_user_data())
+            (*cd).fd_cb(hc, fd, flags, (*cd).get_user_data()) as i32
         }
-    }) {
-        Ok(result) => result as i32,
-        Err(_)     => Eat::None as i32,
-    }
+    }).unwrap_or(Eat::None as i32)
 }
