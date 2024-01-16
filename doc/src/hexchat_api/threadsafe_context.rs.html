@@ -373,7 +373,7 @@
 
 <span class="kw">impl </span>Drop <span class="kw">for </span>ThreadSafeContext {
     <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="kw">if </span>Arc::strong_count(<span class="kw-2">&amp;</span><span class="self">self</span>.ctx) == <span class="number">1 
+        <span class="kw">if </span>Arc::strong_count(<span class="kw-2">&amp;</span><span class="self">self</span>.ctx) &lt;= <span class="number">1 
             </span>&amp;&amp; <span class="self">self</span>.ctx.read().unwrap().is_some() {
             <span class="kw">let </span>me = <span class="self">self</span>.clone();
             main_thread(<span class="kw">move </span>|<span class="kw">_</span>| {

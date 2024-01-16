@@ -238,7 +238,7 @@
 /// hexchat window. Internally it invokes 
 /// `hexchat.print(&amp;format!(&quot;&lt;format-string&gt;&quot;, arg1, arg2, ...)`.
 /// Using the macro, this becomes 
-/// `hc_print!(hc, &quot;&lt;format_string&gt;&quot;, arg1, arg2, ...)`. To print from another 
+/// `hc_print!(&quot;&lt;format_string&gt;&quot;, arg1, arg2, ...)`. To print from another 
 /// thread `hc_print_th!()` can be used.
 /// ```
 /// use hexchat_api::hc_print;

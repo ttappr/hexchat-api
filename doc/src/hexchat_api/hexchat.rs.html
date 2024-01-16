@@ -1325,7 +1325,7 @@
     /// invocable slash &quot;/&quot; command that can be seen when listing `/help`.
     /// The callback can be a static function, or a closure, that has the form:
     /// ```
-    ///     FnMut(&amp;Hexchat, &amp;[String], &amp;[String], &amp;mut UserData)
+    ///     FnMut(&amp;Hexchat, &amp;[String], &amp;[String], &amp;UserData)
     ///     -&gt; Eat
     /// ```
     /// Note that the callback parameters include a reference to the `Hexchat`
@@ -1389,7 +1389,7 @@
     /// [Hexchat Plugin Interface](https://hexchat.readthedocs.io/en/latest/plugins.html)
     /// The callback needs to be compatible with this signature:
     ///  ```
-    ///  FnMut(&amp;Hexchat, &amp;[String], &amp;[String], &amp;mut UserData)
+    ///  FnMut(&amp;Hexchat, &amp;[String], &amp;[String], &amp;UserData)
     ///  -&gt; Eat
     ///  ```
     /// # Arguments
@@ -1437,7 +1437,7 @@
     /// can be any of the text events listed under Settings &gt; Text Events.
     /// Callback needs to be compatible with this signature:
     /// ```
-    /// FnMut(&amp;Hexchat, &amp;[String], &amp;mut UserData) -&gt; Eat
+    /// FnMut(&amp;Hexchat, &amp;[String], &amp;UserData) -&gt; Eat
     /// ```
     /// # Arguments
     /// * `name`        - The name of the event to listen for.
@@ -1484,7 +1484,7 @@
     /// a `time_t` value for the event. The callback needs to be compatible
     /// with this signature:
     /// ```
-    /// FnMut(&amp;Hexchat, &amp;[String], &amp;EventAttrs, &amp;mut UserData)
+    /// FnMut(&amp;Hexchat, &amp;[String], &amp;EventAttrs, &amp;UserData)
     /// -&gt; Eat
     /// ```
     /// # Arguments
@@ -1532,7 +1532,7 @@
     <span class="doccomment">/// Sets up a callback to be invoked every `timeout` milliseconds. The
     /// callback needs to be compatible with:
     /// ```
-    /// FnMut(&amp;Hexchat, &amp;mut UserData) -&gt; i32
+    /// FnMut(&amp;Hexchat, &amp;UserData) -&gt; i32
     /// ```
     /// # Arguments
     /// * `timeout`     - The timeout in milliseconds.
