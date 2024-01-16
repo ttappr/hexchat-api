@@ -103,7 +103,7 @@ impl Hexchat {
     /// invocable slash "/" command that can be seen when listing `/help`.
     /// The callback can be a static function, or a closure, that has the form:
     /// ```
-    ///     FnMut(&Hexchat, &[String], &[String], &mut UserData)
+    ///     FnMut(&Hexchat, &[String], &[String], &UserData)
     ///     -> Eat
     /// ```
     /// Note that the callback parameters include a reference to the `Hexchat`
@@ -167,7 +167,7 @@ impl Hexchat {
     /// [Hexchat Plugin Interface](https://hexchat.readthedocs.io/en/latest/plugins.html)
     /// The callback needs to be compatible with this signature:
     ///  ```
-    ///  FnMut(&Hexchat, &[String], &[String], &mut UserData)
+    ///  FnMut(&Hexchat, &[String], &[String], &UserData)
     ///  -> Eat
     ///  ```
     /// # Arguments
@@ -215,7 +215,7 @@ impl Hexchat {
     /// can be any of the text events listed under Settings > Text Events.
     /// Callback needs to be compatible with this signature:
     /// ```
-    /// FnMut(&Hexchat, &[String], &mut UserData) -> Eat
+    /// FnMut(&Hexchat, &[String], &UserData) -> Eat
     /// ```
     /// # Arguments
     /// * `name`        - The name of the event to listen for.
@@ -262,7 +262,7 @@ impl Hexchat {
     /// a `time_t` value for the event. The callback needs to be compatible
     /// with this signature:
     /// ```
-    /// FnMut(&Hexchat, &[String], &EventAttrs, &mut UserData)
+    /// FnMut(&Hexchat, &[String], &EventAttrs, &UserData)
     /// -> Eat
     /// ```
     /// # Arguments
@@ -310,7 +310,7 @@ impl Hexchat {
     /// Sets up a callback to be invoked every `timeout` milliseconds. The
     /// callback needs to be compatible with:
     /// ```
-    /// FnMut(&Hexchat, &mut UserData) -> i32
+    /// FnMut(&Hexchat, &UserData) -> i32
     /// ```
     /// # Arguments
     /// * `timeout`     - The timeout in milliseconds.

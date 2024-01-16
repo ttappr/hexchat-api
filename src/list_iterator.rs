@@ -1,6 +1,4 @@
 
-#![allow(dead_code, unused_imports)]
-
 //! This module provides a Rust wrapper for Hexchat's list related API. A list
 //! can be accessed by creating a `ListIterator` by passing the name of one of
 //! the list types to the constructor. The iterator itself can be used to
@@ -10,19 +8,11 @@
 //! can be called to generate a vector or other collections.
 
 use libc::c_void;
-use libc::c_char;
 use libc::time_t;
 use std::cell::RefCell;
-use std::borrow::Borrow;
-use std::collections::hash_map::Keys;
-use std::collections::HashMap;
-use std::error::Error;
 use std::{fmt, error};
-use std::iter::IntoIterator;
-use std::marker::PhantomData;
 use std::rc::Rc;
-use std::ptr::null;
-use std::ffi::{CString, CStr};
+use std::ffi::CString;
 
 use crate::context::*;
 use crate::hexchat::Hexchat;
@@ -284,6 +274,7 @@ impl Iterator for &ListIterator {
 /// * `hc`          - The Hexchat pointer.
 /// * `started`     - true if `next()` has aready been called on the Rust iter.
 ///
+#[allow(dead_code)]
 struct ListIteratorData {
     list_name   : String,
     field_types : Vec<(String, i8)>,

@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::ffi::{CString, c_void};
 use crate::{str2cstring, PHEXCHAT};
 use std::ptr;
@@ -8,6 +6,7 @@ use std::rc::Rc;
 
 // TODO - Currently there's no use for retaining all the data except for the
 //        handle. Consider removing the CString fields.
+#[allow(dead_code)]
 struct PluginData {
     file_name   : CString,
     plugin_name : CString,

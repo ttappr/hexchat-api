@@ -1,6 +1,3 @@
-
-#![allow(unused_macros, dead_code)]
-
 use libc::c_char;
 use std::ffi::{CString, CStr};
 
@@ -21,7 +18,7 @@ fn str2cstring(s: &str) -> CString {
 /// hexchat window. Internally it invokes 
 /// `hexchat.print(&format!("<format-string>", arg1, arg2, ...)`.
 /// Using the macro, this becomes 
-/// `hc_print!(hc, "<format_string>", arg1, arg2, ...)`. To print from another 
+/// `hc_print!("<format_string>", arg1, arg2, ...)`. To print from another 
 /// thread `hc_print_th!()` can be used.
 /// ```
 /// use hexchat_api::hc_print;
