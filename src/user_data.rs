@@ -2,7 +2,7 @@ use std::any::Any;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::sync::Arc;
-use std::sync::Mutex;
+use std::sync::RwLock;
 
 /// Represents the user data that is provided to callbacks when they're invoked.
 /// A `UserData` object is registered with the callback using one of the
@@ -32,7 +32,7 @@ use std::sync::Mutex;
 pub enum UserData {
     BoxedData  ( Box < RefCell < dyn Any > > ),
     SharedData ( Rc  < RefCell < dyn Any > > ),
-    SyncData   ( Arc < Mutex   < dyn Any > > ),
+    SyncData   ( Arc < RwLock  < dyn Any > > ),
     NoData,
 }
 
@@ -69,7 +69,7 @@ impl UserData {
     /// * `SyncData(user_data)`.
     ///
     pub fn sync<D:'static>(user_data: D) -> Self {
-        SyncData(Arc::new(Mutex::new(user_data)))
+        SyncData(Arc::new(RwLock::new(user_data)))
     }
 
     /// Applies the given function to the wrapped object inside a `UserData`
@@ -99,7 +99,7 @@ impl UserData {
                 f(d.borrow().downcast_ref::<D>().expect(ERRMSG))
             },
             SyncData(d) => {
-                f((*d.lock().unwrap()).downcast_ref::<D>().expect(ERRMSG))
+                f((*d.read().unwrap()).downcast_ref::<D>().expect(ERRMSG))
             },
             NoData => { panic!("Can't downcast `NoData`.") },
         }
@@ -121,7 +121,7 @@ impl UserData {
                 f(d.borrow_mut().downcast_mut::<D>().expect(ERRMSG))
             },
             SyncData(d) => {
-                f((*d.lock().unwrap()).downcast_mut::<D>().expect(ERRMSG))
+                f((*d.write().unwrap()).downcast_mut::<D>().expect(ERRMSG))
             },
             NoData => { panic!("Can't downcast `NoData`.") },
         }
