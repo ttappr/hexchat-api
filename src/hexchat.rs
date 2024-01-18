@@ -875,11 +875,11 @@ impl PrefValue {
 // Apply the same attribute to all items in the block, but don't compile it as 
 // an actual block.
 macro_rules! apply_attrib {
-    (#[$d:meta] $($e:item)*) => { $( #[$d] $e )* }
+    (#![$attr:meta] $( $it:item )*) => { $( #[$attr] $it )* }
 }
 
 apply_attrib! {
-#[allow(non_camel_case_types)]
+#![allow(non_camel_case_types)]
 
 /// Some types used by the C struct below.
 pub (crate) type hexchat_hook        = c_void;
