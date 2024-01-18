@@ -18,7 +18,6 @@ use libc::c_void;
 use std::ptr::null;
 use std::sync::RwLock;
 use std::sync::Arc;
-use std::sync::Mutex;
 
 use send_wrapper::SendWrapper;
 
@@ -45,7 +44,7 @@ struct HookData {
 ///
 #[derive(Clone)]
 pub struct Hook {
-    data: Arc<Mutex<Option<SendWrapper<HookData>>>>,
+    data: Arc<RwLock<Option<SendWrapper<HookData>>>>,
 }
 
 unsafe impl Send for Hook {}
@@ -58,7 +57,7 @@ impl Hook {
 
         let hook = Hook { 
             data: Arc::new(
-                    Mutex::new(
+                    RwLock::new(
                         Some(
                             SendWrapper::new(
                                 HookData {
@@ -74,7 +73,7 @@ impl Hook {
             
             // Clean up dead hooks.
             hook_list.retain(|h| 
-                !h.data.lock().unwrap().as_ref().unwrap().hook_ptr.is_null()
+                !h.data.read().unwrap().as_ref().unwrap().hook_ptr.is_null()
             );
             
             // Store newly created hook in global list.
@@ -91,7 +90,7 @@ impl Hook {
         if let Some(hl_rwlock) = unsafe { &HOOK_LIST } {
             // Lock the global list, and set the internal pointer.
             let _rlock = hl_rwlock.read();
-            self.data.lock().unwrap().as_mut().unwrap().hook_ptr = ptr;
+            self.data.write().unwrap().as_mut().unwrap().hook_ptr = ptr;
         }
     }
 
@@ -105,7 +104,7 @@ impl Hook {
         if let Some(hl_rwlock) = unsafe { &HOOK_LIST } {
             // Lock the global list, and set the internal pointer.
             let _rlock = hl_rwlock.read();
-            self.data.lock().unwrap().as_mut().unwrap().cbd_box_ptr = ptr;
+            self.data.write().unwrap().as_mut().unwrap().cbd_box_ptr = ptr;
         }
     }
 
@@ -122,7 +121,7 @@ impl Hook {
             if let Some(hl_rwlock) = &HOOK_LIST {
                 let _rlock = hl_rwlock.read();
                 
-                let ptr_data = &mut self.data.lock().unwrap();
+                let ptr_data = &mut self.data.write().unwrap();
                 
                 // Determine if the Hook is still alive (non-null ptr).
                 if !ptr_data.as_ref().unwrap().hook_ptr.is_null() {
