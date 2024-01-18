@@ -47,20 +47,21 @@ impl ThreadSafeListIterator {
         }
     }
     
-    /// This can give unpredictable results if executed from a thread that isn't
-    /// Hexchat's main thread. Use a `ThreadSafeContext` to get a list from
-    /// non-main threads. With that said, this method executed from the main
-    /// thread will produce the list from the current context which can then
-    /// be passed to another thread.
+    /// Produces the list associated with `name`.
     /// # Arguments
     /// * `name` - The name of the list to get.
     /// # Returns
     /// * A thread-safe object representing one of Hexchat's internal lists.
     ///
     pub fn new(name: &str) -> Option<Self> {
-        ListIterator::new(name).map(|list| ThreadSafeListIterator {
-            list_iter: Arc::new(RwLock::new(Some(SendWrapper::new(list))))
-        })
+        let name = name.to_string();
+        main_thread(move |_| {
+            ListIterator::new(&name).map(|list| 
+                ThreadSafeListIterator {
+                    list_iter: 
+                        Arc::new(RwLock::new(Some(SendWrapper::new(list))))
+                })}
+        ).get()
     }
     
     /// Returns a vector of the names of the fields supported by the list
