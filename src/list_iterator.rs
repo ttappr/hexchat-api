@@ -12,7 +12,6 @@ use libc::time_t;
 use std::cell::RefCell;
 use std::{fmt, error};
 use std::rc::Rc;
-use std::ffi::CString;
 
 use crate::context::*;
 use crate::hexchat::Hexchat;
@@ -193,8 +192,8 @@ impl ListIterator {
                     Ok(IntVal(val))
                 },
                 112 /* 'p' (pointer) */ => {
-                    let networkcstr = CString::new("network").unwrap();
-                    let channelcstr = CString::new("channel").unwrap();
+                    let networkcstr = str2cstring("network");
+                    let channelcstr = str2cstring("channel");
                     if name.to_lowercase() == "context" {
                         let network = (data.hc.c_list_str)(data.hc,
                                                            data.list_ptr,

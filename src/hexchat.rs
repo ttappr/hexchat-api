@@ -1,4 +1,3 @@
-
 //! This file holds the Hexchat struct used to interface with Hexchat. Its
 //! fields are the actual callbacks provided by Hexchat. When Hexchat
 //! loads this library, the Hexchat pointer is stored and used by casting it
@@ -873,18 +872,23 @@ impl PrefValue {
     }
 }
 
+// Apply the same attribute to all items in the block, but don't compile it as 
+// an actual block.
+macro_rules! apply_attrib {
+    (#[$d:meta] $($e:item)*) => { $( #[$d] $e )* }
+}
+
+apply_attrib! {
+#[allow(non_camel_case_types)]
+
 /// Some types used by the C struct below.
-#[allow(non_camel_case_types)]
 pub (crate) type hexchat_hook        = c_void;
-#[allow(non_camel_case_types)]
 pub (crate) type hexchat_list        = c_void;
-#[allow(non_camel_case_types)]
 pub (crate) type hexchat_context     = c_void;
-#[allow(dead_code, non_camel_case_types)]
+#[allow(dead_code)]
 pub (crate) type hexchat_event_attrs = c_void;
 
 /// Mirrors the callback function pointer of Hexchat.
-#[allow(non_camel_case_types)]
 type C_Callback      = extern "C"
                        fn(word       : *const *const c_char,
                           word_eol   : *const *const c_char,
@@ -892,20 +896,17 @@ type C_Callback      = extern "C"
                          ) -> c_int;
 
 /// Mirrors the print callback function pointer of Hexchat.
-#[allow(non_camel_case_types)]
 type C_PrintCallback = extern "C"
                        fn(word       : *const *const c_char,
                           user_data  : *mut c_void
                          ) -> c_int;
 
 /// Mirrors the timer callback function pointer of Hexchat.
-#[allow(non_camel_case_types)]
 type C_TimerCallback = extern "C"
                        fn(user_data  : *mut c_void
                          ) -> c_int;
 
 /// Mirrors the print attr callback function pointer of Hexchat.
-#[allow(non_camel_case_types)]
 type C_AttrCallback  = extern "C"
                        fn(word       : *const *const c_char,
                           attrs      : *const EventAttrs,
@@ -913,12 +914,12 @@ type C_AttrCallback  = extern "C"
                          ) -> c_int;
 
 /// Mirrors the FD related callback function pointer of Hexchat.
-#[allow(non_camel_case_types)]
 type C_FDCallback    = extern "C"
                        fn(fd         : c_int,
                           flags      : c_int,
                           udata      : *mut c_void
                          ) -> c_int;
+}
 
 /// Mirrors the C struct for `hexchat_event_attrs`. It holds the timestamps
 /// for the callback invocations for callbacks registered using 
