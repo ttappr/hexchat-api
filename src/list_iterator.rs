@@ -47,7 +47,8 @@ impl ListIterator {
     ///   `Ok` holds a `ListIterator` instance.
     ///
     pub fn new(list_name: &str) -> Option<Self> {
-        assert!(thread::current().id() == unsafe { MAIN_THREAD_ID.unwrap() });
+        assert!(thread::current().id() == unsafe { MAIN_THREAD_ID.unwrap() },
+                "ListIterator::new() must be called from the main thread.");
         let name     = str2cstring(list_name);
         let hc       = unsafe { &*PHEXCHAT };
         let list_ptr = unsafe { (hc.c_list_get)(hc, name.as_ptr()) };
