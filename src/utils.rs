@@ -127,6 +127,7 @@ macro_rules! hc_command_th {
 /// Executes a command in the active Hexchat window. This function is not
 /// intended to be used directly.
 /// 
+#[doc(hidden)]
 pub fn command_inner(cmd: &str) {
     let hc = unsafe { &*PHEXCHAT };
     hc.command(cmd);

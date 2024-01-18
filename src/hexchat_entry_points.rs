@@ -185,6 +185,7 @@ impl PluginInfo {
 /// This function calls the client plugin's `plugin_get_info()` indirectly to
 /// obtain the persistent plugin info strings that it sets the paramters to.
 ///
+#[doc(hidden)]
 pub fn lib_hexchat_plugin_get_info(name      : *mut *const i8,
                                    desc      : *mut *const i8,
                                    version   : *mut *const i8,
@@ -198,6 +199,7 @@ pub fn lib_hexchat_plugin_get_info(name      : *mut *const i8,
 /// plugin author shouldn't invoke this fuction - it's only public because
 /// the `dll_entry_points()` macro generates code that calls this.
 ///
+#[doc(hidden)]
 pub fn lib_hexchat_plugin_init(hexchat   : &'static Hexchat,
                                name      : *mut *const c_char,
                                desc      : *mut *const c_char,
@@ -228,6 +230,7 @@ pub fn lib_hexchat_plugin_init(hexchat   : &'static Hexchat,
 /// thus clean up. Plugin authors should not call this - it's only public 
 /// because `dll_entry_points()` generates code that needs this.
 ///
+#[doc(hidden)]
 pub fn lib_hexchat_plugin_deinit(hexchat  : &'static Hexchat, 
                                  callback : Box<DeinitFn>) 
     -> i32
@@ -258,6 +261,7 @@ pub fn lib_hexchat_plugin_deinit(hexchat  : &'static Hexchat,
 /// that calls this.
 ///
 #[inline]
+#[doc(hidden)]
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub fn lib_get_info(name     : *mut *const c_char,
                     desc     : *mut *const c_char,
