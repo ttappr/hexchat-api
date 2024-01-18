@@ -10,9 +10,11 @@
 use libc::c_void;
 use libc::time_t;
 use std::cell::RefCell;
+use std::thread;
 use std::{fmt, error};
 use std::rc::Rc;
 
+use crate::MAIN_THREAD_ID;
 use crate::context::*;
 use crate::hexchat::Hexchat;
 use crate::hexchat_entry_points::PHEXCHAT;
@@ -45,6 +47,7 @@ impl ListIterator {
     ///   `Ok` holds a `ListIterator` instance.
     ///
     pub fn new(list_name: &str) -> Option<Self> {
+        assert!(thread::current().id() == unsafe { MAIN_THREAD_ID.unwrap() });
         let name     = str2cstring(list_name);
         let hc       = unsafe { &*PHEXCHAT };
         let list_ptr = unsafe { (hc.c_list_get)(hc, name.as_ptr()) };

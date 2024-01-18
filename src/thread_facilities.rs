@@ -41,7 +41,7 @@ static mut TASK_QUEUE: Option<Arc<Mutex<TaskQueue>>> = None;
 /// whether it is being called from the main thread or not. If not, the
 /// callback can be invoked right away. Otherwise, it gets scheduled.
 /// 
-static mut MAIN_THREAD_ID: Option<thread::ThreadId> = None;
+pub(crate) static mut MAIN_THREAD_ID: Option<thread::ThreadId> = None;
 
 /// Stops and removes the main thread task queue handler. Otherwise it will
 /// keep checking the queue while doing nothing useful - which isn't 
