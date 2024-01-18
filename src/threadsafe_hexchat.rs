@@ -15,10 +15,7 @@ use crate::threadsafe_list_iterator::*;
 /// enough utility to code that needs to invoke Hexchat from other threads.
 ///
 #[derive(Clone, Copy)]
-pub struct ThreadSafeHexchat {
-    #[allow(dead_code)] // Never read...yet.
-    hc: &'static Hexchat,
-}
+pub struct ThreadSafeHexchat;
 
 unsafe impl Send for ThreadSafeHexchat {}
 unsafe impl Sync for ThreadSafeHexchat {}
@@ -26,8 +23,8 @@ unsafe impl Sync for ThreadSafeHexchat {}
 impl ThreadSafeHexchat {
     /// Constructs a `ThreadSafeHexchat` object that wraps `Hexchat`.
     pub (crate) 
-    fn new(hc: &'static Hexchat) -> Self {
-        ThreadSafeHexchat { hc }
+    fn new(_hc: &'static Hexchat) -> Self {
+        ThreadSafeHexchat
     }
     
     /// Prints the string passed to it to the active Hexchat window.
