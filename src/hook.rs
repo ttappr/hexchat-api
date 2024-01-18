@@ -128,8 +128,8 @@ impl Hook {
                 
                     // Unhook the callback.
                     let hc = &*PHEXCHAT;
-                    let _  = (hc.c_unhook)(hc, 
-                                           ptr_data.as_ref().unwrap().hook_ptr);
+                    let hp = ptr_data.as_ref().unwrap().hook_ptr;
+                    let _  = (hc.c_unhook)(hc, hp);
                     
                     // ^ _ should be our user_data, but we can't rely on Hexchat
                     // to return a valid user_data pointer on unload, so we have
