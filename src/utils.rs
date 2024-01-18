@@ -46,6 +46,7 @@ macro_rules! hc_print {
 /// Used by `hc_print!()` to print to a specific context. This function is
 /// not intended to be used directly.
 /// 
+#[doc(hidden)]
 pub fn print_with_ctx_inner(network: &str, channel: &str, msg: &str) {
     let hc = unsafe { &*PHEXCHAT };
     if let Some(orig_ctx) = hc.get_context() {
@@ -64,6 +65,7 @@ pub fn print_with_ctx_inner(network: &str, channel: &str, msg: &str) {
 /// Used by `hc_print!()` to print to the active Hexchat window. This function
 /// is not intended to be used directly.
 /// 
+#[doc(hidden)]
 pub fn print_inner(msg: &str) {
     let hc = unsafe { &*PHEXCHAT };
     hc.print(msg);
