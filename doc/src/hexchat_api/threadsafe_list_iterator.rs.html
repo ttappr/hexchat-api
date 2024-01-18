@@ -237,6 +237,7 @@
 <a href="#237" id="237">237</a>
 <a href="#238" id="238">238</a>
 <a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
 </pre></div><pre class="rust"><code>
 <span class="doccomment">//! This module provides a thread-safe wrapper class for the Hexchat 
 //! `ListIterator`. The methods it provides can be invoked from threads other
@@ -286,20 +287,21 @@
         }
     }
     
-    <span class="doccomment">/// This can give unpredictable results if executed from a thread that isn&#39;t
-    /// Hexchat&#39;s main thread. Use a `ThreadSafeContext` to get a list from
-    /// non-main threads. With that said, this method executed from the main
-    /// thread will produce the list from the current context which can then
-    /// be passed to another thread.
+    <span class="doccomment">/// Produces the list associated with `name`.
     /// # Arguments
     /// * `name` - The name of the list to get.
     /// # Returns
     /// * A thread-safe object representing one of Hexchat&#39;s internal lists.
     ///
     </span><span class="kw">pub fn </span>new(name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
-        ListIterator::new(name).map(|list| ThreadSafeListIterator {
-            list_iter: Arc::new(RwLock::new(<span class="prelude-val">Some</span>(SendWrapper::new(list))))
-        })
+        <span class="kw">let </span>name = name.to_string();
+        main_thread(<span class="kw">move </span>|<span class="kw">_</span>| {
+            ListIterator::new(<span class="kw-2">&amp;</span>name).map(|list| 
+                ThreadSafeListIterator {
+                    list_iter: 
+                        Arc::new(RwLock::new(<span class="prelude-val">Some</span>(SendWrapper::new(list))))
+                })}
+        ).get()
     }
     
     <span class="doccomment">/// Returns a vector of the names of the fields supported by the list
