@@ -1220,8 +1220,8 @@
 <a href="#1220" id="1220">1220</a>
 <a href="#1221" id="1221">1221</a>
 <a href="#1222" id="1222">1222</a>
-</pre></div><pre class="rust"><code>
-<span class="doccomment">//! This file holds the Hexchat struct used to interface with Hexchat. Its
+<a href="#1223" id="1223">1223</a>
+</pre></div><pre class="rust"><code><span class="doccomment">//! This file holds the Hexchat struct used to interface with Hexchat. Its
 //! fields are the actual callbacks provided by Hexchat. When Hexchat
 //! loads this library, the Hexchat pointer is stored and used by casting it
 //! to the struct contained in this file. These native function pointers are
@@ -2095,18 +2095,23 @@
     }
 }
 
-<span class="doccomment">/// Some types used by the C struct below.
-</span><span class="attr">#[allow(non_camel_case_types)]
+<span class="comment">// Apply the same attribute to all items in the block, but don&#39;t compile it as 
+// an actual block.
+</span><span class="macro">macro_rules! </span>apply_attrib {
+    (<span class="attr">#![<span class="macro-nonterminal">$attr</span>:meta] </span>$( <span class="macro-nonterminal">$it</span>:item )<span class="kw-2">*</span>) =&gt; { $( <span class="attr">#[<span class="macro-nonterminal">$attr</span>] </span><span class="macro-nonterminal">$it </span>)* }
+}
+
+<span class="macro">apply_attrib! </span>{
+<span class="attr">#![allow(non_camel_case_types)]
+
+</span><span class="doccomment">/// Some types used by the C struct below.
 </span><span class="kw">pub </span>(<span class="kw">crate</span>) <span class="kw">type </span>hexchat_hook        = c_void;
-<span class="attr">#[allow(non_camel_case_types)]
-</span><span class="kw">pub </span>(<span class="kw">crate</span>) <span class="kw">type </span>hexchat_list        = c_void;
-<span class="attr">#[allow(non_camel_case_types)]
-</span><span class="kw">pub </span>(<span class="kw">crate</span>) <span class="kw">type </span>hexchat_context     = c_void;
-<span class="attr">#[allow(dead_code, non_camel_case_types)]
+<span class="kw">pub </span>(<span class="kw">crate</span>) <span class="kw">type </span>hexchat_list        = c_void;
+<span class="kw">pub </span>(<span class="kw">crate</span>) <span class="kw">type </span>hexchat_context     = c_void;
+<span class="attr">#[allow(dead_code)]
 </span><span class="kw">pub </span>(<span class="kw">crate</span>) <span class="kw">type </span>hexchat_event_attrs = c_void;
 
 <span class="doccomment">/// Mirrors the callback function pointer of Hexchat.
-</span><span class="attr">#[allow(non_camel_case_types)]
 </span><span class="kw">type </span>C_Callback      = <span class="kw">extern </span><span class="string">&quot;C&quot;
                        </span><span class="kw">fn</span>(word       : <span class="kw-2">*const *const </span>c_char,
                           word_eol   : <span class="kw-2">*const *const </span>c_char,
@@ -2114,20 +2119,17 @@
                          ) -&gt; c_int;
 
 <span class="doccomment">/// Mirrors the print callback function pointer of Hexchat.
-</span><span class="attr">#[allow(non_camel_case_types)]
 </span><span class="kw">type </span>C_PrintCallback = <span class="kw">extern </span><span class="string">&quot;C&quot;
                        </span><span class="kw">fn</span>(word       : <span class="kw-2">*const *const </span>c_char,
                           user_data  : <span class="kw-2">*mut </span>c_void
                          ) -&gt; c_int;
 
 <span class="doccomment">/// Mirrors the timer callback function pointer of Hexchat.
-</span><span class="attr">#[allow(non_camel_case_types)]
 </span><span class="kw">type </span>C_TimerCallback = <span class="kw">extern </span><span class="string">&quot;C&quot;
                        </span><span class="kw">fn</span>(user_data  : <span class="kw-2">*mut </span>c_void
                          ) -&gt; c_int;
 
 <span class="doccomment">/// Mirrors the print attr callback function pointer of Hexchat.
-</span><span class="attr">#[allow(non_camel_case_types)]
 </span><span class="kw">type </span>C_AttrCallback  = <span class="kw">extern </span><span class="string">&quot;C&quot;
                        </span><span class="kw">fn</span>(word       : <span class="kw-2">*const *const </span>c_char,
                           attrs      : <span class="kw-2">*const </span>EventAttrs,
@@ -2135,12 +2137,12 @@
                          ) -&gt; c_int;
 
 <span class="doccomment">/// Mirrors the FD related callback function pointer of Hexchat.
-</span><span class="attr">#[allow(non_camel_case_types)]
 </span><span class="kw">type </span>C_FDCallback    = <span class="kw">extern </span><span class="string">&quot;C&quot;
                        </span><span class="kw">fn</span>(fd         : c_int,
                           flags      : c_int,
                           udata      : <span class="kw-2">*mut </span>c_void
                          ) -&gt; c_int;
+}
 
 <span class="doccomment">/// Mirrors the C struct for `hexchat_event_attrs`. It holds the timestamps
 /// for the callback invocations for callbacks registered using 

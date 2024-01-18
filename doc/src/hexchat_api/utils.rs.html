@@ -214,11 +214,7 @@
 <a href="#214" id="214">214</a>
 <a href="#215" id="215">215</a>
 <a href="#216" id="216">216</a>
-<a href="#217" id="217">217</a>
-</pre></div><pre class="rust"><code>
-<span class="attr">#![allow(unused_macros, dead_code)]
-
-</span><span class="kw">use </span>libc::c_char;
+</pre></div><pre class="rust"><code><span class="kw">use </span>libc::c_char;
 <span class="kw">use </span>std::ffi::{CString, CStr};
 
 <span class="kw">use crate</span>::{Context, PHEXCHAT};
@@ -266,6 +262,7 @@
 <span class="doccomment">/// Used by `hc_print!()` to print to a specific context. This function is
 /// not intended to be used directly.
 /// 
+</span><span class="attr">#[doc(hidden)]
 </span><span class="kw">pub fn </span>print_with_ctx_inner(network: <span class="kw-2">&amp;</span>str, channel: <span class="kw-2">&amp;</span>str, msg: <span class="kw-2">&amp;</span>str) {
     <span class="kw">let </span>hc = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>PHEXCHAT };
     <span class="kw">if let </span><span class="prelude-val">Some</span>(orig_ctx) = hc.get_context() {
@@ -284,6 +281,7 @@
 <span class="doccomment">/// Used by `hc_print!()` to print to the active Hexchat window. This function
 /// is not intended to be used directly.
 /// 
+</span><span class="attr">#[doc(hidden)]
 </span><span class="kw">pub fn </span>print_inner(msg: <span class="kw-2">&amp;</span>str) {
     <span class="kw">let </span>hc = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>PHEXCHAT };
     hc.print(msg);

@@ -369,20 +369,8 @@
 <a href="#369" id="369">369</a>
 <a href="#370" id="370">370</a>
 <a href="#371" id="371">371</a>
-<a href="#372" id="372">372</a>
-<a href="#373" id="373">373</a>
-<a href="#374" id="374">374</a>
-<a href="#375" id="375">375</a>
-<a href="#376" id="376">376</a>
-<a href="#377" id="377">377</a>
-<a href="#378" id="378">378</a>
-<a href="#379" id="379">379</a>
-<a href="#380" id="380">380</a>
-<a href="#381" id="381">381</a>
 </pre></div><pre class="rust"><code>
-<span class="attr">#![allow(dead_code, unused_imports)]
-
-</span><span class="doccomment">//! This module provides a Rust wrapper for Hexchat&#39;s list related API. A list
+<span class="doccomment">//! This module provides a Rust wrapper for Hexchat&#39;s list related API. A list
 //! can be accessed by creating a `ListIterator` by passing the name of one of
 //! the list types to the constructor. The iterator itself can be used to
 //! access list item fields by name using `get_field()`. Fields can&#39;t be
@@ -391,19 +379,10 @@
 //! can be called to generate a vector or other collections.
 
 </span><span class="kw">use </span>libc::c_void;
-<span class="kw">use </span>libc::c_char;
 <span class="kw">use </span>libc::time_t;
 <span class="kw">use </span>std::cell::RefCell;
-<span class="kw">use </span>std::borrow::Borrow;
-<span class="kw">use </span>std::collections::hash_map::Keys;
-<span class="kw">use </span>std::collections::HashMap;
-<span class="kw">use </span>std::error::Error;
 <span class="kw">use </span>std::{fmt, error};
-<span class="kw">use </span>std::iter::IntoIterator;
-<span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::rc::Rc;
-<span class="kw">use </span>std::ptr::null;
-<span class="kw">use </span>std::ffi::{CString, CStr};
 
 <span class="kw">use </span><span class="kw">crate</span>::context::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::hexchat::Hexchat;
@@ -584,8 +563,8 @@
                     <span class="prelude-val">Ok</span>(IntVal(val))
                 },
                 <span class="number">112 </span><span class="comment">/* &#39;p&#39; (pointer) */ </span>=&gt; {
-                    <span class="kw">let </span>networkcstr = CString::new(<span class="string">&quot;network&quot;</span>).unwrap();
-                    <span class="kw">let </span>channelcstr = CString::new(<span class="string">&quot;channel&quot;</span>).unwrap();
+                    <span class="kw">let </span>networkcstr = str2cstring(<span class="string">&quot;network&quot;</span>);
+                    <span class="kw">let </span>channelcstr = str2cstring(<span class="string">&quot;channel&quot;</span>);
                     <span class="kw">if </span>name.to_lowercase() == <span class="string">&quot;context&quot; </span>{
                         <span class="kw">let </span>network = (data.hc.c_list_str)(data.hc,
                                                            data.list_ptr,
@@ -665,6 +644,7 @@
 /// * `hc`          - The Hexchat pointer.
 /// * `started`     - true if `next()` has aready been called on the Rust iter.
 ///
+</span><span class="attr">#[allow(dead_code)]
 </span><span class="kw">struct </span>ListIteratorData {
     list_name   : String,
     field_types : Vec&lt;(String, i8)&gt;,

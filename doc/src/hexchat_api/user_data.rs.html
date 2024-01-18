@@ -159,15 +159,11 @@
 <a href="#159" id="159">159</a>
 <a href="#160" id="160">160</a>
 <a href="#161" id="161">161</a>
-<a href="#162" id="162">162</a>
-<a href="#163" id="163">163</a>
-</pre></div><pre class="rust"><code><span class="attr">#![allow(dead_code)]
-
-</span><span class="kw">use </span>std::any::Any;
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::any::Any;
 <span class="kw">use </span>std::rc::Rc;
 <span class="kw">use </span>std::cell::RefCell;
 <span class="kw">use </span>std::sync::Arc;
-<span class="kw">use </span>std::sync::Mutex;
+<span class="kw">use </span>std::sync::RwLock;
 
 <span class="doccomment">/// Represents the user data that is provided to callbacks when they&#39;re invoked.
 /// A `UserData` object is registered with the callback using one of the
@@ -197,7 +193,7 @@
 </span><span class="kw">pub enum </span>UserData {
     BoxedData  ( Box &lt; RefCell &lt; <span class="kw">dyn </span>Any &gt; &gt; ),
     SharedData ( Rc  &lt; RefCell &lt; <span class="kw">dyn </span>Any &gt; &gt; ),
-    SyncData   ( Arc &lt; Mutex   &lt; <span class="kw">dyn </span>Any &gt; &gt; ),
+    SyncData   ( Arc &lt; RwLock  &lt; <span class="kw">dyn </span>Any &gt; &gt; ),
     NoData,
 }
 
@@ -234,7 +230,7 @@
     /// * `SyncData(user_data)`.
     ///
     </span><span class="kw">pub fn </span>sync&lt;D:<span class="lifetime">&#39;static</span>&gt;(user_data: D) -&gt; <span class="self">Self </span>{
-        SyncData(Arc::new(Mutex::new(user_data)))
+        SyncData(Arc::new(RwLock::new(user_data)))
     }
 
     <span class="doccomment">/// Applies the given function to the wrapped object inside a `UserData`
@@ -264,7 +260,7 @@
                 f(d.borrow().downcast_ref::&lt;D&gt;().expect(ERRMSG))
             },
             SyncData(d) =&gt; {
-                f((<span class="kw-2">*</span>d.lock().unwrap()).downcast_ref::&lt;D&gt;().expect(ERRMSG))
+                f((<span class="kw-2">*</span>d.read().unwrap()).downcast_ref::&lt;D&gt;().expect(ERRMSG))
             },
             NoData =&gt; { <span class="macro">panic!</span>(<span class="string">&quot;Can&#39;t downcast `NoData`.&quot;</span>) },
         }
@@ -286,7 +282,7 @@
                 f(d.borrow_mut().downcast_mut::&lt;D&gt;().expect(ERRMSG))
             },
             SyncData(d) =&gt; {
-                f((<span class="kw-2">*</span>d.lock().unwrap()).downcast_mut::&lt;D&gt;().expect(ERRMSG))
+                f((<span class="kw-2">*</span>d.write().unwrap()).downcast_mut::&lt;D&gt;().expect(ERRMSG))
             },
             NoData =&gt; { <span class="macro">panic!</span>(<span class="string">&quot;Can&#39;t downcast `NoData`.&quot;</span>) },
         }

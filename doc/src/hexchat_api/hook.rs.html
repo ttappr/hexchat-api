@@ -184,6 +184,11 @@
 <a href="#184" id="184">184</a>
 <a href="#185" id="185">185</a>
 <a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
 </pre></div><pre class="rust"><code>
 <span class="doccomment">//! This object wraps hook pointers returned when callbacks are registered
 //! with Hexchat. The Rust-style hook can be used to unhook commands directly
@@ -204,7 +209,8 @@
 <span class="kw">use </span>std::ptr::null;
 <span class="kw">use </span>std::sync::RwLock;
 <span class="kw">use </span>std::sync::Arc;
-<span class="kw">use </span>std::sync::Mutex;
+
+<span class="kw">use </span>send_wrapper::SendWrapper;
 
 <span class="kw">use </span><span class="kw">crate</span>::callback_data::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::hexchat_entry_points::PHEXCHAT;
@@ -229,11 +235,10 @@
 ///
 </span><span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>Hook {
-    data: Arc&lt;Mutex&lt;HookData&gt;&gt;,
+    data: Arc&lt;RwLock&lt;<span class="prelude-ty">Option</span>&lt;SendWrapper&lt;HookData&gt;&gt;&gt;&gt;,
 }
 
 <span class="kw">unsafe impl </span>Send <span class="kw">for </span>Hook {}
-<span class="kw">unsafe impl </span>Send <span class="kw">for </span>HookData {}
 
 <span class="kw">impl </span>Hook {
     <span class="doccomment">/// Constructor. `hook` is a hook returned by Hexchat when registering a
@@ -243,11 +248,13 @@
 
         <span class="kw">let </span>hook = Hook { 
             data: Arc::new(
-                    Mutex::new(
-                        HookData {
-                            hook_ptr    : null::&lt;c_void&gt;(),
-                            cbd_box_ptr : null::&lt;c_void&gt;(),
-                    })),
+                    RwLock::new(
+                        <span class="prelude-val">Some</span>(
+                            SendWrapper::new(
+                                HookData {
+                                    hook_ptr    : null::&lt;c_void&gt;(),
+                                    cbd_box_ptr : null::&lt;c_void&gt;(),
+                        })))),
         };
                    
         <span class="kw">if let </span><span class="prelude-val">Some</span>(hook_list_rwlock) = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;</span>HOOK_LIST } {
@@ -256,7 +263,9 @@
             <span class="kw">let </span>hook_list = <span class="kw-2">&amp;mut *</span>wlock.unwrap();
             
             <span class="comment">// Clean up dead hooks.
-            </span>hook_list.retain(|h| !h.data.lock().unwrap().hook_ptr.is_null());
+            </span>hook_list.retain(|h| 
+                !h.data.read().unwrap().as_ref().unwrap().hook_ptr.is_null()
+            );
             
             <span class="comment">// Store newly created hook in global list.
             </span>hook_list.push(hook.clone());
@@ -272,7 +281,7 @@
         <span class="kw">if let </span><span class="prelude-val">Some</span>(hl_rwlock) = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;</span>HOOK_LIST } {
             <span class="comment">// Lock the global list, and set the internal pointer.
             </span><span class="kw">let </span>_rlock = hl_rwlock.read();
-            <span class="self">self</span>.data.lock().unwrap().hook_ptr = ptr;
+            <span class="self">self</span>.data.write().unwrap().as_mut().unwrap().hook_ptr = ptr;
         }
     }
 
@@ -286,7 +295,7 @@
         <span class="kw">if let </span><span class="prelude-val">Some</span>(hl_rwlock) = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;</span>HOOK_LIST } {
             <span class="comment">// Lock the global list, and set the internal pointer.
             </span><span class="kw">let </span>_rlock = hl_rwlock.read();
-            <span class="self">self</span>.data.lock().unwrap().cbd_box_ptr = ptr;
+            <span class="self">self</span>.data.write().unwrap().as_mut().unwrap().cbd_box_ptr = ptr;
         }
     }
 
@@ -303,24 +312,25 @@
             <span class="kw">if let </span><span class="prelude-val">Some</span>(hl_rwlock) = <span class="kw-2">&amp;</span>HOOK_LIST {
                 <span class="kw">let </span>_rlock = hl_rwlock.read();
                 
-                <span class="kw">let </span>ptr_data = <span class="kw-2">&amp;mut </span><span class="self">self</span>.data.lock().unwrap();
+                <span class="kw">let </span>ptr_data = <span class="kw-2">&amp;mut </span><span class="self">self</span>.data.write().unwrap();
                 
                 <span class="comment">// Determine if the Hook is still alive (non-null ptr).
-                </span><span class="kw">if </span>!ptr_data.hook_ptr.is_null() {
+                </span><span class="kw">if </span>!ptr_data.as_ref().unwrap().hook_ptr.is_null() {
                 
                     <span class="comment">// Unhook the callback.
                     </span><span class="kw">let </span>hc = <span class="kw-2">&amp;*</span>PHEXCHAT;
-                    <span class="kw">let _  </span>= (hc.c_unhook)(hc, ptr_data.hook_ptr);
+                    <span class="kw">let </span>hp = ptr_data.as_ref().unwrap().hook_ptr;
+                    <span class="kw">let _  </span>= (hc.c_unhook)(hc, hp);
                     
                     <span class="comment">// ^ _ should be our user_data, but we can&#39;t rely on Hexchat
                     // to return a valid user_data pointer on unload, so we have
                     // to maintain it ourselves.
 
                     // Null the hook pointer.
-                    </span>ptr_data.hook_ptr = null::&lt;c_void&gt;();
+                    </span>ptr_data.as_mut().unwrap().hook_ptr = null::&lt;c_void&gt;();
 
                     <span class="comment">// Reconstitute the CallbackData Box.
-                    </span><span class="kw">let </span>cd = ptr_data.cbd_box_ptr;
+                    </span><span class="kw">let </span>cd = ptr_data.as_ref().unwrap().cbd_box_ptr;
                     <span class="kw">let </span>cd = <span class="kw-2">&amp;mut </span>(<span class="kw-2">*</span>(cd <span class="kw">as </span><span class="kw-2">*mut </span>CallbackData));
                     <span class="kw">let </span>cd = <span class="kw-2">&amp;mut </span>Box::from_raw(cd);
                     
