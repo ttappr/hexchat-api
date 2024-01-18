@@ -214,6 +214,7 @@
 <a href="#214" id="214">214</a>
 <a href="#215" id="215">215</a>
 <a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>libc::c_char;
 <span class="kw">use </span>std::ffi::{CString, CStr};
 
@@ -343,6 +344,7 @@
 <span class="doccomment">/// Executes a command in the active Hexchat window. This function is not
 /// intended to be used directly.
 /// 
+</span><span class="attr">#[doc(hidden)]
 </span><span class="kw">pub fn </span>command_inner(cmd: <span class="kw-2">&amp;</span>str) {
     <span class="kw">let </span>hc = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>PHEXCHAT };
     hc.command(cmd);
