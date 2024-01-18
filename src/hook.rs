@@ -20,6 +20,8 @@ use std::sync::RwLock;
 use std::sync::Arc;
 use std::sync::Mutex;
 
+use send_wrapper::SendWrapper;
+
 use crate::callback_data::*;
 use crate::hexchat_entry_points::PHEXCHAT;
 use crate::user_data::*;
@@ -43,11 +45,10 @@ struct HookData {
 ///
 #[derive(Clone)]
 pub struct Hook {
-    data: Arc<Mutex<HookData>>,
+    data: Arc<Mutex<Option<SendWrapper<HookData>>>>,
 }
 
 unsafe impl Send for Hook {}
-unsafe impl Send for HookData {}
 
 impl Hook {
     /// Constructor. `hook` is a hook returned by Hexchat when registering a
@@ -58,10 +59,12 @@ impl Hook {
         let hook = Hook { 
             data: Arc::new(
                     Mutex::new(
-                        HookData {
-                            hook_ptr    : null::<c_void>(),
-                            cbd_box_ptr : null::<c_void>(),
-                    })),
+                        Some(
+                            SendWrapper::new(
+                                HookData {
+                                    hook_ptr    : null::<c_void>(),
+                                    cbd_box_ptr : null::<c_void>(),
+                        })))),
         };
                    
         if let Some(hook_list_rwlock) = unsafe { &HOOK_LIST } {
@@ -70,7 +73,9 @@ impl Hook {
             let hook_list = &mut *wlock.unwrap();
             
             // Clean up dead hooks.
-            hook_list.retain(|h| !h.data.lock().unwrap().hook_ptr.is_null());
+            hook_list.retain(|h| 
+                !h.data.lock().unwrap().as_ref().unwrap().hook_ptr.is_null()
+            );
             
             // Store newly created hook in global list.
             hook_list.push(hook.clone());
@@ -86,7 +91,7 @@ impl Hook {
         if let Some(hl_rwlock) = unsafe { &HOOK_LIST } {
             // Lock the global list, and set the internal pointer.
             let _rlock = hl_rwlock.read();
-            self.data.lock().unwrap().hook_ptr = ptr;
+            self.data.lock().unwrap().as_mut().unwrap().hook_ptr = ptr;
         }
     }
 
@@ -100,7 +105,7 @@ impl Hook {
         if let Some(hl_rwlock) = unsafe { &HOOK_LIST } {
             // Lock the global list, and set the internal pointer.
             let _rlock = hl_rwlock.read();
-            self.data.lock().unwrap().cbd_box_ptr = ptr;
+            self.data.lock().unwrap().as_mut().unwrap().cbd_box_ptr = ptr;
         }
     }
 
@@ -120,21 +125,22 @@ impl Hook {
                 let ptr_data = &mut self.data.lock().unwrap();
                 
                 // Determine if the Hook is still alive (non-null ptr).
-                if !ptr_data.hook_ptr.is_null() {
+                if !ptr_data.as_ref().unwrap().hook_ptr.is_null() {
                 
                     // Unhook the callback.
                     let hc = &*PHEXCHAT;
-                    let _  = (hc.c_unhook)(hc, ptr_data.hook_ptr);
+                    let _  = (hc.c_unhook)(hc, 
+                                           ptr_data.as_ref().unwrap().hook_ptr);
                     
                     // ^ _ should be our user_data, but we can't rely on Hexchat
                     // to return a valid user_data pointer on unload, so we have
                     // to maintain it ourselves.
 
                     // Null the hook pointer.
-                    ptr_data.hook_ptr = null::<c_void>();
+                    ptr_data.as_mut().unwrap().hook_ptr = null::<c_void>();
 
                     // Reconstitute the CallbackData Box.
-                    let cd = ptr_data.cbd_box_ptr;
+                    let cd = ptr_data.as_ref().unwrap().cbd_box_ptr;
                     let cd = &mut (*(cd as *mut CallbackData));
                     let cd = &mut Box::from_raw(cd);
                     
