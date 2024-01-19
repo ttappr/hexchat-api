@@ -126,8 +126,8 @@ where
 /// this is only used when the task queue is being shut down. This happens
 /// when Hexchat is closing or the addon is being unloaded.
 /// 
-#[derive(Debug)]
-struct TaskError(String);
+#[derive(Debug, Clone)]
+pub struct TaskError(String);
 
 impl Error for TaskError {}
 
@@ -143,13 +143,10 @@ impl Display for TaskError {
 /// on the completion of a callback, thus providing synchronization between
 /// threads.
 /// 
+#[allow(clippy::type_complexity)]
 #[derive(Clone)]
 pub struct AsyncResult<T: Clone + Send> {
-    #[allow(clippy::type_complexity)]
-    data: Arc<(Mutex<(Result<T, TaskError>, bool)>, Condvar)>,
-    
-    // ^^ ((callback-result, is-done), synchronization-object)
-    // This is the simplified format of the `data` field above.
+    data: Arc<(Mutex<(Option<Result<T, TaskError>>, bool)>, Condvar)>,
 }
 
 unsafe impl<T: Clone + Send> Send for AsyncResult<T> {}
@@ -157,16 +154,18 @@ unsafe impl<T: Clone + Send> Sync for AsyncResult<T> {}
 
 impl<T: Clone + Send> AsyncResult<T> {
     /// Constructor. Initializes the return data to None.
+    /// 
     pub (crate)
     fn new() -> Self {
         AsyncResult {
             data: Arc::new(
-                    (Mutex::new((Err(TaskError(String::default())), false)), 
+                    (Mutex::new((None, false)), 
                     Condvar::new()))
         }
     }
     /// Indicates whether the callback executing on another thread is done or
     /// not. This can be used to poll for the result.
+    /// 
     #[allow(dead_code)]
     pub fn is_done(&self) -> bool {
         let (mtx, _) = &*self.data;
@@ -174,27 +173,29 @@ impl<T: Clone + Send> AsyncResult<T> {
     }
     /// Blocking call to retrieve the return data from a callback on another
     /// thread.
-    pub fn get(&self) -> T {
+    /// 
+    pub fn get(&self) -> Result<T, TaskError> {
         let (mtx, cvar) = &*self.data;
         let mut guard   = mtx.lock().unwrap();
         while !guard.1 {
             guard = cvar.wait(guard).unwrap();
         }
-        guard.0.as_ref().unwrap().clone()
+        guard.0.take().unwrap()
     }
     /// Sets the return data for the async result. This will unblock the
     /// receiver waiting on the result from `get()`.
+    /// 
     pub (crate)
     fn set(&self, result: T) {
         let (mtx, cvar) = &*self.data;
         let mut guard   = mtx.lock().unwrap();
-               *guard   = (Ok(result), true);
+               *guard   = (Some(Ok(result)), true);
         cvar.notify_one();
     }
     fn set_error(&self, error: &str) {
         let (mtx, cvar) = &*self.data;
         let mut guard   = mtx.lock().unwrap();
-               *guard   = (Err(TaskError(error.into())), true);
+               *guard   = (Some(Err(TaskError(error.into()))), true);
         cvar.notify_one();
     }
 }

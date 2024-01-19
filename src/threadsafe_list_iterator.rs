@@ -61,7 +61,7 @@ impl ThreadSafeListIterator {
                     list_iter: 
                         Arc::new(RwLock::new(Some(SendWrapper::new(list))))
                 })}
-        ).get()
+        ).get().unwrap()
     }
     
     /// Returns a vector of the names of the fields supported by the list
@@ -73,7 +73,7 @@ impl ThreadSafeListIterator {
             me.list_iter.read().unwrap().as_ref()
                         .expect("ListIterator dropped from threadsafe context.")
                         .get_field_names().to_vec()
-        }).get()
+        }).get().unwrap()
     }
     
     /// Constructs a vector of list items on the main thread all at once. The
@@ -85,7 +85,7 @@ impl ThreadSafeListIterator {
             me.list_iter.read().unwrap().as_ref()
                         .expect("ListIterator dropped from threadsafe context.")
                         .to_vec()
-        }).get()
+        }).get().unwrap()
     }
     
     /// Creates a `ListItem` from the field data at the current position in the
@@ -97,7 +97,7 @@ impl ThreadSafeListIterator {
             me.list_iter.read().unwrap().as_ref()
                         .expect("ListIterator dropped from threadsafe context.")
                         .get_item()
-        }).get()
+        }).get().unwrap()
     }
     
     /// Returns the value for the field of the requested name.
@@ -153,7 +153,7 @@ impl ThreadSafeListIterator {
                     "ListIterator dropped from threadsafe context."
                     .to_string()))
             }
-        }).get()
+        }).get().unwrap()
     }
 }
 
@@ -167,7 +167,7 @@ impl Iterator for ThreadSafeListIterator {
             } else {
                 None
             }
-        }).get()
+        }).get().unwrap()
     }
 }
 
@@ -178,7 +178,7 @@ impl Iterator for &ThreadSafeListIterator {
         let has_more = main_thread(move |_| {
             me.list_iter.write().unwrap().as_mut()
                         .map_or(false, |it| it.next().is_some())
-        }).get();
+        }).get().unwrap();
         if has_more {
             Some(self)
         } else {
