@@ -16,6 +16,8 @@
 //! has finished executing the callback.
 
 use std::collections::LinkedList;
+use std::error::Error;
+use std::fmt::{Display, self, Formatter};
 use std::sync::{Arc, Condvar, Mutex};
 use std::thread;
 
@@ -30,7 +32,7 @@ const TASK_REST_MSECS: i64 = 2;
 
 // The type of the queue that closures will be added to and pulled from to run 
 // on the main thread of Hexchat.
-type TaskQueue = LinkedList<Box<dyn FnMut() + Sync + Send>>;
+type TaskQueue = LinkedList<Box<dyn Task>>;
 
 /// The task queue that other threads use to schedule tasks to run on the
 /// main thread. It is guarded by a `Mutex`.
@@ -54,8 +56,78 @@ pub(crate) static mut MAIN_THREAD_ID: Option<thread::ThreadId> = None;
 /// should also not be used after this function is called, since they rely on 
 /// `main_thread()` internally.
 ///
-pub fn turn_off_threadsafe_features() {
+pub unsafe fn turn_off_threadsafe_features() {
     main_thread_deinit();
+}
+
+/// Base trait for items placed on the task queue.
+/// 
+trait Task {
+    fn execute(&mut self, hexchat: &Hexchat);
+    fn set_error(&mut self, error: &str);
+}
+
+/// A task that executes a closure on the main thread.
+/// 
+struct ConcreteTask<F, R> 
+where 
+    F: FnMut(&Hexchat) -> R,
+    R: Clone + Send,
+{
+    callback : F,
+    result   : AsyncResult<R>,
+}
+
+impl<F, R> ConcreteTask<F, R> 
+where
+    F: FnMut(&Hexchat) -> R,
+    R: Clone + Send,
+{
+    fn new(callback: F, result: AsyncResult<R>) -> Self {
+        ConcreteTask {
+            callback,
+            result,
+        }
+    }
+}
+
+impl<F, R> Task for ConcreteTask<F, R> 
+where
+    F: FnMut(&Hexchat) -> R,
+    R: Clone + Send,
+{
+    /// Executes the closure and sets the result.
+    /// 
+    fn execute(&mut self, hexchat: &Hexchat) {
+        self.result.set((self.callback)(hexchat));
+    }
+    /// When the task queue is being shut down, this will be called to set the
+    /// result to an error.
+    /// 
+    fn set_error(&mut self, error: &str) {
+        self.result.set_error(error);
+    }
+}
+
+unsafe impl<F, R> Send for ConcreteTask<F, R> 
+where 
+    F: FnMut(&Hexchat) -> R,
+    R: Clone + Send,
+{}
+
+/// An error type that can be used to indicate that a task failed. Currently,
+/// this is only used when the task queue is being shut down. This happens
+/// when Hexchat is closing or the addon is being unloaded.
+/// 
+#[derive(Debug)]
+struct TaskError(String);
+
+impl Error for TaskError {}
+
+impl Display for TaskError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "TaskError: {}", self.0)
+    }
 }
 
 /// A result object that allows callbacks operating on a thread to send their
@@ -67,7 +139,7 @@ pub fn turn_off_threadsafe_features() {
 #[derive(Clone)]
 pub struct AsyncResult<T: Clone + Send> {
     #[allow(clippy::type_complexity)]
-    data: Arc< (Mutex<(Option<T>, bool)>, Condvar) >,
+    data: Arc<(Mutex<(Result<T, TaskError>, bool)>, Condvar)>,
     
     // ^^ ((callback-result, is-done), synchronization-object)
     // This is the simplified format of the `data` field above.
@@ -81,8 +153,9 @@ impl<T: Clone + Send> AsyncResult<T> {
     pub (crate)
     fn new() -> Self {
         AsyncResult {
-            data: Arc::new((Mutex::new((None, false)), 
-                            Condvar::new()))
+            data: Arc::new(
+                    (Mutex::new((Err(TaskError(String::default())), false)), 
+                    Condvar::new()))
         }
     }
     /// Indicates whether the callback executing on another thread is done or
@@ -108,7 +181,13 @@ impl<T: Clone + Send> AsyncResult<T> {
     fn set(&self, result: T) {
         let (mtx, cvar) = &*self.data;
         let mut guard   = mtx.lock().unwrap();
-               *guard   = (Some(result), true);
+               *guard   = (Ok(result), true);
+        cvar.notify_one();
+    }
+    fn set_error(&self, error: &str) {
+        let (mtx, cvar) = &*self.data;
+        let mut guard   = mtx.lock().unwrap();
+               *guard   = (Err(TaskError(error.into())), true);
         cvar.notify_one();
     }
 }
@@ -136,12 +215,8 @@ where
         let cln = res.clone();
         let hex = unsafe { &*PHEXCHAT };
         if let Some(task_queue) = unsafe { &TASK_QUEUE } {
-            let cbk = Box::new(
-                move || {
-                    cln.set(callback(hex));
-                }
-            );
-            task_queue.lock().unwrap().push_back(cbk);
+            let task = Box::new(ConcreteTask::new(callback, cln));
+            task_queue.lock().unwrap().push_back(task);
         } else {
             cln.set(callback(hex));
         }
@@ -167,12 +242,12 @@ fn main_thread_init() {
         hex.hook_timer(
             TASK_REST_MSECS,
             move |_hc, _ud| {
-                if let Some(task_queue) = unsafe { &TASK_QUEUE } {
+                if let Some(queue) = unsafe { &TASK_QUEUE } {
                     let mut count = 1;
                     
-                    while let Some(mut callback) 
-                        = task_queue.lock().unwrap().pop_front() {
-                        callback();
+                    while let Some(mut task) 
+                        = queue.lock().unwrap().pop_front() {
+                        task.execute(hex);
                         count += 1;
                         if count > TASK_SPURT_SIZE { 
                             break  
@@ -201,24 +276,13 @@ fn main_thread_init() {
 ///
 pub (crate)
 fn main_thread_deinit() {
-    unsafe { TASK_QUEUE = None }
+    if let Some(queue) = unsafe { TASK_QUEUE.take() } {
+        let mut queue = queue.lock().unwrap();
+        while let Some(mut task) = queue.pop_front() {
+            task.set_error("Addon is being unloaded, \
+                           or Hexchat is shutting down \
+                           while a spawned thread is waiting on a \
+                           pending main thread task.");
+        }
+    }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
