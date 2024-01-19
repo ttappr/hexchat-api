@@ -1,3 +1,4 @@
+#![cfg(feature = "threadsafe")]
 
 //! A thread-safe wrapper for the `Hexchat` object. The methods of the object
 //! will execute on the Hexchat main thread when called from another thread.
@@ -34,7 +35,7 @@ impl ThreadSafeHexchat {
     pub fn print(&self, text: &str) {
         let text = text.to_string();
         let result = main_thread(move |hc| hc.print(&text));
-        result.get();
+        result.get().unwrap();
     }
     
     /// Invokes the Hexchat command specified by `command`.
@@ -44,7 +45,7 @@ impl ThreadSafeHexchat {
     pub fn command(&self, command: &str) {
         let command = command.to_string();
         let result = main_thread(move |hc| hc.command(&command));
-        result.get();
+        result.get().unwrap();
     }
     
     /// Returns a `ThreadSafeContext` object bound to the requested channel.
@@ -67,7 +68,7 @@ impl ThreadSafeHexchat {
         let data = (network.to_string(), channel.to_string());
         main_thread(move |hc| {
             hc.find_context(&data.0, &data.1).map(ThreadSafeContext::new)
-        }).get()
+        }).get().unwrap()
     }
 
     /// This should be invoked from the main thread. The context object returned
@@ -86,7 +87,7 @@ impl ThreadSafeHexchat {
         //self.hc.get_context().map(ThreadSafeContext::new)
         main_thread(|hc| {
             hc.get_context().map(ThreadSafeContext::new)
-        }).get()
+        }).get().unwrap()
     }
         
     /// Retrieves the info data with the given `id`. It returns None on failure
@@ -107,7 +108,7 @@ impl ThreadSafeHexchat {
         let id = id.to_string();
         main_thread(move |hc| {
             hc.get_info(&id)
-        }).get()
+        }).get().unwrap()
     }
     
     /// Creates an iterator for the requested Hexchat list. This is modeled
@@ -127,7 +128,7 @@ impl ThreadSafeHexchat {
         let list = list.to_string();
         main_thread(move |hc| {
             hc.list_get(&list).map(ThreadSafeListIterator::create)
-        }).get()
+        }).get().unwrap()
     }
 }
 

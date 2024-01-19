@@ -10,10 +10,12 @@
 use libc::c_void;
 use libc::time_t;
 use std::cell::RefCell;
+#[cfg(feature = "threadsafe")]
 use std::thread;
 use std::{fmt, error};
 use std::rc::Rc;
 
+#[cfg(feature = "threadsafe")]
 use crate::MAIN_THREAD_ID;
 use crate::context::*;
 use crate::hexchat::Hexchat;
@@ -47,6 +49,7 @@ impl ListIterator {
     ///   `Ok` holds a `ListIterator` instance.
     ///
     pub fn new(list_name: &str) -> Option<Self> {
+        #[cfg(feature = "threadsafe")]
         assert!(thread::current().id() == unsafe { MAIN_THREAD_ID.unwrap() },
                 "ListIterator::new() must be called from the main thread.");
         let name     = str2cstring(list_name);

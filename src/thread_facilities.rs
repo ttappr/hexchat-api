@@ -1,3 +1,4 @@
+#![cfg(feature = "threadsafe")]
 
 //! This module provides facilities for accessing Hexchat from routines  
 //! running on threads other than Hexchat's main thread. 
@@ -16,6 +17,8 @@
 //! has finished executing the callback.
 
 use std::collections::LinkedList;
+use std::error::Error;
+use std::fmt::{Display, self, Formatter};
 use std::sync::{Arc, Condvar, Mutex};
 use std::thread;
 
@@ -30,12 +33,12 @@ const TASK_REST_MSECS: i64 = 2;
 
 // The type of the queue that closures will be added to and pulled from to run 
 // on the main thread of Hexchat.
-type TaskQueue = LinkedList<Box<dyn FnMut() + Sync + Send>>;
+type TaskQueue = LinkedList<Box<dyn Task>>;
 
 /// The task queue that other threads use to schedule tasks to run on the
 /// main thread. It is guarded by a `Mutex`.
 ///
-static mut TASK_QUEUE: Option<Arc<Mutex<TaskQueue>>> = None;
+static mut TASK_QUEUE: Option<Arc<Mutex<Option<TaskQueue>>>> = None;
 
 /// The main thread's ID is captured and used by `main_thread()` to determine
 /// whether it is being called from the main thread or not. If not, the
@@ -43,19 +46,74 @@ static mut TASK_QUEUE: Option<Arc<Mutex<TaskQueue>>> = None;
 /// 
 pub(crate) static mut MAIN_THREAD_ID: Option<thread::ThreadId> = None;
 
-/// Stops and removes the main thread task queue handler. Otherwise it will
-/// keep checking the queue while doing nothing useful - which isn't 
-/// necessarily bad. Performance is unaffected either way.
-///
-/// Support for `main_thread()` is on by default. After this function is 
-/// invoked, `main_thread()` should not be used and threads in general risk
-/// crashing the software if they try to access Hexchat directly without
-/// the `main_thread()`. `ThreadSafeContext` and `ThreadSafeListIterator` 
-/// should also not be used after this function is called, since they rely on 
-/// `main_thread()` internally.
-///
-pub fn turn_off_threadsafe_features() {
-    main_thread_deinit();
+/// Base trait for items placed on the task queue.
+/// 
+trait Task : Send {
+    fn execute(&mut self, hexchat: &Hexchat);
+    fn set_error(&mut self, error: &str);
+}
+
+/// A task that executes a closure on the main thread.
+/// 
+struct ConcreteTask<F, R> 
+where 
+    F: FnMut(&Hexchat) -> R,
+    R: Clone + Send,
+{
+    callback : F,
+    result   : AsyncResult<R>,
+}
+
+impl<F, R> ConcreteTask<F, R> 
+where
+    F: FnMut(&Hexchat) -> R,
+    R: Clone + Send,
+{
+    fn new(callback: F, result: AsyncResult<R>) -> Self {
+        ConcreteTask {
+            callback,
+            result,
+        }
+    }
+}
+
+impl<F, R> Task for ConcreteTask<F, R> 
+where
+    F: FnMut(&Hexchat) -> R,
+    R: Clone + Send,
+{
+    /// Executes the closure and sets the result.
+    /// 
+    fn execute(&mut self, hexchat: &Hexchat) {
+        self.result.set((self.callback)(hexchat));
+    }
+    /// When the task queue is being shut down, this will be called to set the
+    /// result to an error.
+    /// 
+    fn set_error(&mut self, error: &str) {
+        self.result.set_error(error);
+    }
+}
+
+unsafe impl<F, R> Send for ConcreteTask<F, R> 
+where 
+    F: FnMut(&Hexchat) -> R,
+    R: Clone + Send,
+{}
+
+/// An error type that can be used to indicate that a task failed. Currently,
+/// this is only used when the task queue is being shut down. This happens
+/// when Hexchat is closing or the addon is being unloaded.
+/// 
+#[derive(Debug, Clone)]
+pub struct TaskError(String);
+
+impl Error for TaskError {}
+
+impl Display for TaskError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "TaskError: {}", self.0)
+    }
 }
 
 /// A result object that allows callbacks operating on a thread to send their
@@ -64,13 +122,10 @@ pub fn turn_off_threadsafe_features() {
 /// on the completion of a callback, thus providing synchronization between
 /// threads.
 /// 
+#[allow(clippy::type_complexity)]
 #[derive(Clone)]
 pub struct AsyncResult<T: Clone + Send> {
-    #[allow(clippy::type_complexity)]
-    data: Arc< (Mutex<(Option<T>, bool)>, Condvar) >,
-    
-    // ^^ ((callback-result, is-done), synchronization-object)
-    // This is the simplified format of the `data` field above.
+    data: Arc<(Mutex<(Option<Result<T, TaskError>>, bool)>, Condvar)>,
 }
 
 unsafe impl<T: Clone + Send> Send for AsyncResult<T> {}
@@ -78,15 +133,16 @@ unsafe impl<T: Clone + Send> Sync for AsyncResult<T> {}
 
 impl<T: Clone + Send> AsyncResult<T> {
     /// Constructor. Initializes the return data to None.
+    /// 
     pub (crate)
     fn new() -> Self {
         AsyncResult {
-            data: Arc::new((Mutex::new((None, false)), 
-                            Condvar::new()))
+            data: Arc::new((Mutex::new((None, false)), Condvar::new()))
         }
     }
     /// Indicates whether the callback executing on another thread is done or
     /// not. This can be used to poll for the result.
+    /// 
     #[allow(dead_code)]
     pub fn is_done(&self) -> bool {
         let (mtx, _) = &*self.data;
@@ -94,21 +150,29 @@ impl<T: Clone + Send> AsyncResult<T> {
     }
     /// Blocking call to retrieve the return data from a callback on another
     /// thread.
-    pub fn get(&self) -> T {
+    /// 
+    pub fn get(&self) -> Result<T, TaskError> {
         let (mtx, cvar) = &*self.data;
         let mut guard   = mtx.lock().unwrap();
         while !guard.1 {
             guard = cvar.wait(guard).unwrap();
         }
-        guard.0.as_ref().unwrap().clone()
+        guard.0.take().unwrap()
     }
     /// Sets the return data for the async result. This will unblock the
     /// receiver waiting on the result from `get()`.
+    /// 
     pub (crate)
     fn set(&self, result: T) {
         let (mtx, cvar) = &*self.data;
         let mut guard   = mtx.lock().unwrap();
-               *guard   = (Some(result), true);
+               *guard   = (Some(Ok(result)), true);
+        cvar.notify_one();
+    }
+    fn set_error(&self, error: &str) {
+        let (mtx, cvar) = &*self.data;
+        let mut guard   = mtx.lock().unwrap();
+               *guard   = (Some(Err(TaskError(error.into()))), true);
         cvar.notify_one();
     }
 }
@@ -134,17 +198,21 @@ where
     } else {
         let res = AsyncResult::new();
         let cln = res.clone();
-        let hex = unsafe { &*PHEXCHAT };
-        if let Some(task_queue) = unsafe { &TASK_QUEUE } {
-            let cbk = Box::new(
-                move || {
-                    cln.set(callback(hex));
-                }
-            );
-            task_queue.lock().unwrap().push_back(cbk);
-        } else {
-            cln.set(callback(hex));
+        let arc = unsafe { TASK_QUEUE.as_ref().unwrap() };
+        if let Some(queue) = arc.lock().unwrap().as_mut() {
+            let task = Box::new(ConcreteTask::new(callback, cln));
+            queue.push_back(task);
+        } 
+        else {
+            res.set_error("Task queue has been shut down.");
         }
+        //else {
+        //    cln.set(callback(hex));
+        //}
+        // TODO - This approach needs some thought and testing. The commented 
+        //        out code above had didn't prevent a hang in Hexchat when the
+        //        addon was unloaded. The new code also doesn't seem to help
+        //        either. Needs further work.
         res
     }
 }
@@ -160,19 +228,21 @@ fn main_thread_init() {
     unsafe { MAIN_THREAD_ID = Some(thread::current().id()) }
     if unsafe { TASK_QUEUE.is_none() } {
         unsafe { 
-            TASK_QUEUE = Some(Arc::new(Mutex::new(LinkedList::new()))); 
+            TASK_QUEUE = Some(Arc::new(Mutex::new(Some(LinkedList::new())))); 
         }
         let hex = unsafe { &*PHEXCHAT };
         
         hex.hook_timer(
             TASK_REST_MSECS,
             move |_hc, _ud| {
-                if let Some(task_queue) = unsafe { &TASK_QUEUE } {
+                let arc = unsafe { TASK_QUEUE.as_ref().unwrap() };
+                if arc.lock().unwrap().is_some() {
                     let mut count = 1;
                     
-                    while let Some(mut callback) 
-                        = task_queue.lock().unwrap().pop_front() {
-                        callback();
+                    while let Some(mut task) 
+                        = arc.lock().unwrap().as_mut()
+                             .and_then(|q| q.pop_front()) {
+                        task.execute(hex);
                         count += 1;
                         if count > TASK_SPURT_SIZE { 
                             break  
@@ -187,11 +257,9 @@ fn main_thread_init() {
     }
 }
 
-// TODO - Make the thread-safe features optional, so we won't have the queue
-//        timer handler needlessly running if an addon doesn't use threads.
-
 // TODO - Do something about threads blocked on a .get() on any outstanding
-//        AsyncResult's.
+//        AsyncResult's. The current branch is a work in progress trying to
+//        figure out how to do this.
 
 /// Called when the an addon is being unloaded. This eliminates the task queue.
 /// Any holders of `AsyncResult` objects that are blocked on `.get()` may be
@@ -201,24 +269,38 @@ fn main_thread_init() {
 ///
 pub (crate)
 fn main_thread_deinit() {
-    unsafe { TASK_QUEUE = None }
+    if let Some(queue) = unsafe { &TASK_QUEUE } {
+        if let Some(mut queue ) = queue.lock().unwrap().take() {
+            while let Some(mut task) = queue.pop_front() {
+                task.set_error("Task queue is being shut down.");
+            }
+        }
+    }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+/// Stops and removes the main thread task queue handler. Otherwise it will
+/// keep checking the queue while doing nothing useful - which isn't 
+/// necessarily bad. Performance is unaffected either way.
+///
+/// Support for `main_thread()` is on by default. After this function is 
+/// invoked, `main_thread()` should not be used and threads in general risk
+/// crashing the software if they try to access Hexchat directly without
+/// the `main_thread()`. `ThreadSafeContext` and `ThreadSafeListIterator` 
+/// should also not be used after this function is called, since they rely on 
+/// `main_thread()` internally.
+/// 
+/// # Safety
+/// While this will disable the handling of the main thread task queue, it
+/// doesn't prevent the plugin author from spawning threads and attempting to
+/// use the features of the threadsafe objects this crate provides. If the 
+/// plugin author intends to use ThreadSafeContext, ThreadSafeListIterator, or
+/// invoke `main_thread()` directly, then this function should not be called.
+///
+#[deprecated(
+    since = "0.2.6",
+    note = "This function is no longer necessary. Threadsafe features can be\
+            turned off by specifying `features = []` in the Cargo.toml file \
+            for the `hexchat-api` dependency.")]
+pub unsafe fn turn_off_threadsafe_features() {
+    main_thread_deinit();
+}

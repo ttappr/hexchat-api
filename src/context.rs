@@ -15,8 +15,10 @@ use std::error;
 use std::fmt;
 use std::ffi::CString;
 use std::rc::Rc;
+#[cfg(feature = "threadsafe")]
 use std::thread;
 
+#[cfg(feature = "threadsafe")]
 use crate::MAIN_THREAD_ID;
 use crate::hexchat::{Hexchat, hexchat_context, HexchatError};
 use crate::hexchat_entry_points::PHEXCHAT;
@@ -57,6 +59,7 @@ impl Context {
     /// returned as a `Some<Context>` if the context is found, or `None` if
     /// not.
     pub fn find(network: &str, channel: &str) -> Option<Self> {
+        #[cfg(feature = "threadsafe")]
         assert!(thread::current().id() == unsafe { MAIN_THREAD_ID.unwrap() },
                 "Context::find() must be called from the Hexchat main thread.");
         let csnetwork = str2cstring(network);
@@ -87,6 +90,7 @@ impl Context {
     /// `Result<Context, ()>` is returned with either the context, or an
     /// error result if it coulnd't be obtained.
     pub fn get() -> Option<Self> {
+        #[cfg(feature = "threadsafe")]
         assert!(thread::current().id() == unsafe { MAIN_THREAD_ID.unwrap() },
                 "Context::get() must be called from the Hexchat main thread.");
         unsafe {

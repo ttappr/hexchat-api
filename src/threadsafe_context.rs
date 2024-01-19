@@ -1,3 +1,4 @@
+#![cfg(feature = "threadsafe")]
 
 //! A thread-safe version of `Context`. The methods of these objects will 
 //! execute on the main thread of Hexchat. Invoking them is virutally the same 
@@ -45,7 +46,7 @@ impl ThreadSafeContext {
     /// yield a wrapped `Context` for an unexpected channel.
     ///
     pub fn get() -> Option<Self> {
-        main_thread(|_| Context::get().map(Self::new)).get()
+        main_thread(|_| Context::get().map(Self::new)).get().unwrap()
     }
     
     /// Gets a `ThreadSafeContext` object associated with the given channel.
@@ -59,7 +60,7 @@ impl ThreadSafeContext {
         let data = (network.to_string(), channel.to_string());
         main_thread(move |_| {
             Context::find(&data.0, &data.1).map(Self::new)
-        }).get()
+        }).get().unwrap()
     }
 
     /// Prints the message to the `ThreadSafeContext` object's Hexchat context.
@@ -72,7 +73,7 @@ impl ThreadSafeContext {
             me.ctx.read().unwrap().as_ref()
                   .expect("Context dropped from threadsafe context.")
                   .print(&message)
-        }).get()
+        }).get().unwrap()
     }
     
     /// Prints without waiting for asynchronous completion. This will print
@@ -105,7 +106,7 @@ impl ThreadSafeContext {
             me.ctx.read().unwrap().as_ref()
                   .expect("Context dropped from threadsafe context.")
                   .command(&command)
-        }).get()
+        }).get().unwrap()
     }
 
     /// Gets information from the channel/window that the `ThreadSafeContext` 
@@ -118,7 +119,7 @@ impl ThreadSafeContext {
             me.ctx.read().unwrap().as_ref()
                   .expect("Context dropped from threadsafe context.")
                   .get_info(&info)
-        }).get()
+        }).get().unwrap()
     }
     
     /// Issues a print event to the context held by the `ThreadSafeContext` 
@@ -139,7 +140,7 @@ impl ThreadSafeContext {
             me.ctx.read().unwrap().as_ref()
                   .expect("Context dropped from threadsafe context.")
                   .emit_print(&data.0, var_args.as_slice())
-        }).get()
+        }).get().unwrap()
     }
     
     /// Gets a `ListIterator` from the context held by the `Context` object.
@@ -169,7 +170,7 @@ impl ThreadSafeContext {
                 Err(ContextError::ContextDropped(
                     "Context dropped from threadsafe context.".to_string()))
             }
-        }).get()
+        }).get().unwrap()
     }
 }
 
