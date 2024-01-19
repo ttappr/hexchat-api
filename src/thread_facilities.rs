@@ -37,7 +37,7 @@ type TaskQueue = LinkedList<Box<dyn Task>>;
 /// The task queue that other threads use to schedule tasks to run on the
 /// main thread. It is guarded by a `Mutex`.
 ///
-static mut TASK_QUEUE: Option<Arc<Mutex<TaskQueue>>> = None;
+static mut TASK_QUEUE: Option<Arc<Mutex<Option<TaskQueue>>>> = None;
 
 /// The main thread's ID is captured and used by `main_thread()` to determine
 /// whether it is being called from the main thread or not. If not, the
@@ -55,6 +55,13 @@ pub(crate) static mut MAIN_THREAD_ID: Option<thread::ThreadId> = None;
 /// the `main_thread()`. `ThreadSafeContext` and `ThreadSafeListIterator` 
 /// should also not be used after this function is called, since they rely on 
 /// `main_thread()` internally.
+/// 
+/// # Safety
+/// While this will disable the handling of the main thread task queue, it
+/// doesn't prevent the plugin author from spawning threads and attempting to
+/// use the features of the threadsafe objects this crate provides. If the 
+/// plugin author intends to use ThreadSafeContext, ThreadSafeListIterator, or
+/// invoke `main_thread()` directly, then this function should not be called.
 ///
 pub unsafe fn turn_off_threadsafe_features() {
     main_thread_deinit();
@@ -62,7 +69,7 @@ pub unsafe fn turn_off_threadsafe_features() {
 
 /// Base trait for items placed on the task queue.
 /// 
-trait Task {
+trait Task : Send {
     fn execute(&mut self, hexchat: &Hexchat);
     fn set_error(&mut self, error: &str);
 }
@@ -215,17 +222,22 @@ where
         let cln = res.clone();
         if let Some(task_queue) = unsafe { &TASK_QUEUE } {
             let task = Box::new(ConcreteTask::new(callback, cln));
-            task_queue.lock().unwrap().push_back(task);
+            if let Some(queue) = task_queue.lock().unwrap().as_mut() {
+                queue.push_back(task);
+            } else {
+                res.set_error("Task queue has been shut down.");
+            }
         } 
-        //else {
-        //    cln.set(callback(hex));
-        //}
-        // TODO - This approach needs some thought and testing. The commented
-        //        out block above was used before and was sort of okay. The
-        //        block below is the new approach that needs to be tested.
         else {
             res.set_error("Task queue has been shut down.");
         }
+        //else {
+        //    cln.set(callback(hex));
+        //}
+        // TODO - This approach needs some thought and testing. The commented 
+        //        out code above had didn't prevent a hang in Hexchat when the
+        //        addon was unloaded. The new code also doesn't seem to help
+        //        either. Needs further work.
         res
     }
 }
@@ -241,7 +253,7 @@ fn main_thread_init() {
     unsafe { MAIN_THREAD_ID = Some(thread::current().id()) }
     if unsafe { TASK_QUEUE.is_none() } {
         unsafe { 
-            TASK_QUEUE = Some(Arc::new(Mutex::new(LinkedList::new()))); 
+            TASK_QUEUE = Some(Arc::new(Mutex::new(Some(LinkedList::new())))); 
         }
         let hex = unsafe { &*PHEXCHAT };
         
@@ -252,7 +264,8 @@ fn main_thread_init() {
                     let mut count = 1;
                     
                     while let Some(mut task) 
-                        = queue.lock().unwrap().pop_front() {
+                        = queue.lock().unwrap().as_mut()
+                               .and_then(|q| q.pop_front()) {
                         task.execute(hex);
                         count += 1;
                         if count > TASK_SPURT_SIZE { 
@@ -268,11 +281,9 @@ fn main_thread_init() {
     }
 }
 
-// TODO - Make the thread-safe features optional, so we won't have the queue
-//        timer handler needlessly running if an addon doesn't use threads.
-
 // TODO - Do something about threads blocked on a .get() on any outstanding
-//        AsyncResult's.
+//        AsyncResult's. The current branch is a work in progress trying to
+//        figure out how to do this.
 
 /// Called when the an addon is being unloaded. This eliminates the task queue.
 /// Any holders of `AsyncResult` objects that are blocked on `.get()` may be
@@ -283,9 +294,10 @@ fn main_thread_init() {
 pub (crate)
 fn main_thread_deinit() {
     if let Some(queue) = unsafe { TASK_QUEUE.take() } {
-        let mut queue = queue.lock().unwrap();
-        while let Some(mut task) = queue.pop_front() {
-            task.set_error("Task queue is being shut down.");
+        if let Some(mut queue ) = queue.lock().unwrap().take() {
+            while let Some(mut task) = queue.pop_front() {
+                task.set_error("Task queue is being shut down.");
+            }
         }
     }
 }
