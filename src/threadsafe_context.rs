@@ -1,3 +1,4 @@
+#![cfg(feature = "threadsafe")]
 
 //! A thread-safe version of `Context`. The methods of these objects will 
 //! execute on the main thread of Hexchat. Invoking them is virutally the same 

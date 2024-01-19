@@ -1,3 +1,4 @@
+#![cfg(feature = "threadsafe")]
 
 //! This module provides a thread-safe wrapper class for the Hexchat 
 //! `ListIterator`. The methods it provides can be invoked from threads other

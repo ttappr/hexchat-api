@@ -33,9 +33,13 @@ pub use hexchat_entry_points::*;
 pub use list_item::*;
 pub use list_iterator::*;
 pub use plugin::*;
+#[cfg(feature = "threadsafe")]
 pub use thread_facilities::*;
+#[cfg(feature = "threadsafe")]
 pub use threadsafe_context::*;
+#[cfg(feature = "threadsafe")]
 pub use threadsafe_hexchat::*;
+#[cfg(feature = "threadsafe")]
 pub use threadsafe_list_iterator::*;
 pub use user_data::*;
 #[allow(unused_imports)]

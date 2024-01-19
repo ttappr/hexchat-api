@@ -18,12 +18,14 @@ use crate::callback_data::{CallbackData, TimerCallbackOnce};
 use crate::context::Context;
 use crate::context::ContextError;
 use crate::hexchat_callbacks::*;
+#[cfg(feature = "threadsafe")]
 use crate::hexchat_entry_points::PHEXCHAT;
 use crate::hook::Hook;
 use crate::list_iterator::ListIterator;
 use crate::plugin::Plugin;
 use crate::user_data::*;
 use crate::utils::*;
+#[cfg(feature = "threadsafe")]
 use crate::threadsafe_hexchat::*;
 
 /// Value used in example from the Hexchat Plugin Interface doc web page.
@@ -76,6 +78,7 @@ impl Hexchat {
     /// Returns a thread-safe wrapper for `Hexchat` that exposes thread-safe
     /// methods wrapping several of `Hexchat`s methods.
     ///
+    #[cfg(feature = "threadsafe")]
     pub fn threadsafe(&self) -> ThreadSafeHexchat {
         ThreadSafeHexchat::new(unsafe { &*PHEXCHAT })
     }

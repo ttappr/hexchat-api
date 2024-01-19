@@ -24,6 +24,7 @@ use std::ptr::NonNull;
 use crate::hexchat::Hexchat;
 use crate::hook::*;
 use crate::utils::*;
+#[cfg(feature = "threadsafe")]
 use crate::thread_facilities::*;
 
 /// The signature for the init function that plugin authors need to register
@@ -218,6 +219,7 @@ pub fn lib_hexchat_plugin_init(hexchat   : &'static Hexchat,
     // Invoke client lib's init function.
     catch_unwind(|| { 
         Hook::init();
+        #[cfg(feature = "threadsafe")]
         main_thread_init();
         init_cb(hexchat) 
     }).unwrap_or(0)
@@ -239,6 +241,7 @@ pub fn lib_hexchat_plugin_deinit(hexchat  : &'static Hexchat,
         // Call user's deinit().
         let retval = callback(hexchat);
         
+        #[cfg(feature = "threadsafe")]
         main_thread_deinit();
         
         // Cause the callback_data objects to drop and clean up.

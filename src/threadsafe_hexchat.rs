@@ -1,3 +1,4 @@
+#![cfg(feature = "threadsafe")]
 
 //! A thread-safe wrapper for the `Hexchat` object. The methods of the object
 //! will execute on the Hexchat main thread when called from another thread.

@@ -1,3 +1,4 @@
+#![cfg(feature = "threadsafe")]
 
 //! This module provides facilities for accessing Hexchat from routines  
 //! running on threads other than Hexchat's main thread. 
@@ -123,12 +124,12 @@ impl Display for TaskError {
 /// 
 #[allow(clippy::type_complexity)]
 #[derive(Clone)]
-pub struct AsyncResult<T: Send> {
+pub struct AsyncResult<T: Clone + Send> {
     data: Arc<(Mutex<(Option<Result<T, TaskError>>, bool)>, Condvar)>,
 }
 
-unsafe impl<T: Send> Send for AsyncResult<T> {}
-unsafe impl<T: Send> Sync for AsyncResult<T> {}
+unsafe impl<T: Clone + Send> Send for AsyncResult<T> {}
+unsafe impl<T: Clone + Send> Sync for AsyncResult<T> {}
 
 impl<T: Clone + Send> AsyncResult<T> {
     /// Constructor. Initializes the return data to None.
@@ -136,9 +137,7 @@ impl<T: Clone + Send> AsyncResult<T> {
     pub (crate)
     fn new() -> Self {
         AsyncResult {
-            data: Arc::new(
-                    (Mutex::new((None, false)), 
-                    Condvar::new()))
+            data: Arc::new((Mutex::new((None, false)), Condvar::new()))
         }
     }
     /// Indicates whether the callback executing on another thread is done or
@@ -199,13 +198,10 @@ where
     } else {
         let res = AsyncResult::new();
         let cln = res.clone();
-        if let Some(task_queue) = unsafe { &TASK_QUEUE } {
+        let arc = unsafe { TASK_QUEUE.as_ref().unwrap() };
+        if let Some(queue) = arc.lock().unwrap().as_mut() {
             let task = Box::new(ConcreteTask::new(callback, cln));
-            if let Some(queue) = task_queue.lock().unwrap().as_mut() {
-                queue.push_back(task);
-            } else {
-                res.set_error("Task queue has been shut down.");
-            }
+            queue.push_back(task);
         } 
         else {
             res.set_error("Task queue has been shut down.");
@@ -239,12 +235,13 @@ fn main_thread_init() {
         hex.hook_timer(
             TASK_REST_MSECS,
             move |_hc, _ud| {
-                if let Some(queue) = unsafe { &TASK_QUEUE } {
+                let arc = unsafe { TASK_QUEUE.as_ref().unwrap() };
+                if arc.lock().unwrap().is_some() {
                     let mut count = 1;
                     
                     while let Some(mut task) 
-                        = queue.lock().unwrap().as_mut()
-                               .and_then(|q| q.pop_front()) {
+                        = arc.lock().unwrap().as_mut()
+                             .and_then(|q| q.pop_front()) {
                         task.execute(hex);
                         count += 1;
                         if count > TASK_SPURT_SIZE { 
@@ -272,7 +269,7 @@ fn main_thread_init() {
 ///
 pub (crate)
 fn main_thread_deinit() {
-    if let Some(queue) = unsafe { TASK_QUEUE.take() } {
+    if let Some(queue) = unsafe { &TASK_QUEUE } {
         if let Some(mut queue ) = queue.lock().unwrap().take() {
             while let Some(mut task) = queue.pop_front() {
                 task.set_error("Task queue is being shut down.");
@@ -299,6 +296,11 @@ fn main_thread_deinit() {
 /// plugin author intends to use ThreadSafeContext, ThreadSafeListIterator, or
 /// invoke `main_thread()` directly, then this function should not be called.
 ///
+#[deprecated(
+    since = "0.2.6",
+    note = "This function is no longer necessary. Threadsaef features can be\
+            turned off by specifying `features = []` in the Cargo.toml file \
+            for the `hexchat-api` dependency.")]
 pub unsafe fn turn_off_threadsafe_features() {
     main_thread_deinit();
 }
