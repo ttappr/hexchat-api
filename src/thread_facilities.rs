@@ -45,28 +45,6 @@ static mut TASK_QUEUE: Option<Arc<Mutex<Option<TaskQueue>>>> = None;
 /// 
 pub(crate) static mut MAIN_THREAD_ID: Option<thread::ThreadId> = None;
 
-/// Stops and removes the main thread task queue handler. Otherwise it will
-/// keep checking the queue while doing nothing useful - which isn't 
-/// necessarily bad. Performance is unaffected either way.
-///
-/// Support for `main_thread()` is on by default. After this function is 
-/// invoked, `main_thread()` should not be used and threads in general risk
-/// crashing the software if they try to access Hexchat directly without
-/// the `main_thread()`. `ThreadSafeContext` and `ThreadSafeListIterator` 
-/// should also not be used after this function is called, since they rely on 
-/// `main_thread()` internally.
-/// 
-/// # Safety
-/// While this will disable the handling of the main thread task queue, it
-/// doesn't prevent the plugin author from spawning threads and attempting to
-/// use the features of the threadsafe objects this crate provides. If the 
-/// plugin author intends to use ThreadSafeContext, ThreadSafeListIterator, or
-/// invoke `main_thread()` directly, then this function should not be called.
-///
-pub unsafe fn turn_off_threadsafe_features() {
-    main_thread_deinit();
-}
-
 /// Base trait for items placed on the task queue.
 /// 
 trait Task : Send {
@@ -145,12 +123,12 @@ impl Display for TaskError {
 /// 
 #[allow(clippy::type_complexity)]
 #[derive(Clone)]
-pub struct AsyncResult<T: Clone + Send> {
+pub struct AsyncResult<T: Send> {
     data: Arc<(Mutex<(Option<Result<T, TaskError>>, bool)>, Condvar)>,
 }
 
-unsafe impl<T: Clone + Send> Send for AsyncResult<T> {}
-unsafe impl<T: Clone + Send> Sync for AsyncResult<T> {}
+unsafe impl<T: Send> Send for AsyncResult<T> {}
+unsafe impl<T: Send> Sync for AsyncResult<T> {}
 
 impl<T: Clone + Send> AsyncResult<T> {
     /// Constructor. Initializes the return data to None.
@@ -301,4 +279,26 @@ fn main_thread_deinit() {
             }
         }
     }
+}
+
+/// Stops and removes the main thread task queue handler. Otherwise it will
+/// keep checking the queue while doing nothing useful - which isn't 
+/// necessarily bad. Performance is unaffected either way.
+///
+/// Support for `main_thread()` is on by default. After this function is 
+/// invoked, `main_thread()` should not be used and threads in general risk
+/// crashing the software if they try to access Hexchat directly without
+/// the `main_thread()`. `ThreadSafeContext` and `ThreadSafeListIterator` 
+/// should also not be used after this function is called, since they rely on 
+/// `main_thread()` internally.
+/// 
+/// # Safety
+/// While this will disable the handling of the main thread task queue, it
+/// doesn't prevent the plugin author from spawning threads and attempting to
+/// use the features of the threadsafe objects this crate provides. If the 
+/// plugin author intends to use ThreadSafeContext, ThreadSafeListIterator, or
+/// invoke `main_thread()` directly, then this function should not be called.
+///
+pub unsafe fn turn_off_threadsafe_features() {
+    main_thread_deinit();
 }
