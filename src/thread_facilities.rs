@@ -213,12 +213,18 @@ where
     } else {
         let res = AsyncResult::new();
         let cln = res.clone();
-        let hex = unsafe { &*PHEXCHAT };
         if let Some(task_queue) = unsafe { &TASK_QUEUE } {
             let task = Box::new(ConcreteTask::new(callback, cln));
             task_queue.lock().unwrap().push_back(task);
-        } else {
-            cln.set(callback(hex));
+        } 
+        //else {
+        //    cln.set(callback(hex));
+        //}
+        // TODO - This approach needs some thought and testing. The commented
+        //        out block above was used before and was sort of okay. The
+        //        block below is the new approach that needs to be tested.
+        else {
+            res.set_error("Task queue has been shut down.");
         }
         res
     }
@@ -279,10 +285,7 @@ fn main_thread_deinit() {
     if let Some(queue) = unsafe { TASK_QUEUE.take() } {
         let mut queue = queue.lock().unwrap();
         while let Some(mut task) = queue.pop_front() {
-            task.set_error("Addon is being unloaded, \
-                           or Hexchat is shutting down \
-                           while a spawned thread is waiting on a \
-                           pending main thread task.");
+            task.set_error("Task queue is being shut down.");
         }
     }
 }
