@@ -298,7 +298,7 @@ fn main_thread_deinit() {
 ///
 #[deprecated(
     since = "0.2.6",
-    note = "This function is no longer necessary. Threadsaef features can be\
+    note = "This function is no longer necessary. Threadsafe features can be\
             turned off by specifying `features = []` in the Cargo.toml file \
             for the `hexchat-api` dependency.")]
 pub unsafe fn turn_off_threadsafe_features() {
