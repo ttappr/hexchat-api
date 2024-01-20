@@ -274,27 +274,7 @@ impl error::Error for ContextError {}
 
 impl fmt::Display for ContextError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            AcquisitionFailed(network, channel) => {
-                write!(f, "AcquisitionFailed(\"{}\", \"{}\")",
-                          network, channel)
-            },
-            OperationFailed(reason) => {
-                write!(f, "OperationFailed(\"{}\")", reason)
-            },
-            ContextDropped(reason) => {
-                write!(f, "ContextDropped(\"{}\")", reason)
-            },
-            ThreadSafeOperationFailed(reason) => {
-                write!(f, "ThreadSafeOperationFailed(\"{}\")", reason)
-            },
-            ListNotFound(list) => {
-                write!(f, "ListNotFound(\"{}\")", list)
-            },
-            InfoNotFound(info) => {
-                write!(f, "InfoNotFound(\"{}\")", info)
-            },
-        }
+        write!(f, "{:?}", self)
     }
 }
 /*

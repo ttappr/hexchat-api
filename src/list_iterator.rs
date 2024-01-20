@@ -363,19 +363,7 @@ impl error::Error for ListError {}
 
 impl fmt::Display for ListError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            UnknownList(msg)  => { write!(f, "UnknownList(\"{}\")", msg) },
-            UnknownField(msg) => { write!(f, "UnknownField(\"{}\")", msg) },
-            UnknownType(msg)  => { write!(f, "UnknownType(\"{:?}\")", msg) },
-            NotStarted(msg)   => { write!(f, "NotStarted(\"{}\")", msg) },
-            NotAvailable(msg) => { write!(f, "NotAvailable(\"{}\")", msg) },
-            ListIteratorDropped(msg) => {
-                write!(f, "ListIteratorDropped(\"{}\")", msg)
-            },
-            ThreadSafeOperationFailed(msg) => {
-                write!(f, "ThreadsafeOperationFailed(\"{}\")", msg)
-            },
-        }
+        write!(f, "{:?}", self)
     }
 }
 

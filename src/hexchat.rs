@@ -950,12 +950,7 @@ impl error::Error for HexchatError {}
 
 impl fmt::Display for HexchatError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use HexchatError::*;
-        match self {
-            CommandFailed(message) => {
-                write!(f, "CommandFailed(\"{}\")", message)
-            },
-        }
+        write!(f, "{:?}", self)
     }
 }
 /*
