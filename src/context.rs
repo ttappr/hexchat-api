@@ -48,7 +48,7 @@ struct ContextData {
 /// returned to invoke a command, `context.command("SAY hello!")`, or print,
 /// `context.print("Hello!")`, or perform other operations.
 ///
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Context {
     data    : Rc<ContextData>,
 }
@@ -238,15 +238,26 @@ impl Context {
         }
     }
 
+    /// Returns the network name associated with the `Context` object.
+    /// 
     pub fn network(&self) -> String {
         cstring2string(&self.data.network)
     }
+
+    /// Returns the channel name associated with the `Context` object.
+    /// 
     pub fn channel(&self) -> String {
         cstring2string(&self.data.channel)
     }
 }
 
 impl fmt::Display for Context {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl fmt::Debug for Context {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let data    = &*self.data;
         let network = cstring2string(&data.network);
