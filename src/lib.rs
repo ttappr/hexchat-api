@@ -2,7 +2,7 @@
 //! This crate provides a Rust interface to the
 //! [Hexchat Plugin Interface](https://hexchat.readthedocs.io/en/latest/plugins.html)
 //! The primary object of the interface is
-//! [Hexchat](crate::Hexchat),
+//! [Hexchat],
 //! which exposes an interface with functions that mirror the C functions
 //! listed on the Hexchat docs page linked above.
 
