@@ -33,7 +33,8 @@ unsafe impl Sync for ThreadSafeContext {}
 
 impl ThreadSafeContext {
     /// Creates a new `ThreadSafeContext` object, which wraps a `Context` object
-    /// internally.
+    /// internally. Only to be called from the main thread internally.
+    /// 
     pub (crate)
     fn new(ctx: Context) -> Self {
         Self { ctx: Arc::new(RwLock::new(Some(SendWrapper::new(ctx)))) }

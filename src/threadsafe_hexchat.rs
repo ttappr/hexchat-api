@@ -24,7 +24,9 @@ unsafe impl Send for ThreadSafeHexchat {}
 unsafe impl Sync for ThreadSafeHexchat {}
 
 impl ThreadSafeHexchat {
-    /// Constructs a `ThreadSafeHexchat` object that wraps `Hexchat`.
+    /// Constructs a `ThreadSafeHexchat` object that wraps `Hexchat`. Only to
+    /// be called from the main thread internally.
+    /// 
     pub (crate)
     fn new(_hc: &'static Hexchat) -> Self {
         ThreadSafeHexchat
