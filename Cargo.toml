@@ -21,5 +21,11 @@ backtrace = "0.3"
 send_wrapper = "0.6.0"
 
 [features]
+### The "threadsafe" flag is enabled by default.
 default = ["threadsafe"]
+
+### Enabled by default, the threadsafe features are enabled. This gives 
+### plugin authors access to ThreadSafeContext, ThreadSafeListIterator, 
+### ThreadSafeHexchat and the `main_thread()` function for ensuring code is 
+### executed on the main thread.
 threadsafe = []
