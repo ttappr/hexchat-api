@@ -6,6 +6,7 @@
 //! care of internally by `ThreadSafeHexchat`.
 
 use crate::ContextError;
+use crate::ListError;
 use crate::hexchat::*;
 use crate::thread_facilities::*;
 use crate::threadsafe_context::*;
@@ -147,11 +148,19 @@ impl ThreadSafeHexchat {
     /// * If the list exists, `Some(ThreadSafeListIterator)` is returned; `None`
     ///   otherwise.
     ///
-    pub fn list_get(&self, list: &str) -> Option<ThreadSafeListIterator> {
+    pub fn list_get(&self, list: &str) 
+        -> Result<ThreadSafeListIterator, ListError> 
+    {
+        use ListError::*;
         let list = list.to_string();
         main_thread(move |hc| {
             hc.list_get(&list).map(ThreadSafeListIterator::create)
-        }).get().unwrap()
+        }).get()
+        .map_or_else(
+            |err| Err(ThreadSafeOperationFailed(err.to_string())),
+            |res| res.map_or_else(
+                || Err(UnknownList("List not found".into())),
+                Ok))
     }
     // TODO - Get back to this after updating list iterator.
 }

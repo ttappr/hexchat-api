@@ -244,6 +244,8 @@ impl Drop for ThreadSafeContext {
 
 impl fmt::Debug for ThreadSafeContext {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // A bit overkill, but fixes problems with users trying to debug print
+        // the object from other threads.
         let me = self.clone();
         let s = main_thread(move |_| {
             if let Ok(guard) = me.ctx.read() {
