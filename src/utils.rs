@@ -86,6 +86,7 @@ pub fn print_inner(msg: &str) {
 /// * `fmt`     - The format string.
 /// * `argv`    - The varibale length formatted arguments.
 ///
+#[cfg(feature = "threadsafe")]
 #[macro_export]
 macro_rules! hc_print_th {
     (  ctx = ($network:expr, $channel:expr), $( $arg:tt )* ) => {
@@ -116,6 +117,7 @@ macro_rules! hc_command {
 /// Executes a command on the main thread. This is useful for executing
 /// commands from spawned threads.
 ///
+#[cfg(feature = "threadsafe")]
 #[macro_export]
 macro_rules! hc_command_th {
     ( $( $arg:tt )* ) => {
