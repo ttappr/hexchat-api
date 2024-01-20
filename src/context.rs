@@ -266,6 +266,7 @@ pub enum ContextError {
     OperationFailed(String),
     ContextDropped(String),
     ThreadSafeOperationFailed(String),
+    ListNotFound(String),
 }
 
 impl error::Error for ContextError {}
@@ -285,6 +286,9 @@ impl fmt::Display for ContextError {
             },
             ThreadSafeOperationFailed(reason) => {
                 write!(f, "ThreadSafeOperationFailed(\"{}\")", reason)
+            },
+            ListNotFound(list) => {
+                write!(f, "ListNotFound(\"{}\")", list)
             },
         }
     }

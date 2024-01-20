@@ -64,7 +64,7 @@ impl ThreadSafeContext {
                 |err| Err(ThreadSafeOperationFailed(err.to_string())),
                 |res| res.map_or_else(
                     || Err(AcquisitionFailed("?".into(), "?".into())), 
-                    |ctx| Ok(ctx)))
+                    Ok))
     }
     
     /// Gets a `ThreadSafeContext` object associated with the given channel.
@@ -83,7 +83,7 @@ impl ThreadSafeContext {
             |err| Err(ThreadSafeOperationFailed(err.to_string())),
             |res| res.map_or_else(
                 || Err(AcquisitionFailed(network.into(), channel.into())), 
-                |ctx| Ok(ctx)))
+                Ok))
     }
 
     /// Prints the message to the `ThreadSafeContext` object's Hexchat context.
@@ -95,7 +95,8 @@ impl ThreadSafeContext {
         let me = self.clone();
         main_thread(move |_| {
             me.ctx.read().unwrap().as_ref()
-                  .expect("Context dropped from threadsafe context.")
+                  .ok_or_else(|| ContextDropped("Context dropped from \
+                                                 threadsafe context.".into()))?
                   .print(&message)
         }).get().unwrap_or_else(
             |err| Err(ThreadSafeOperationFailed(err.to_string())))
@@ -130,10 +131,12 @@ impl ThreadSafeContext {
         let me = self.clone();
         main_thread(move |_| {
             me.ctx.read().unwrap().as_ref()
-                  .expect("Context dropped from threadsafe context.")
+                  .ok_or_else(|| ContextDropped("Context dropped from \
+                                                 threadsafe context.".into()))?
                   .command(&command)
-        }).get().unwrap_or_else(
-            |err| Err(ThreadSafeOperationFailed(err.to_string())))
+        }).get()
+        .map_or_else(|err| Err(ThreadSafeOperationFailed(err.to_string())),
+                     |res| res)        
     }
 
     /// Gets information from the channel/window that the `ThreadSafeContext` 
@@ -145,13 +148,14 @@ impl ThreadSafeContext {
         let me = self.clone();
         main_thread(move |_| {
             me.ctx.read().unwrap().as_ref()
-                  .expect("Context dropped from threadsafe context.")
+                  .ok_or_else(||ContextDropped("Context dropped from \
+                                                threadsafe context.".into()))?
                   .get_info(&info)
             }).get()
             .map_or_else(
                 |err| Err(ThreadSafeOperationFailed(err.to_string())),
                 |res| res.map_or_else(
-                    |err| Err(err), 
+                    Err, 
                     |info| info.ok_or(OperationFailed("no data".into()))))
     }
     
@@ -161,6 +165,7 @@ impl ThreadSafeContext {
     pub fn emit_print(&self, event_name: &str, var_args: &[&str])
         -> Result<(), ContextError>
     {
+        use ContextError::*;
         let var_args: Vec<String> = var_args.iter()
                                             .map(|s| s.to_string())
                                             .collect();
@@ -171,9 +176,11 @@ impl ThreadSafeContext {
                                             .map(|s| s.as_str())
                                             .collect();
             me.ctx.read().unwrap().as_ref()
-                  .expect("Context dropped from threadsafe context.")
+                  .ok_or_else(|| ContextDropped("Context dropped from \
+                                                 threadsafe context.".into()))?
                   .emit_print(&data.0, var_args.as_slice())
-        }).get().unwrap()
+        }).get().unwrap_or_else(
+            |err| Err(ThreadSafeOperationFailed(err.to_string())))
     }
     
     /// Gets a `ListIterator` from the context held by the `Context` object.
@@ -183,8 +190,9 @@ impl ThreadSafeContext {
     ///
     pub fn list_get(&self, 
                     name: &str) 
-        -> Result<Option<ThreadSafeListIterator>, ContextError>
+        -> Result<ThreadSafeListIterator, ContextError>
     {
+        use ContextError::*;
         let name = name.to_string();
         let me = self.clone();
         main_thread(move |_| {
@@ -192,16 +200,16 @@ impl ThreadSafeContext {
                 match ctx.list_get(&name) {
                     Ok(opt) => {
                         if let Some(list) = opt {
-                            Ok(Some(ThreadSafeListIterator::create(list)))
+                            Ok(ThreadSafeListIterator::create(list))
                         } else {
-                            Ok(None)
+                            Err(ListNotFound(name.clone()))
                         }
                     },
                     Err(err) => Err(err),
                 }
             } else {
-                Err(ContextError::ContextDropped(
-                    "Context dropped from threadsafe context.".to_string()))
+                Err(ContextDropped("Context dropped from threadsafe \
+                                    context.".to_string()))
             }
         }).get().unwrap()
     }

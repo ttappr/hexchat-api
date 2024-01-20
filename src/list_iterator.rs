@@ -356,7 +356,7 @@ pub enum ListError {
     NotStarted(String),
     NotAvailable(String),
     ListIteratorDropped(String),
-    ThreadsafeOperationFailed(String),
+    ThreadSafeOperationFailed(String),
 }
 
 impl error::Error for ListError {}
@@ -372,7 +372,7 @@ impl fmt::Display for ListError {
             ListIteratorDropped(msg) => {
                 write!(f, "ListIteratorDropped(\"{}\")", msg)
             },
-            ThreadsafeOperationFailed(msg) => {
+            ThreadSafeOperationFailed(msg) => {
                 write!(f, "ThreadsafeOperationFailed(\"{}\")", msg)
             },
         }

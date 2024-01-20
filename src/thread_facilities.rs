@@ -106,13 +106,13 @@ where
 /// when Hexchat is closing or the addon is being unloaded.
 /// 
 #[derive(Debug, Clone)]
-pub struct TaskError(String);
+pub struct TaskError(pub(crate) String);
 
 impl Error for TaskError {}
 
 impl Display for TaskError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "TaskError: {}", self.0)
+        write!(f, "TaskError(\"{}\")", self.0)
     }
 }
 
