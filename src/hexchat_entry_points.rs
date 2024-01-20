@@ -2,11 +2,11 @@
 //! This module holds the DLL entry points for this plugin library.
 //! These exported functions are what Hexchat links to directly when the
 //! plugin is loaded.
-//! 
+//!
 //! These functions register the plugin info with Hexchat and set up to "catch"
 //! any panics that Rust-side callbacks might "raise" during execution.
 //! Panics are displayed in the currently active Hexchat window/context.
-//! The debug build of the library will include a stack trace in the error 
+//! The debug build of the library will include a stack trace in the error
 //! message.
 
 #[cfg(debug_assertions)]
@@ -82,16 +82,16 @@ pub(crate) static mut PHEXCHAT: *const Hexchat = null::<Hexchat>();
 ///
 #[macro_export]
 macro_rules! dll_entry_points {
- 
+
     ( $info:ident, $init:ident, $deinit:ident ) => {
         #[no_mangle]
-        pub extern "C"    
+        pub extern "C"
         fn hexchat_plugin_get_info(name     : *mut *const i8,
                                    desc     : *mut *const i8,
                                    version  : *mut *const i8,
-                                   reserved : *mut *const i8) 
+                                   reserved : *mut *const i8)
         {
-            hexchat_api::lib_get_info(name,    
+            hexchat_api::lib_get_info(name,
                                       desc,
                                       version,
                                       Box::new($info));
@@ -104,9 +104,9 @@ macro_rules! dll_entry_points {
                                version   : *mut *const i8
                               ) -> i32
         {
-            hexchat_api::lib_hexchat_plugin_init(hexchat, 
+            hexchat_api::lib_hexchat_plugin_init(hexchat,
                                                  name,
-                                                 desc,   
+                                                 desc,
                                                  version,
                                                  Box::new($init),
                                                  Box::new($info))
@@ -168,10 +168,10 @@ impl PluginInfo {
         let sname        = NonNull::from(&boxed.name);
         let sversion     = NonNull::from(&boxed.version);
         let sdescription = NonNull::from(&boxed.description);
-        
+
         unsafe {
             let mut_ref: Pin<&mut PluginInfoData> = Pin::as_mut(&mut boxed);
-            let unchecked = Pin::get_unchecked_mut(mut_ref); 
+            let unchecked = Pin::get_unchecked_mut(mut_ref);
             unchecked.pname        = sname;
             unchecked.pversion     = sversion;
             unchecked.pdescription = sdescription;
@@ -206,7 +206,7 @@ pub fn lib_hexchat_plugin_init(hexchat   : &'static Hexchat,
                                desc      : *mut *const c_char,
                                version   : *mut *const c_char,
                                init_cb   : Box<InitFn>,
-                               info_cb   : Box<InfoFn>) 
+                               info_cb   : Box<InfoFn>)
     -> i32
 {
     // Store the global Hexchat pointer.
@@ -217,11 +217,11 @@ pub fn lib_hexchat_plugin_init(hexchat   : &'static Hexchat,
     lib_get_info(name, desc, version, info_cb);
 
     // Invoke client lib's init function.
-    catch_unwind(|| { 
+    catch_unwind(|| {
         Hook::init();
         #[cfg(feature = "threadsafe")]
         main_thread_init();
-        init_cb(hexchat) 
+        init_cb(hexchat)
     }).unwrap_or(0)
 }
 
@@ -229,12 +229,12 @@ pub fn lib_hexchat_plugin_init(hexchat   : &'static Hexchat,
 /// call the deinitialization function that was registered using the
 /// `dll_entry_points()` macro. It will also unhook all the callbacks
 /// currently registered forcing them, and their closure state, to drop and
-/// thus clean up. Plugin authors should not call this - it's only public 
+/// thus clean up. Plugin authors should not call this - it's only public
 /// because `dll_entry_points()` generates code that needs this.
 ///
 #[doc(hidden)]
-pub fn lib_hexchat_plugin_deinit(hexchat  : &'static Hexchat, 
-                                 callback : Box<DeinitFn>) 
+pub fn lib_hexchat_plugin_deinit(hexchat  : &'static Hexchat,
+                                 callback : Box<DeinitFn>)
     -> i32
 {
     let result = catch_unwind(|| {
@@ -246,14 +246,14 @@ pub fn lib_hexchat_plugin_deinit(hexchat  : &'static Hexchat,
 
         // Call user's deinit().
         let retval = callback(hexchat);
-        
+
         // Cause the callback_data objects to drop and clean up.
-        Hook::deinit();   
-        
+        Hook::deinit();
+
         // Destruct the info struct.
         unsafe { PLUGIN_INFO = None; }
-        
-        retval     
+
+        retval
     }).unwrap_or(0);
     // Final clean up on unload - drop the hook closure.
     let _ = panic::take_hook();
@@ -287,8 +287,8 @@ pub fn lib_get_info(name     : *mut *const c_char,
     }
 }
 
-/// Sets the panic hook so panic info will be printed to the active Hexchat 
-/// window. The debug build includes a stack trace using  
+/// Sets the panic hook so panic info will be printed to the active Hexchat
+/// window. The debug build includes a stack trace using
 /// [Backtrace](https://crates.io/crates/backtrace)
 fn set_panic_hook(hexchat: &'static Hexchat) {
     panic::set_hook(Box::new(move |panic_info| {
@@ -313,7 +313,7 @@ fn set_panic_hook(hexchat: &'static Hexchat) {
                          plugin_name,
                          location.file(),
                          location.line()));
-                        
+
             #[cfg(debug_assertions)]
             { loc = format!("{}:{:?}", location.file(), location.line()); }
         }
@@ -325,7 +325,7 @@ fn set_panic_hook(hexchat: &'static Hexchat) {
             let mut end   = 0;
             let     bt    = Backtrace::new();
             let     btstr = format!("{:?}", bt);
-            
+
             for line in btstr.lines() {
                 let line  = String::from(line);
                 if begin == 0 && !loc.is_empty() && line.contains(&loc) {

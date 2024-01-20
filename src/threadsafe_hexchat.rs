@@ -5,6 +5,7 @@
 //! The client code doesn't have to worry about synchronization; that's taken
 //! care of internally by `ThreadSafeHexchat`.
 
+use crate::ContextError;
 use crate::hexchat::*;
 use crate::thread_facilities::*;
 use crate::threadsafe_context::*;
@@ -23,33 +24,39 @@ unsafe impl Sync for ThreadSafeHexchat {}
 
 impl ThreadSafeHexchat {
     /// Constructs a `ThreadSafeHexchat` object that wraps `Hexchat`.
-    pub (crate) 
+    pub (crate)
     fn new(_hc: &'static Hexchat) -> Self {
         ThreadSafeHexchat
     }
-    
+
     /// Prints the string passed to it to the active Hexchat window.
     /// # Arguments
     /// * `text` - The text to print.
     ///
-    pub fn print(&self, text: &str) {
+    pub fn print(&self, text: &str) -> Result<(), HexchatError> {
+        use HexchatError::*;
         let text = text.to_string();
         let result = main_thread(move |hc| hc.print(&text));
-        result.get().unwrap();
+        result.get().map_or_else(
+            |err| Err(CommandFailed(err.to_string())),
+            Ok)
     }
-    
+
     /// Invokes the Hexchat command specified by `command`.
     /// # Arguments
     /// * `command` - The Hexchat command to invoke.
     ///
-    pub fn command(&self, command: &str) {
+    pub fn command(&self, command: &str) -> Result<(), HexchatError> {
+        use HexchatError::*;
         let command = command.to_string();
         let result = main_thread(move |hc| hc.command(&command));
-        result.get().unwrap();
+        result.get().map_or_else(
+            |err| Err(CommandFailed(err.to_string())),
+            Ok)
     }
-    
+
     /// Returns a `ThreadSafeContext` object bound to the requested channel.
-    /// The object provides methods like `print()` that will execute the 
+    /// The object provides methods like `print()` that will execute the
     /// Hexchat print command in that tab/window related to the context.
     /// The `Context::find()` can also be invoked to find a context.
     /// # Arguments
@@ -57,18 +64,24 @@ impl ThreadSafeHexchat {
     /// * `channel`  - The channel name for the context (e.g. "##rust").
     /// # Returns
     /// * the thread-safe context was found, i.e. if the user is joined to the
-    ///   channel specified currently, a `Some(<Context>)` is returned with the
-    ///   context object; `None` otherwise.
+    ///   channel specified currently, the context or a `ContextError` if the
+    ///   context wasn't found, or another problem occurred..
     ///
-    pub fn find_context(&self, 
-                        network : &str, 
-                        channel : &str) 
-        -> Option<ThreadSafeContext>
+    pub fn find_context(&self,
+                        network : &str,
+                        channel : &str)
+        -> Result<ThreadSafeContext, ContextError>
     {
+        use ContextError::*;
         let data = (network.to_string(), channel.to_string());
         main_thread(move |hc| {
             hc.find_context(&data.0, &data.1).map(ThreadSafeContext::new)
-        }).get().unwrap()
+        }).get()
+        .map_or_else(
+            |err| Err(ThreadSafeOperationFailed(err.to_string())),
+            |res| res.map_or_else(
+                || Err(AcquisitionFailed(network.into(), channel.into())),
+                Ok))
     }
 
     /// This should be invoked from the main thread. The context object returned
@@ -80,16 +93,20 @@ impl ThreadSafeHexchat {
     /// the Hexchat API within the context the object is bound to. Also,
     /// `Context::get()` will return a context object for the current context.
     /// # Returns
-    /// * The `ThreadSafeContext` for the currently active context. This usually 
+    /// * The `ThreadSafeContext` for the currently active context. This usually
     ///   means the channel window the user has visible in the GUI.
     ///
-    pub fn get_context(&self) -> Option<ThreadSafeContext> {
-        //self.hc.get_context().map(ThreadSafeContext::new)
+    pub fn get_context(&self) -> Result<ThreadSafeContext, ContextError> {
+        use ContextError::*;
         main_thread(|hc| {
             hc.get_context().map(ThreadSafeContext::new)
-        }).get().unwrap()
+        }).get().map_or_else(
+            |err| Err(ThreadSafeOperationFailed(err.to_string())),
+            |res| res.map_or_else(
+                || Err(AcquisitionFailed("?".into(), "?".into())),
+                Ok))
     }
-        
+
     /// Retrieves the info data with the given `id`. It returns None on failure
     /// and `Some(String)` on success. All information is returned as String
     /// data - even the "win_ptr"/"gtkwin_ptr" values, which can be parsed
@@ -100,22 +117,28 @@ impl ThreadSafeHexchat {
     ///          Plugin Interface page under `hexchat_get_info()`. These include
     ///          "channel", "network", "topic", etc.
     /// # Returns
-    /// * `Some(<String>)` is returned with the string value of the info
-    ///   requested. `None` is returned if there is no info with the requested
-    ///   `id`.
+    /// * The string is returned for the info requested. `HexchatError`` is 
+    ///   returned if there is no info with the requested `id` or another 
+    ///   problem occurred.
     ///
-    pub fn get_info(&self, id: &str) -> Option<String> {
+    pub fn get_info(&self, id: &str) -> Result<String, HexchatError> {
+        use HexchatError::*;
         let id = id.to_string();
         main_thread(move |hc| {
             hc.get_info(&id)
-        }).get().unwrap()
+        }).get()
+        .map_or_else(
+            |err| Err(CommandFailed(err.to_string())),
+            |res| res.map_or_else(
+                || Err(CommandFailed("No info found".into())),
+                Ok))
     }
-    
+
     /// Creates an iterator for the requested Hexchat list. This is modeled
     /// after how Hexchat implements the listing feature: rather than load
     /// all the list items up front, an internal list pointer is advanced
     /// to the current item, and the fields of which are accessible through
-    /// the iterator's `.get_field()` function. 
+    /// the iterator's `.get_field()` function.
     /// See the Hexchat Plugin Interface web page for more information on the
     /// related lists.
     /// # Arguments
@@ -130,5 +153,6 @@ impl ThreadSafeHexchat {
             hc.list_get(&list).map(ThreadSafeListIterator::create)
         }).get().unwrap()
     }
+    // TODO - Get back to this after updating list iterator.
 }
 

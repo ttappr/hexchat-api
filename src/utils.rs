@@ -15,10 +15,10 @@ fn str2cstring(s: &str) -> CString {
 }
 
 /// Reduces the syntax required to output formatted text to the current
-/// hexchat window. Internally it invokes 
+/// hexchat window. Internally it invokes
 /// `hexchat.print(&format!("<format-string>", arg1, arg2, ...)`.
-/// Using the macro, this becomes 
-/// `hc_print!("<format_string>", arg1, arg2, ...)`. To print from another 
+/// Using the macro, this becomes
+/// `hc_print!("<format_string>", arg1, arg2, ...)`. To print from another
 /// thread `hc_print_th!()` can be used.
 /// ```
 /// use hexchat_api::hc_print;
@@ -31,7 +31,7 @@ fn str2cstring(s: &str) -> CString {
 /// * `ctx=(network, channel)` - Sets the context to print in.
 /// * `fmt`     - The format string.
 /// * `argv`    - The varibale length formatted arguments.
-/// 
+///
 #[macro_export]
 macro_rules! hc_print {
     ( ctx = ($network:expr, $channel:expr), $( $arg:tt )* ) => {
@@ -45,7 +45,7 @@ macro_rules! hc_print {
 
 /// Used by `hc_print!()` to print to a specific context. This function is
 /// not intended to be used directly.
-/// 
+///
 #[doc(hidden)]
 pub fn print_with_ctx_inner(network: &str, channel: &str, msg: &str) {
     let hc = unsafe { &*PHEXCHAT };
@@ -64,7 +64,7 @@ pub fn print_with_ctx_inner(network: &str, channel: &str, msg: &str) {
 
 /// Used by `hc_print!()` to print to the active Hexchat window. This function
 /// is not intended to be used directly.
-/// 
+///
 #[doc(hidden)]
 pub fn print_inner(msg: &str) {
     let hc = unsafe { &*PHEXCHAT };
@@ -85,7 +85,7 @@ pub fn print_inner(msg: &str) {
 /// * `ctx=(network, channel)` - Sets the context to print in.
 /// * `fmt`     - The format string.
 /// * `argv`    - The varibale length formatted arguments.
-/// 
+///
 #[macro_export]
 macro_rules! hc_print_th {
     (  ctx = ($network:expr, $channel:expr), $( $arg:tt )* ) => {
@@ -105,7 +105,7 @@ macro_rules! hc_print_th {
 
 /// Executes a command in the active Hexchat window. Provided for convenience
 /// to support formatted string commands.
-/// 
+///
 #[macro_export]
 macro_rules! hc_command {
     ( $( $arg:tt )* ) => {
@@ -115,7 +115,7 @@ macro_rules! hc_command {
 
 /// Executes a command on the main thread. This is useful for executing
 /// commands from spawned threads.
-/// 
+///
 #[macro_export]
 macro_rules! hc_command_th {
     ( $( $arg:tt )* ) => {
@@ -126,7 +126,7 @@ macro_rules! hc_command_th {
 
 /// Executes a command in the active Hexchat window. This function is not
 /// intended to be used directly.
-/// 
+///
 #[doc(hidden)]
 pub fn command_inner(cmd: &str) {
     let hc = unsafe { &*PHEXCHAT };
