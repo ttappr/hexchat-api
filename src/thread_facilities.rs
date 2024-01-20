@@ -205,13 +205,6 @@ where
         else {
             res.set_error("Task queue has been shut down.");
         }
-        //else {
-        //    cln.set(callback(hex));
-        //}
-        // TODO - This approach needs some thought and testing. The commented 
-        //        out code above didn't prevent a hang in Hexchat when the
-        //        addon was unloaded. The new code also doesn't seem cover all
-        //        cases either. Needs further work.
         res
     }
 }
@@ -255,10 +248,6 @@ fn main_thread_init() {
             NoData);
     }
 }
-
-// TODO - Do something about threads blocked on a .get() on any outstanding
-//        AsyncResult's. The current branch is a work in progress trying to
-//        figure out how to do this.
 
 /// Called when the an addon is being unloaded. This eliminates the task queue.
 /// Any holders of `AsyncResult` objects that are blocked on `.get()` may be
