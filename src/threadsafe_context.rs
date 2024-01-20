@@ -23,7 +23,7 @@ use crate::threadsafe_list_iterator::*;
 /// executing.
 ///
 ///
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct ThreadSafeContext {
     ctx : Arc<RwLock<Option<SendWrapper<Context>>>>,
 }
@@ -39,10 +39,8 @@ impl ThreadSafeContext {
         Self { ctx: Arc::new(RwLock::new(Some(SendWrapper::new(ctx)))) }
     }
 
-    /// Gets the current `Context` wrapped in a `ThreadSafeContext` object.
-    /// This method should be called from the Hexchat main thread for it
-    /// to contain a predictable `Context`. Executing it from a thread can
-    /// yield a wrapped `Context` for an unexpected channel.
+    /// Gets the user's current `Context` wrapped in a `ThreadSafeContext` 
+    /// object.
     ///
     pub fn get() -> Result<Self, ContextError> {
         use ContextError::*;
@@ -212,5 +210,23 @@ impl Drop for ThreadSafeContext {
                 me.ctx.write().unwrap().take();
             });
         }
+    }
+}
+
+impl fmt::Debug for ThreadSafeContext {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let me = self.clone();
+        let s = main_thread(move |_| {
+            if let Ok(guard) = me.ctx.read() {
+                if let Some(ctx) =  guard.as_ref() {
+                    format!("Context({:?}, {:?})", ctx.network(), ctx.channel())
+                } else {
+                    "Context(Error getting info)".to_string()
+                }
+            } else {
+                "Context(Error getting info)".to_string()
+            }
+        }).get().unwrap();
+        write!(f, "{}", s)
     }
 }
