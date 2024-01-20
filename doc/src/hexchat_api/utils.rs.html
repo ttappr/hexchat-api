@@ -215,6 +215,8 @@
 <a href="#215" id="215">215</a>
 <a href="#216" id="216">216</a>
 <a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>libc::c_char;
 <span class="kw">use </span>std::ffi::{CString, CStr};
 
@@ -303,7 +305,8 @@
 /// * `fmt`     - The format string.
 /// * `argv`    - The varibale length formatted arguments.
 ///
-</span><span class="attr">#[macro_export]
+</span><span class="attr">#[cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
+#[macro_export]
 </span><span class="macro">macro_rules! </span>hc_print_th {
     (  ctx = (<span class="macro-nonterminal">$network</span>:expr, <span class="macro-nonterminal">$channel</span>:expr), $( <span class="macro-nonterminal">$arg</span>:tt )* ) =&gt; {
         <span class="kw">let </span>fm_msg = <span class="macro">format!</span>( $( <span class="macro-nonterminal">$arg </span>)* );
@@ -333,7 +336,8 @@
 <span class="doccomment">/// Executes a command on the main thread. This is useful for executing
 /// commands from spawned threads.
 ///
-</span><span class="attr">#[macro_export]
+</span><span class="attr">#[cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
+#[macro_export]
 </span><span class="macro">macro_rules! </span>hc_command_th {
     ( $( <span class="macro-nonterminal">$arg</span>:tt )* ) =&gt; {
         <span class="kw">let </span>rc_cmd = <span class="macro">format!</span>( $( <span class="macro-nonterminal">$arg </span>)* );

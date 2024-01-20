@@ -304,6 +304,13 @@
 <a href="#304" id="304">304</a>
 <a href="#305" id="305">305</a>
 <a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
 </pre></div><pre class="rust"><code>
 <span class="doccomment">//! Objects of the `Context` class represent Hexchat contexts, which are
 //! associated with channels the user is currently in. These are usually
@@ -542,6 +549,13 @@
             (data.hc.c_set_context)(data.hc, prior);
             iter.ok_or_else(|| ListNotFound(list.to_string()))
         }
+    }
+
+    <span class="kw">pub fn </span>network(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
+        cstring2string(<span class="kw-2">&amp;</span><span class="self">self</span>.data.network)
+    }
+    <span class="kw">pub fn </span>channel(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
+        cstring2string(<span class="kw-2">&amp;</span><span class="self">self</span>.data.channel)
     }
 }
 
