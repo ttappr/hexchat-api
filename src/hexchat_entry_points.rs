@@ -238,6 +238,9 @@ pub fn lib_hexchat_plugin_deinit(hexchat  : &'static Hexchat,
     -> i32
 {
     let result = catch_unwind(|| {
+        // This has to be called before the user's deinit function to avoid the
+        // situation where their function tries to do a .join() on their threads
+        // which will block indefinitely waiting on AsyncResult.get().
         #[cfg(feature = "threadsafe")]
         main_thread_deinit();
 
