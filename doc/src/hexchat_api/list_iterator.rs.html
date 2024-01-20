@@ -417,8 +417,8 @@
     /// * `list_name` - The name of one of the Hexchat lists (&#39;channels&#39;, &#39;dcc&#39;,
     ///                &#39;ignore&#39;, &#39;notify&#39;, &#39;users&#39;).
     /// # Returns
-    /// * An `Result` where `Err` means no such list of that name exists, and
-    ///   `Ok` holds a `ListIterator` instance.
+    /// * An iterator to the list of the requested name, or `None` if the list
+    ///   doesn&#39;t exist.
     ///
     </span><span class="kw">pub fn </span>new(list_name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
         <span class="attr">#[cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
