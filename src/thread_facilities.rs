@@ -112,7 +112,7 @@ impl Error for TaskError {}
 
 impl Display for TaskError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "TaskError(\"{}\")", self.0)
+        write!(f, "TaskError({})", self.0)
     }
 }
 

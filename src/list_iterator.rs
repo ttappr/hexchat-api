@@ -363,7 +363,9 @@ impl error::Error for ListError {}
 
 impl fmt::Display for ListError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
+        let mut s = format!("{:?}", self);
+        s.retain(|c| c != '"');
+        write!(f, "{}", s)
     }
 }
 

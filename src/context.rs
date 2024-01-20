@@ -274,7 +274,9 @@ impl error::Error for ContextError {}
 
 impl fmt::Display for ContextError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
+        let mut s = format!("{:?}", self);
+        s.retain(|c| c != '"');
+        write!(f, "{}", s)
     }
 }
 /*
