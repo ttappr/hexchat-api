@@ -16,7 +16,7 @@ use crate::list_iterator::FieldValue;
 /// iterate over the resulting vector. The conversion happens on the main thread
 /// and is done all at once.
 ///
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ListItem {
     fields : BTreeMap<String, FieldValue>,
 }
