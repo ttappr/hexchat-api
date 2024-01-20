@@ -83,7 +83,7 @@ impl UserData {
     ///         is the return type that gets wrapped in an `Option` and returned
     ///         by `apply()`.
     /// # Returns
-    /// * Returns the return value of function `f` if the downcast is 
+    /// * Returns the return value of function `f` if the downcast is
     ///   successful.
     ///
     pub fn apply<D:'static, F, R>(&self, f: F) -> R
@@ -104,7 +104,7 @@ impl UserData {
             NoData => { panic!("Can't downcast `NoData`.") },
         }
     }
-    
+
     /// Same as the `apply()` function except allows mutable access to the
     /// user data contents.
     ///
@@ -130,7 +130,7 @@ impl UserData {
 
 impl Clone for UserData {
     /// The clone operation for `UserData` allows each variant to be cloned,
-    /// except for `BoxedData`. The reason `BoxedData` is prohibited is to 
+    /// except for `BoxedData`. The reason `BoxedData` is prohibited is to
     /// deter sharing a box between callbacks, as that's not what
     /// a box is meant to be used for. One of the shared variants is more
     /// appropriate to share access to user data.
@@ -140,7 +140,7 @@ impl Clone for UserData {
             SharedData(d) => { SharedData(d.clone()) },
             SyncData(d)   => { SyncData(d.clone()) },
             NoData        => { NoData },
-            BoxedData(_)  => { 
+            BoxedData(_)  => {
                 panic!("Can't clone `BoxedData`. If user data needs to be \
                         shared, The `SharedData` or `SyncData` variants of \
                        `UserData` should be used.")
@@ -151,7 +151,7 @@ impl Clone for UserData {
 
 impl Default for UserData {
     /// Implemented to support the `take()` operation in `CallbackData` so the
-    /// user data can be retrieved with ownership when a callback is 
+    /// user data can be retrieved with ownership when a callback is
     /// deregistered. That take operation replaces the user data the callback
     /// owns with the default value (`NoData`).
     ///

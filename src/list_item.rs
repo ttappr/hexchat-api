@@ -1,6 +1,6 @@
 
 //! A list item for the `ListIterator` and `ThreadSafeListIterator` items that
-//! can populate a vector generated using `ThreadSafeListIterator.to_vec()`, 
+//! can populate a vector generated using `ThreadSafeListIterator.to_vec()`,
 //! or using the same function of `ListIterator`. `ListItem`s can also be
 //! obtained using the `.get_item()` method of the list classes.
 
@@ -55,7 +55,7 @@ impl Index<&str> for ListItem {
 }
 
 impl From<ListIterator> for ListItem {
-    /// Consructs a list item from the given `ListIterator` instance and 
+    /// Consructs a list item from the given `ListIterator` instance and
     /// consumes it. The item is constructed from the fields retrieved from
     /// the iterator at its current position.
     ///
@@ -69,7 +69,7 @@ impl From<ListIterator> for ListItem {
 }
 
 impl From<&ListIterator> for ListItem {
-    /// Constructs a list item from the iterator reference at its current 
+    /// Constructs a list item from the iterator reference at its current
     /// position.
     ///
     fn from(list: &ListIterator) -> Self {

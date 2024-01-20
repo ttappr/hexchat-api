@@ -1,10 +1,10 @@
 
-//! This crate provides a Rust interface to the 
+//! This crate provides a Rust interface to the
 //! [Hexchat Plugin Interface](https://hexchat.readthedocs.io/en/latest/plugins.html)
-//! The primary object of the interface is 
+//! The primary object of the interface is
 //! [Hexchat](https://ttappr.github.io/hexchat_api/hexchat_api/struct.Hexchat.html),
-//! which exposes an interface with functions that mirror the C functions 
-//! listed on the Hexchat docs page linked above.  
+//! which exposes an interface with functions that mirror the C functions
+//! listed on the Hexchat docs page linked above.
 
 mod hook;
 mod callback_data;

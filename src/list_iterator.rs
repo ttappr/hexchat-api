@@ -94,7 +94,7 @@ impl ListIterator {
             None
         }
     }
-    
+
     /// Eagerly constructs a vector of `ListItem`s. The iterator will be spent
     /// afterward.
     ///
@@ -102,7 +102,7 @@ impl ListIterator {
         self.map(ListItem::from).collect()
     }
 
-    /// Creates a `ListItem` from the field data at the current position in 
+    /// Creates a `ListItem` from the field data at the current position in
     /// the list.
     ///
     pub fn get_item(&self) -> ListItem {

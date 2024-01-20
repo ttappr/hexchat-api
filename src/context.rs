@@ -36,16 +36,16 @@ struct ContextData {
 }
 /// Any channel in Hexchat has an associated IRC network name and channel name.
 /// The network name and channel name are closely associated with the Hexchat
-/// concept of contexts. Hexchat contexts can also be thought of as the 
+/// concept of contexts. Hexchat contexts can also be thought of as the
 /// tabs, or windows, open in the UI that have the user joined to their various
-/// "chat rooms". To access a specific chat window in Hexchat, its context 
+/// "chat rooms". To access a specific chat window in Hexchat, its context
 /// can be acquired and used. This library's `Context` objects represent the
-/// Hexchat contexts and can be used to interact with the specific 
+/// Hexchat contexts and can be used to interact with the specific
 /// channels/windows/tabs that he user has open. For instance if your plugin
 /// needs to output only to specific channels, rather than the default window
 /// (which is the one currently open) - it can acquire the appropriate context
 /// using `Context::find("some-network", "some-channel")`, and use the object
-/// returned to invoke a command, `context.command("SAY hello!")`, or print, 
+/// returned to invoke a command, `context.command("SAY hello!")`, or print,
 /// `context.print("Hello!")`, or perform other operations.
 ///
 #[derive(Debug, Clone)]
@@ -58,6 +58,7 @@ impl Context {
     /// the requested network/channel, if it exists. The object will be
     /// returned as a `Some<Context>` if the context is found, or `None` if
     /// not.
+    /// 
     pub fn find(network: &str, channel: &str) -> Option<Self> {
         #[cfg(feature = "threadsafe")]
         assert!(thread::current().id() == unsafe { MAIN_THREAD_ID.unwrap() },
@@ -89,6 +90,7 @@ impl Context {
     /// context (window/tab, channel/network) open on the user's screen. A
     /// `Result<Context, ()>` is returned with either the context, or an
     /// error result if it coulnd't be obtained.
+    /// 
     pub fn get() -> Option<Self> {
         #[cfg(feature = "threadsafe")]
         assert!(thread::current().id() == unsafe { MAIN_THREAD_ID.unwrap() },
@@ -124,6 +126,7 @@ impl Context {
     /// So `Context` objects need to reacquire the pointer for each command
     /// invocation. If successful, `Ok(ptr)` is returned with the pointer value;
     /// `AcquisitionFailed(network, channel)` otherwise.
+    /// 
     #[inline]
     fn acquire(&self) -> Result<*const hexchat_context, ContextError> {
         let data = &*self.data;
@@ -220,9 +223,6 @@ impl Context {
     }
 
     /// Gets a `ListIterator` from the context held by the `Context` object.
-    /// If the list doesn't exist, the `OK()` result will contain `None`;
-    /// otherwise it will hold the `listIterator` object for the requested
-    /// list.
     ///
     pub fn list_get(&self, list: &str)
         -> Result<ListIterator, ContextError>
@@ -251,15 +251,23 @@ impl fmt::Display for Context {
 
 /// The `Context` functions may encounter an error when invoked depending on
 /// whether the network name and channel name they're bound to are currently
-/// valid. 
+/// valid.
 /// # Variants
 /// * `AcquisitionFailed`   - The function was unable to acquire the desired
 ///                           context associated with its network and channel
 ///                           names.
 /// * `OperationFailed`     - The context acquisition succeeded, but there is
 ///                           some problem with the action being performed,
-///                           for instance the requested list for 
+///                           for instance the requested list for
 ///                           `ctx.get_listiter("foo")` doesn't exist.
+/// * `ContextDropped`      - The context object was dropped.
+/// * `ThreadSafeOperationFailed` 
+///                         - This can happen when a `ThreadSafeContext` or 
+///                          `ThreadSafeListIterator` object is used while 
+///                          the plugin is unloading.
+/// * `ListNotFound`        - The requested list doesn't exist.
+/// * `InfoNotFound`        - The requested info doesn't exist.
+/// 
 #[derive(Debug, Clone)]
 pub enum ContextError {
     AcquisitionFailed(String, String),
