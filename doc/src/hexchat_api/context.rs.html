@@ -311,6 +311,17 @@
 <a href="#311" id="311">311</a>
 <a href="#312" id="312">312</a>
 <a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
 </pre></div><pre class="rust"><code>
 <span class="doccomment">//! Objects of the `Context` class represent Hexchat contexts, which are
 //! associated with channels the user is currently in. These are usually
@@ -361,7 +372,7 @@
 /// returned to invoke a command, `context.command(&quot;SAY hello!&quot;)`, or print,
 /// `context.print(&quot;Hello!&quot;)`, or perform other operations.
 ///
-</span><span class="attr">#[derive(Debug, Clone)]
+</span><span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>Context {
     data    : Rc&lt;ContextData&gt;,
 }
@@ -551,15 +562,26 @@
         }
     }
 
-    <span class="kw">pub fn </span>network(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
+    <span class="doccomment">/// Returns the network name associated with the `Context` object.
+    /// 
+    </span><span class="kw">pub fn </span>network(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
         cstring2string(<span class="kw-2">&amp;</span><span class="self">self</span>.data.network)
     }
-    <span class="kw">pub fn </span>channel(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
+
+    <span class="doccomment">/// Returns the channel name associated with the `Context` object.
+    /// 
+    </span><span class="kw">pub fn </span>channel(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
         cstring2string(<span class="kw-2">&amp;</span><span class="self">self</span>.data.channel)
     }
 }
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>Context {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
+        <span class="macro">write!</span>(f, <span class="string">&quot;{:?}&quot;</span>, <span class="self">self</span>)
+    }
+}
+
+<span class="kw">impl </span>fmt::Debug <span class="kw">for </span>Context {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
         <span class="kw">let </span>data    = <span class="kw-2">&amp;*</span><span class="self">self</span>.data;
         <span class="kw">let </span>network = cstring2string(<span class="kw-2">&amp;</span>data.network);

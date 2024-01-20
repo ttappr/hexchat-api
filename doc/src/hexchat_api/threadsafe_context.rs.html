@@ -230,6 +230,35 @@
 <a href="#230" id="230">230</a>
 <a href="#231" id="231">231</a>
 <a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
 </pre></div><pre class="rust"><code><span class="attr">#![cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
 
 </span><span class="doccomment">//! A thread-safe version of `Context`. The methods of these objects will
@@ -419,6 +448,35 @@
                     },
                     <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(err),
                 }
+            } <span class="kw">else </span>{
+                <span class="prelude-val">Err</span>(ContextDropped(<span class="string">&quot;Context dropped from threadsafe \
+                                    context.&quot;</span>.to_string()))
+            }
+        }).get().unwrap()
+    }
+    <span class="doccomment">/// Returns the network name associated with the context.
+    /// 
+    </span><span class="kw">pub fn </span>network(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;String, ContextError&gt; {
+        <span class="kw">use </span>ContextError::<span class="kw-2">*</span>;
+        <span class="kw">let </span>me = <span class="self">self</span>.clone();
+        main_thread(<span class="kw">move </span>|<span class="kw">_</span>| {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(ctx) = me.ctx.read().unwrap().as_ref() {
+                <span class="prelude-val">Ok</span>(ctx.network())
+            } <span class="kw">else </span>{
+                <span class="prelude-val">Err</span>(ContextDropped(<span class="string">&quot;Context dropped from threadsafe \
+                                    context.&quot;</span>.to_string()))
+            }
+        }).get().unwrap()
+    }
+
+    <span class="doccomment">/// Returns the channel name associated with the context.
+    /// 
+    </span><span class="kw">pub fn </span>channel(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;String, ContextError&gt; {
+        <span class="kw">use </span>ContextError::<span class="kw-2">*</span>;
+        <span class="kw">let </span>me = <span class="self">self</span>.clone();
+        main_thread(<span class="kw">move </span>|<span class="kw">_</span>| {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(ctx) = me.ctx.read().unwrap().as_ref() {
+                <span class="prelude-val">Ok</span>(ctx.channel())
             } <span class="kw">else </span>{
                 <span class="prelude-val">Err</span>(ContextDropped(<span class="string">&quot;Context dropped from threadsafe \
                                     context.&quot;</span>.to_string()))
