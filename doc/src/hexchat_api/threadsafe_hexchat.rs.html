@@ -156,6 +156,14 @@
 <a href="#156" id="156">156</a>
 <a href="#157" id="157">157</a>
 <a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
 </pre></div><pre class="rust"><code><span class="attr">#![cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
 
 </span><span class="doccomment">//! A thread-safe wrapper for the `Hexchat` object. The methods of the object
@@ -164,6 +172,7 @@
 //! care of internally by `ThreadSafeHexchat`.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::ContextError;
+<span class="kw">use </span><span class="kw">crate</span>::ListError;
 <span class="kw">use </span><span class="kw">crate</span>::hexchat::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::thread_facilities::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::threadsafe_context::<span class="kw-2">*</span>;
@@ -302,16 +311,23 @@
     /// # Arguments
     /// * `name` - The name of the list to iterate over.
     /// # Returns
-    /// * If the list exists, `Some(ThreadSafeListIterator)` is returned; `None`
-    ///   otherwise.
+    /// * If the list exists, a `ThreadSafeListIterator` is returned otherwise,
+    ///   an error is returned.
     ///
-    </span><span class="kw">pub fn </span>list_get(<span class="kw-2">&amp;</span><span class="self">self</span>, list: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;ThreadSafeListIterator&gt; {
+    </span><span class="kw">pub fn </span>list_get(<span class="kw-2">&amp;</span><span class="self">self</span>, list: <span class="kw-2">&amp;</span>str) 
+        -&gt; <span class="prelude-ty">Result</span>&lt;ThreadSafeListIterator, ListError&gt; 
+    {
+        <span class="kw">use </span>ListError::<span class="kw-2">*</span>;
         <span class="kw">let </span>list = list.to_string();
         main_thread(<span class="kw">move </span>|hc| {
             hc.list_get(<span class="kw-2">&amp;</span>list).map(ThreadSafeListIterator::create)
-        }).get().unwrap()
+        }).get()
+        .map_or_else(
+            |err| <span class="prelude-val">Err</span>(ThreadSafeOperationFailed(err.to_string())),
+            |res| res.map_or_else(
+                || <span class="prelude-val">Err</span>(UnknownList(<span class="string">&quot;List not found&quot;</span>.into())),
+                <span class="prelude-val">Ok</span>))
     }
-    <span class="comment">// TODO - Get back to this after updating list iterator.
-</span>}
+}
 
 </code></pre></div></section></main></body></html>
