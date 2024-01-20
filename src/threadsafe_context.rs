@@ -193,6 +193,35 @@ impl ThreadSafeContext {
             }
         }).get().unwrap()
     }
+    /// Returns the network name associated with the context.
+    /// 
+    pub fn network(&self) -> Result<String, ContextError> {
+        use ContextError::*;
+        let me = self.clone();
+        main_thread(move |_| {
+            if let Some(ctx) = me.ctx.read().unwrap().as_ref() {
+                Ok(ctx.network())
+            } else {
+                Err(ContextDropped("Context dropped from threadsafe \
+                                    context.".to_string()))
+            }
+        }).get().unwrap()
+    }
+
+    /// Returns the channel name associated with the context.
+    /// 
+    pub fn channel(&self) -> Result<String, ContextError> {
+        use ContextError::*;
+        let me = self.clone();
+        main_thread(move |_| {
+            if let Some(ctx) = me.ctx.read().unwrap().as_ref() {
+                Ok(ctx.channel())
+            } else {
+                Err(ContextDropped("Context dropped from threadsafe \
+                                    context.".to_string()))
+            }
+        }).get().unwrap()
+    }
 }
 
 impl fmt::Display for ThreadSafeContext {
