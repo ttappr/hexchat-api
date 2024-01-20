@@ -1,6 +1,6 @@
 [package]
 name = "hexchat-api"
-version = "0.2.5"
+version = "0.3.0"
 authors = ["ttappr <tmtappr@gmail.com>"]
 description = "A Rust API for HexChat plugin development"
 documentation = "https://ttappr.github.io/hexchat-api/doc/hexchat_api/index.html"
