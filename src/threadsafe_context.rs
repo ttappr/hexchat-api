@@ -14,6 +14,18 @@ use crate::context::*;
 use crate::thread_facilities::*;
 use crate::threadsafe_list_iterator::*;
 
+// TODO - AsyncResult.get() now returns a Result. If the main thread handler
+//        was shut down, the threads wating on results should be notified
+//        somehow. The functions that wait on results currently will panic
+//        when the main thread handler goes down, which is not terrible, but
+//        not ideal. The methods of the threadsafe objects should probably
+//        return results so the waiting threads can perform error handling 
+//        instead of being immediately terminated on panic.
+//        The return values for methods in ThreadSafeContext and
+//        ThreadSafeListIterator could be simplified a bit by flattening the
+//        Result's they return, rather than returning nested Options and 
+//        Results.
+
 
 /// A thread-safe version of `Context`. Its methods automatically execute on
 /// the Hexchat main thread. The full set of methods of `Context` aren't 

@@ -238,11 +238,11 @@ pub fn lib_hexchat_plugin_deinit(hexchat  : &'static Hexchat,
     -> i32
 {
     let result = catch_unwind(|| {
-        // Call user's deinit().
-        let retval = callback(hexchat);
-        
         #[cfg(feature = "threadsafe")]
         main_thread_deinit();
+
+        // Call user's deinit().
+        let retval = callback(hexchat);
         
         // Cause the callback_data objects to drop and clean up.
         Hook::deinit();   

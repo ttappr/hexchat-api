@@ -143,7 +143,6 @@ impl<T: Clone + Send> AsyncResult<T> {
     /// Indicates whether the callback executing on another thread is done or
     /// not. This can be used to poll for the result.
     /// 
-    #[allow(dead_code)]
     pub fn is_done(&self) -> bool {
         let (mtx, _) = &*self.data;
         mtx.lock().unwrap().1
@@ -167,13 +166,13 @@ impl<T: Clone + Send> AsyncResult<T> {
         let (mtx, cvar) = &*self.data;
         let mut guard   = mtx.lock().unwrap();
                *guard   = (Some(Ok(result)), true);
-        cvar.notify_one();
+        cvar.notify_all();
     }
     fn set_error(&self, error: &str) {
         let (mtx, cvar) = &*self.data;
         let mut guard   = mtx.lock().unwrap();
                *guard   = (Some(Err(TaskError(error.into()))), true);
-        cvar.notify_one();
+        cvar.notify_all();
     }
 }
 
@@ -210,9 +209,9 @@ where
         //    cln.set(callback(hex));
         //}
         // TODO - This approach needs some thought and testing. The commented 
-        //        out code above had didn't prevent a hang in Hexchat when the
-        //        addon was unloaded. The new code also doesn't seem to help
-        //        either. Needs further work.
+        //        out code above didn't prevent a hang in Hexchat when the
+        //        addon was unloaded. The new code also doesn't seem cover all
+        //        cases either. Needs further work.
         res
     }
 }
@@ -293,12 +292,12 @@ fn main_thread_deinit() {
 /// While this will disable the handling of the main thread task queue, it
 /// doesn't prevent the plugin author from spawning threads and attempting to
 /// use the features of the threadsafe objects this crate provides. If the 
-/// plugin author intends to use ThreadSafeContext, ThreadSafeListIterator, or
-/// invoke `main_thread()` directly, then this function should not be called.
+/// plugin author intends to use `ThreadSafeContext`, `ThreadSafeListIterator`, 
+/// or invoke `main_thread()` directly, then this function should not be called.
 ///
 #[deprecated(
     since = "0.2.6",
-    note = "This function is no longer necessary. Threadsafe features can be\
+    note = "This function is no longer necessary. Threadsafe features can be \
             turned off by specifying `features = []` in the Cargo.toml file \
             for the `hexchat-api` dependency.")]
 pub unsafe fn turn_off_threadsafe_features() {
