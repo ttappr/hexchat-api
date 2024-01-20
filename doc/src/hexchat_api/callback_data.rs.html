@@ -304,7 +304,7 @@
 <a href="#304" id="304">304</a>
 <a href="#305" id="305">305</a>
 </pre></div><pre class="rust"><code>
-<span class="doccomment">//! The `CallbackData` object holds all the information about a callback 
+<span class="doccomment">//! The `CallbackData` object holds all the information about a callback
 //! needed to manage the `user_data` and  invoke it safely and correctly.
 //! The objects of this module are used internally. This file also contains
 //! type declarations for the Rust-facing callback signatures.
@@ -317,7 +317,7 @@
 
 <span class="kw">use </span>UCallback::<span class="kw-2">*</span>;
 
-<span class="doccomment">/// Holds the Rust-implemented function, or closure, of a registered Hexchat 
+<span class="doccomment">/// Holds the Rust-implemented function, or closure, of a registered Hexchat
 /// callback.
 ///
 </span><span class="attr">#[allow(dead_code)]
@@ -332,7 +332,7 @@
 }
 <span class="kw">impl </span>Default <span class="kw">for </span>UCallback {
     <span class="doccomment">/// Supports `mem::take()` for the `TimerOnce` callback invocation.
-    /// The value of that callback is replaced with `OnceDone` when 
+    /// The value of that callback is replaced with `OnceDone` when
     /// `mem::take()` is performed on it in `timer_once_cb()`.
     </span><span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{ OnceDone }
 }
@@ -341,12 +341,12 @@
 <span class="doccomment">/// Pointers to instances of this struct are registered with the Hexchat
 /// callbacks. On the C-facing side, this is the `user_data` passed to the
 /// native callback wrappers (like `c_print_callback()`). When invoked by
-/// Hexchat, the native callbacks receive a pointer to a `user_data` 
-/// (`CallbackData`) object, which the wrapper then uses to invoke the 
-/// Rust-implemented callback held in the `UCallback` field below. The `data` 
+/// Hexchat, the native callbacks receive a pointer to a `user_data`
+/// (`CallbackData`) object, which the wrapper then uses to invoke the
+/// Rust-implemented callback held in the `UCallback` field below. The `data`
 /// field holds the user data registered for the Rust-facing callback, and is
 /// passed to it when invoked.
-</span><span class="kw">pub </span>(<span class="kw">crate</span>) 
+</span><span class="kw">pub </span>(<span class="kw">crate</span>)
 <span class="kw">struct </span>CallbackData {
     callback    : UCallback,
     data        : UserData,
@@ -356,10 +356,10 @@
 <span class="kw">impl </span>CallbackData {
     <span class="doccomment">/// Creates callback data for a regular command or server command.
     </span><span class="kw">pub </span>(<span class="kw">crate</span>)
-    <span class="kw">fn </span>new_command_data(callback : Box&lt;Callback&gt;, 
+    <span class="kw">fn </span>new_command_data(callback : Box&lt;Callback&gt;,
                         data     : UserData,
                         hook     : Hook
-                       ) -&gt; <span class="self">Self 
+                       ) -&gt; <span class="self">Self
     </span>{
         <span class="kw">let </span>callback = Command(callback);
         CallbackData { callback, data, hook  }
@@ -367,7 +367,7 @@
 
     <span class="doccomment">/// Creates callback data for a print callback.
     </span><span class="kw">pub </span>(<span class="kw">crate</span>)
-    <span class="kw">fn </span>new_print_data(callback  : Box&lt;PrintCallback&gt;, 
+    <span class="kw">fn </span>new_print_data(callback  : Box&lt;PrintCallback&gt;,
                       data      : UserData,
                       hook      : Hook
                      ) -&gt; <span class="self">Self
@@ -378,7 +378,7 @@
 
     <span class="doccomment">/// Creates callback data for a print attrs callback.
     </span><span class="kw">pub </span>(<span class="kw">crate</span>)
-    <span class="kw">fn </span>new_print_attrs_data(callback : Box&lt;PrintAttrsCallback&gt;, 
+    <span class="kw">fn </span>new_print_attrs_data(callback : Box&lt;PrintAttrsCallback&gt;,
                             data     : UserData,
                             hook     : Hook
                            ) -&gt; <span class="self">Self
@@ -389,7 +389,7 @@
 
     <span class="doccomment">/// Creates callback data for a timer callback.
     </span><span class="kw">pub </span>(<span class="kw">crate</span>)
-    <span class="kw">fn </span>new_timer_data(callback : Box&lt;TimerCallback&gt;, 
+    <span class="kw">fn </span>new_timer_data(callback : Box&lt;TimerCallback&gt;,
                       data     : UserData,
                       hook     : Hook
                      ) -&gt; <span class="self">Self
@@ -397,7 +397,7 @@
         <span class="kw">let </span>callback = Timer(callback);
         CallbackData { callback, data, hook }
     }
-    
+
     <span class="attr">#[allow(dead_code)]
     </span><span class="kw">pub </span>(<span class="kw">crate</span>)
     <span class="kw">fn </span>new_timer_once_data(callback : Box&lt;TimerCallbackOnce&gt;,
@@ -409,10 +409,10 @@
         CallbackData { callback, data, hook }
     }
 
-    
+
     <span class="doccomment">/// Creates callback data for a fd callback.
     </span><span class="kw">pub </span>(<span class="kw">crate</span>)
-    <span class="kw">fn </span>new_fd_data(callback : Box&lt;FdCallback&gt;, 
+    <span class="kw">fn </span>new_fd_data(callback : Box&lt;FdCallback&gt;,
                    data     : UserData,
                    hook     : Hook
                   ) -&gt; <span class="self">Self
@@ -422,13 +422,13 @@
     }
 
     <span class="doccomment">/// Returns a reference to the Rust-facing `user_data` that was
-    /// registered with the callback.    
+    /// registered with the callback.
     </span><span class="attr">#[inline]
     </span><span class="kw">pub </span>(<span class="kw">crate</span>)
     <span class="kw">fn </span>get_user_data(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>UserData {
         <span class="kw-2">&amp;</span><span class="self">self</span>.data
     }
-    
+
     <span class="doccomment">/// Returns the `user_data` held by the `CallbackData` object, passing
     /// ownership to the caller. The data field in the `CallbackData` object is
     /// replaced with `NoData`.
@@ -443,9 +443,9 @@
     </span><span class="attr">#[inline]
     </span><span class="kw">pub </span>(<span class="kw">crate</span>)
     <span class="kw">unsafe fn </span>command_cb(<span class="kw-2">&amp;mut </span><span class="self">self</span>,
-                         hc       : <span class="kw-2">&amp;</span>Hexchat, 
-                         word     : <span class="kw-2">&amp;</span>[String], 
-                         word_eol : <span class="kw-2">&amp;</span>[String], 
+                         hc       : <span class="kw-2">&amp;</span>Hexchat,
+                         word     : <span class="kw-2">&amp;</span>[String],
+                         word_eol : <span class="kw-2">&amp;</span>[String],
                          ud       : <span class="kw-2">&amp;</span>UserData
                         ) -&gt; Eat
     {
@@ -455,17 +455,17 @@
             <span class="macro">panic!</span>(<span class="string">&quot;Invoked wrong type in CallbackData.&quot;</span>);
         }
     }
-    
+
     <span class="doccomment">/// Invokes the callback held in the `callback` field. This is invoked by
     /// `c_print_callback()` which is the C-side registered callback for each
     /// print callback.
     </span><span class="attr">#[inline]
     </span><span class="kw">pub </span>(<span class="kw">crate</span>)
     <span class="kw">unsafe fn </span>print_cb(<span class="kw-2">&amp;mut </span><span class="self">self</span>,
-                       hc       : <span class="kw-2">&amp;</span>Hexchat, 
-                       word     : <span class="kw-2">&amp;</span>[String], 
+                       hc       : <span class="kw-2">&amp;</span>Hexchat,
+                       word     : <span class="kw-2">&amp;</span>[String],
                        ud       : <span class="kw-2">&amp;</span>UserData
-                      ) -&gt; Eat 
+                      ) -&gt; Eat
     {
         <span class="kw">if let </span>Print(callback) = <span class="kw-2">&amp;mut </span><span class="self">self</span>.callback {
             (<span class="kw-2">*</span>callback)(hc, word, ud)
@@ -473,7 +473,7 @@
             <span class="macro">panic!</span>(<span class="string">&quot;Invoked wrong type in CallbackData.&quot;</span>);
         }
     }
-    
+
     <span class="doccomment">/// Invokes the callback held in the `callback` field. This is invoked by
     /// `c_print_attrs_callback()`.
     </span><span class="attr">#[inline]
@@ -491,7 +491,7 @@
             <span class="macro">panic!</span>(<span class="string">&quot;Invoked wrong type in CallbackData.&quot;</span>);
         }
     }
-    
+
     <span class="doccomment">/// Invokes the callback held in the `callback` field. This is invoked by
     /// c_timer_callback()`.
     </span><span class="attr">#[inline]
@@ -533,16 +533,16 @@
             },
         }
     }
-    
+
 
     <span class="doccomment">/// Invokes the callback held in the `callback` field. This is invoked by
     /// c_fd_callback()`.
     </span><span class="attr">#[inline]
     </span><span class="kw">pub </span>(<span class="kw">crate</span>)
-    <span class="kw">unsafe fn </span>fd_cb(<span class="kw-2">&amp;mut </span><span class="self">self</span>, 
-                    hc    : <span class="kw-2">&amp;</span>Hexchat, 
-                    fd    : i32, 
-                    flags : i32, 
+    <span class="kw">unsafe fn </span>fd_cb(<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+                    hc    : <span class="kw-2">&amp;</span>Hexchat,
+                    fd    : i32,
+                    flags : i32,
                     ud    : <span class="kw-2">&amp;</span>UserData) -&gt; Eat
     {
         <span class="kw">if let </span>FD(callback) = <span class="kw-2">&amp;mut </span><span class="self">self</span>.callback {
@@ -553,9 +553,9 @@
     }
 }
 
-<span class="doccomment">/// The Rust-facing function signature corresponding to the C-facing  
+<span class="doccomment">/// The Rust-facing function signature corresponding to the C-facing
 /// `C_Callback`. Note that, unlike the C API, the Rust-facing callback
-/// signatures include a reference to the Hexchat pointer for 
+/// signatures include a reference to the Hexchat pointer for
 /// convenience.
 </span><span class="kw">pub </span>(<span class="kw">crate</span>)
 <span class="kw">type </span>Callback = <span class="kw">dyn </span>FnMut(<span class="kw-2">&amp;</span>Hexchat,
@@ -564,48 +564,48 @@
                           <span class="kw-2">&amp;</span>UserData
                          ) -&gt; Eat;
 
-<span class="doccomment">/// The Rust-facing function signature corresponding to the C-facing  
+<span class="doccomment">/// The Rust-facing function signature corresponding to the C-facing
 /// `C_PrintCallback`. Note that, unlike the C API, the Rust-facing callback
-/// signatures include a reference to the Hexchat pointer for 
+/// signatures include a reference to the Hexchat pointer for
 /// convenience.
 </span><span class="kw">pub </span>(<span class="kw">crate</span>)
-<span class="kw">type </span>PrintCallback 
+<span class="kw">type </span>PrintCallback
               = <span class="kw">dyn </span>FnMut(<span class="kw-2">&amp;</span>Hexchat,
                           <span class="kw-2">&amp;</span>[String],
                           <span class="kw-2">&amp;</span>UserData
                          ) -&gt; Eat;
 
-<span class="doccomment">/// The Rust-facing function signature corresponding to the C-facing  
+<span class="doccomment">/// The Rust-facing function signature corresponding to the C-facing
 /// `C_PrintAttrsCallback`. Note that, unlike the C API, the Rust-facing callback
-/// signatures include a reference to the Hexchat pointer for 
+/// signatures include a reference to the Hexchat pointer for
 /// convenience.
 </span><span class="kw">pub </span>(<span class="kw">crate</span>)
-<span class="kw">type </span>PrintAttrsCallback 
+<span class="kw">type </span>PrintAttrsCallback
               = <span class="kw">dyn </span>FnMut(<span class="kw-2">&amp;</span>Hexchat,
                           <span class="kw-2">&amp;</span>[String],
                           <span class="kw-2">&amp;</span>EventAttrs,
                           <span class="kw-2">&amp;</span>UserData
                          ) -&gt; Eat;
 
-<span class="doccomment">/// The Rust-facing function signature corresponding to the C-facing  
+<span class="doccomment">/// The Rust-facing function signature corresponding to the C-facing
 /// `C_TimerCallback`. Note that, unlike the C API, the Rust-facing callback
-/// signatures include a reference to the Hexchat pointer for 
+/// signatures include a reference to the Hexchat pointer for
 /// convenience.
 </span><span class="kw">pub </span>(<span class="kw">crate</span>)
-<span class="kw">type </span>TimerCallback 
+<span class="kw">type </span>TimerCallback
               = <span class="kw">dyn </span>FnMut(<span class="kw-2">&amp;</span>Hexchat, <span class="kw-2">&amp;</span>UserData) -&gt; i32;
-              
+
 <span class="kw">pub </span>(<span class="kw">crate</span>)
-<span class="kw">type </span>TimerCallbackOnce 
+<span class="kw">type </span>TimerCallbackOnce
               = <span class="kw">dyn </span>FnOnce(<span class="kw-2">&amp;</span>Hexchat, <span class="kw-2">&amp;</span>UserData) -&gt; i32;
 
 
-<span class="doccomment">/// The Rust-facing function signature corresponding to the C-facing  
+<span class="doccomment">/// The Rust-facing function signature corresponding to the C-facing
 /// `C_FdCallback`. Note that, unlike the C API, the Rust-facing callback
-/// signatures include a reference to the Hexchat pointer for 
+/// signatures include a reference to the Hexchat pointer for
 /// convenience.
 </span><span class="kw">pub </span>(<span class="kw">crate</span>)
-<span class="kw">type </span>FdCallback 
+<span class="kw">type </span>FdCallback
               = <span class="kw">dyn </span>FnMut(<span class="kw-2">&amp;</span>Hexchat, i32, i32, <span class="kw-2">&amp;</span>UserData) -&gt; Eat;
-              
+
 </code></pre></div></section></main></body></html>

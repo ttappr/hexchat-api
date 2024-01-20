@@ -337,15 +337,21 @@
 <a href="#337" id="337">337</a>
 <a href="#338" id="338">338</a>
 <a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
 </pre></div><pre class="rust"><code>
 <span class="doccomment">//! This module holds the DLL entry points for this plugin library.
 //! These exported functions are what Hexchat links to directly when the
 //! plugin is loaded.
-//! 
+//!
 //! These functions register the plugin info with Hexchat and set up to &quot;catch&quot;
 //! any panics that Rust-side callbacks might &quot;raise&quot; during execution.
 //! Panics are displayed in the currently active Hexchat window/context.
-//! The debug build of the library will include a stack trace in the error 
+//! The debug build of the library will include a stack trace in the error
 //! message.
 
 </span><span class="attr">#[cfg(debug_assertions)]
@@ -363,7 +369,8 @@
 </span><span class="kw">use </span><span class="kw">crate</span>::hexchat::Hexchat;
 <span class="kw">use </span><span class="kw">crate</span>::hook::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::utils::<span class="kw-2">*</span>;
-<span class="kw">use </span><span class="kw">crate</span>::thread_facilities::<span class="kw-2">*</span>;
+<span class="attr">#[cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
+</span><span class="kw">use </span><span class="kw">crate</span>::thread_facilities::<span class="kw-2">*</span>;
 
 <span class="doccomment">/// The signature for the init function that plugin authors need to register
 /// using `dll_entry_points!()`.
@@ -420,16 +427,16 @@
 ///
 </span><span class="attr">#[macro_export]
 </span><span class="macro">macro_rules! </span>dll_entry_points {
- 
+
     ( <span class="macro-nonterminal">$info</span>:ident, <span class="macro-nonterminal">$init</span>:ident, <span class="macro-nonterminal">$deinit</span>:ident ) =&gt; {
         <span class="attr">#[no_mangle]
-        </span><span class="kw">pub extern </span><span class="string">&quot;C&quot;    
+        </span><span class="kw">pub extern </span><span class="string">&quot;C&quot;
         </span><span class="kw">fn </span>hexchat_plugin_get_info(name     : <span class="kw-2">*mut *const </span>i8,
                                    desc     : <span class="kw-2">*mut *const </span>i8,
                                    version  : <span class="kw-2">*mut *const </span>i8,
-                                   reserved : <span class="kw-2">*mut *const </span>i8) 
+                                   reserved : <span class="kw-2">*mut *const </span>i8)
         {
-            hexchat_api::lib_get_info(name,    
+            hexchat_api::lib_get_info(name,
                                       desc,
                                       version,
                                       Box::new(<span class="macro-nonterminal">$info</span>));
@@ -442,9 +449,9 @@
                                version   : <span class="kw-2">*mut *const </span>i8
                               ) -&gt; i32
         {
-            hexchat_api::lib_hexchat_plugin_init(hexchat, 
+            hexchat_api::lib_hexchat_plugin_init(hexchat,
                                                  name,
-                                                 desc,   
+                                                 desc,
                                                  version,
                                                  Box::new(<span class="macro-nonterminal">$init</span>),
                                                  Box::new(<span class="macro-nonterminal">$info</span>))
@@ -506,10 +513,10 @@
         <span class="kw">let </span>sname        = NonNull::from(<span class="kw-2">&amp;</span>boxed.name);
         <span class="kw">let </span>sversion     = NonNull::from(<span class="kw-2">&amp;</span>boxed.version);
         <span class="kw">let </span>sdescription = NonNull::from(<span class="kw-2">&amp;</span>boxed.description);
-        
+
         <span class="kw">unsafe </span>{
             <span class="kw">let </span>mut_ref: Pin&lt;<span class="kw-2">&amp;mut </span>PluginInfoData&gt; = Pin::as_mut(<span class="kw-2">&amp;mut </span>boxed);
-            <span class="kw">let </span>unchecked = Pin::get_unchecked_mut(mut_ref); 
+            <span class="kw">let </span>unchecked = Pin::get_unchecked_mut(mut_ref);
             unchecked.pname        = sname;
             unchecked.pversion     = sversion;
             unchecked.pdescription = sdescription;
@@ -544,7 +551,7 @@
                                desc      : <span class="kw-2">*mut *const </span>c_char,
                                version   : <span class="kw-2">*mut *const </span>c_char,
                                init_cb   : Box&lt;InitFn&gt;,
-                               info_cb   : Box&lt;InfoFn&gt;) 
+                               info_cb   : Box&lt;InfoFn&gt;)
     -&gt; i32
 {
     <span class="comment">// Store the global Hexchat pointer.
@@ -555,10 +562,11 @@
     lib_get_info(name, desc, version, info_cb);
 
     <span class="comment">// Invoke client lib&#39;s init function.
-    </span>catch_unwind(|| { 
+    </span>catch_unwind(|| {
         Hook::init();
-        main_thread_init();
-        init_cb(hexchat) 
+        <span class="attr">#[cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
+        </span>main_thread_init();
+        init_cb(hexchat)
     }).unwrap_or(<span class="number">0</span>)
 }
 
@@ -566,27 +574,31 @@
 /// call the deinitialization function that was registered using the
 /// `dll_entry_points()` macro. It will also unhook all the callbacks
 /// currently registered forcing them, and their closure state, to drop and
-/// thus clean up. Plugin authors should not call this - it&#39;s only public 
+/// thus clean up. Plugin authors should not call this - it&#39;s only public
 /// because `dll_entry_points()` generates code that needs this.
 ///
 </span><span class="attr">#[doc(hidden)]
-</span><span class="kw">pub fn </span>lib_hexchat_plugin_deinit(hexchat  : <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Hexchat, 
-                                 callback : Box&lt;DeinitFn&gt;) 
+</span><span class="kw">pub fn </span>lib_hexchat_plugin_deinit(hexchat  : <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Hexchat,
+                                 callback : Box&lt;DeinitFn&gt;)
     -&gt; i32
 {
     <span class="kw">let </span>result = catch_unwind(|| {
+        <span class="comment">// This has to be called before the user&#39;s deinit function to avoid the
+        // situation where their function tries to do a .join() on their threads
+        // which will block indefinitely waiting on AsyncResult.get().
+        </span><span class="attr">#[cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
+        </span>main_thread_deinit();
+
         <span class="comment">// Call user&#39;s deinit().
         </span><span class="kw">let </span>retval = callback(hexchat);
-        
-        main_thread_deinit();
-        
+
         <span class="comment">// Cause the callback_data objects to drop and clean up.
-        </span>Hook::deinit();   
-        
+        </span>Hook::deinit();
+
         <span class="comment">// Destruct the info struct.
         </span><span class="kw">unsafe </span>{ PLUGIN_INFO = <span class="prelude-val">None</span>; }
-        
-        retval     
+
+        retval
     }).unwrap_or(<span class="number">0</span>);
     <span class="comment">// Final clean up on unload - drop the hook closure.
     </span><span class="kw">let _ </span>= panic::take_hook();
@@ -620,8 +632,8 @@
     }
 }
 
-<span class="doccomment">/// Sets the panic hook so panic info will be printed to the active Hexchat 
-/// window. The debug build includes a stack trace using  
+<span class="doccomment">/// Sets the panic hook so panic info will be printed to the active Hexchat
+/// window. The debug build includes a stack trace using
 /// [Backtrace](https://crates.io/crates/backtrace)
 </span><span class="kw">fn </span>set_panic_hook(hexchat: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Hexchat) {
     panic::set_hook(Box::new(<span class="kw">move </span>|panic_info| {
@@ -646,7 +658,7 @@
                          plugin_name,
                          location.file(),
                          location.line()));
-                        
+
             <span class="attr">#[cfg(debug_assertions)]
             </span>{ loc = <span class="macro">format!</span>(<span class="string">&quot;{}:{:?}&quot;</span>, location.file(), location.line()); }
         }
@@ -658,7 +670,7 @@
             <span class="kw">let </span><span class="kw-2">mut </span>end   = <span class="number">0</span>;
             <span class="kw">let     </span>bt    = Backtrace::new();
             <span class="kw">let     </span>btstr = <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, bt);
-            
+
             <span class="kw">for </span>line <span class="kw">in </span>btstr.lines() {
                 <span class="kw">let </span>line  = String::from(line);
                 <span class="kw">if </span>begin == <span class="number">0 </span>&amp;&amp; !loc.is_empty() &amp;&amp; line.contains(<span class="kw-2">&amp;</span>loc) {

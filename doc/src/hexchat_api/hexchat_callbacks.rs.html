@@ -139,7 +139,7 @@
 </span><span class="kw">pub </span>(<span class="kw">crate</span>)
 <span class="kw">extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>c_callback(word        : <span class="kw-2">*const *const </span>c_char,
                          word_eol    : <span class="kw-2">*const *const </span>c_char,
-                         user_data   : <span class="kw-2">*mut </span>c_void) 
+                         user_data   : <span class="kw-2">*mut </span>c_void)
     -&gt; c_int
 {
     catch_unwind(|| {
@@ -160,12 +160,12 @@
 /// `user_data`.
 </span><span class="kw">pub </span>(<span class="kw">crate</span>)
 <span class="kw">extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>c_print_callback(word      : <span class="kw-2">*const *const </span>c_char,
-                               user_data : <span class="kw-2">*mut </span>c_void) 
+                               user_data : <span class="kw-2">*mut </span>c_void)
     -&gt; c_int
 {
     catch_unwind(|| {
         <span class="kw">let </span>word = argv2svec(word, <span class="number">1</span>);
-        
+
         <span class="kw">unsafe </span>{
             <span class="kw">let </span>cd = user_data <span class="kw">as </span><span class="kw-2">*mut </span>CallbackData;
             <span class="kw">let </span>hc = <span class="kw-2">&amp;*</span>PHEXCHAT;
@@ -180,12 +180,12 @@
 </span><span class="kw">pub </span>(<span class="kw">crate</span>)
 <span class="kw">extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>c_print_attrs_callback(word      : <span class="kw-2">*const *const </span>c_char,
                                      attrs     : <span class="kw-2">*const </span>EventAttrs,
-                                     user_data : <span class="kw-2">*mut </span>c_void) 
+                                     user_data : <span class="kw-2">*mut </span>c_void)
     -&gt; c_int
 {
     catch_unwind(|| {
         <span class="kw">let </span>word = argv2svec(word, <span class="number">1</span>);
-        
+
         <span class="kw">unsafe </span>{
             <span class="kw">let </span>cd = user_data <span class="kw">as </span><span class="kw-2">*mut </span>CallbackData;
             <span class="kw">let </span>hc = <span class="kw-2">&amp;*</span>PHEXCHAT;
@@ -228,7 +228,7 @@
 /// callbacks.
 </span><span class="kw">pub </span>(<span class="kw">crate</span>)
 <span class="kw">extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>c_fd_callback(fd: c_int, flags: c_int, user_data: <span class="kw-2">*mut </span>c_void)
-    -&gt; c_int 
+    -&gt; c_int
 {
     catch_unwind(|| {
         <span class="kw">unsafe </span>{

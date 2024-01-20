@@ -1226,7 +1226,7 @@
 //! loads this library, the Hexchat pointer is stored and used by casting it
 //! to the struct contained in this file. These native function pointers are
 //! private to this crate, and a more Rust-friendly API is provided through
-//! this Hexchat interface. 
+//! this Hexchat interface.
 
 </span><span class="kw">use </span>libc::{c_int, c_char, c_void, time_t};
 <span class="kw">use </span>std::{error, ptr};
@@ -1241,22 +1241,24 @@
 <span class="kw">use </span><span class="kw">crate</span>::context::Context;
 <span class="kw">use </span><span class="kw">crate</span>::context::ContextError;
 <span class="kw">use </span><span class="kw">crate</span>::hexchat_callbacks::<span class="kw-2">*</span>;
-<span class="kw">use </span><span class="kw">crate</span>::hexchat_entry_points::PHEXCHAT;
+<span class="attr">#[cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
+</span><span class="kw">use </span><span class="kw">crate</span>::hexchat_entry_points::PHEXCHAT;
 <span class="kw">use </span><span class="kw">crate</span>::hook::Hook;
 <span class="kw">use </span><span class="kw">crate</span>::list_iterator::ListIterator;
 <span class="kw">use </span><span class="kw">crate</span>::plugin::Plugin;
 <span class="kw">use </span><span class="kw">crate</span>::user_data::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::utils::<span class="kw-2">*</span>;
-<span class="kw">use </span><span class="kw">crate</span>::threadsafe_hexchat::<span class="kw-2">*</span>;
+<span class="attr">#[cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
+</span><span class="kw">use </span><span class="kw">crate</span>::threadsafe_hexchat::<span class="kw-2">*</span>;
 
 <span class="doccomment">/// Value used in example from the Hexchat Plugin Interface doc web page.
 </span><span class="kw">const </span>MAX_PREF_VALUE_SIZE: usize =  <span class="number">512</span>;
 
 <span class="doccomment">/// Value specified on the [Hexchat Plugin Interface web page]
 /// (https://hexchat.readthedocs.io/en/latest/plugins.html).
-</span><span class="kw">const </span>MAX_PREF_LIST_SIZE : usize = <span class="number">4096</span>; 
+</span><span class="kw">const </span>MAX_PREF_LIST_SIZE : usize = <span class="number">4096</span>;
 
-<span class="comment">// hexchat_send_modes, hexchat_event_attrs_free, pluginpref_delete, 
+<span class="comment">// hexchat_send_modes, hexchat_event_attrs_free, pluginpref_delete,
 
 </span><span class="doccomment">/// The priorty for a given callback invoked by Hexchat.
 </span><span class="kw">pub enum </span>Priority {
@@ -1293,12 +1295,13 @@
 
 <span class="doccomment">/// This is the rust-facing Hexchat API. Each method has a corresponding
 /// C function pointer which they wrap and marshal data/from.
-/// 
+///
 </span><span class="kw">impl </span>Hexchat {
-    
+
     <span class="doccomment">/// Returns a thread-safe wrapper for `Hexchat` that exposes thread-safe
     /// methods wrapping several of `Hexchat`s methods.
     ///
+    </span><span class="attr">#[cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
     </span><span class="kw">pub fn </span>threadsafe(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ThreadSafeHexchat {
         ThreadSafeHexchat::new(<span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>PHEXCHAT })
     }
@@ -1347,9 +1350,9 @@
                                     pri         : Priority,
                                     callback    : F,
                                     help        : <span class="kw-2">&amp;</span>str,
-                                    user_data   : UserData) 
+                                    user_data   : UserData)
         -&gt; Hook
-    <span class="kw">where 
+    <span class="kw">where
         </span>F: FnMut(<span class="kw-2">&amp;</span>Hexchat, <span class="kw-2">&amp;</span>[String], <span class="kw-2">&amp;</span>[String], <span class="kw-2">&amp;</span>UserData)
            -&gt; Eat
     {
@@ -1359,11 +1362,11 @@
                                       Box::new(callback),
                                       user_data,
                                       hook.clone()));
-                                  
+
         <span class="kw">let </span>ud   = Box::into_raw(ud) <span class="kw">as </span><span class="kw-2">*mut </span>c_void;
-        
+
         hook.set_cbd(ud);
-        
+
         <span class="kw">let </span>help = <span class="kw">if </span>!help.is_empty() {
             help
         } <span class="kw">else </span>{
@@ -1406,21 +1409,21 @@
                                    name        : <span class="kw-2">&amp;</span>str,
                                    pri         : Priority,
                                    callback    : F,
-                                   user_data   : UserData) 
+                                   user_data   : UserData)
         -&gt; Hook
-    <span class="kw">where 
+    <span class="kw">where
         </span>F: FnMut(<span class="kw-2">&amp;</span>Hexchat, <span class="kw-2">&amp;</span>[String], <span class="kw-2">&amp;</span>[String], <span class="kw-2">&amp;</span>UserData)
            -&gt; Eat
     {
         <span class="kw">let </span>hook = Hook::new();
         <span class="kw">let </span>ud   = Box::new(
-                    CallbackData::new_command_data( 
+                    CallbackData::new_command_data(
                                       Box::new(callback),
                                       user_data,
                                       hook.clone()
                                   ));
         <span class="kw">let </span>ud = Box::into_raw(ud) <span class="kw">as </span><span class="kw-2">*mut </span>c_void;
-        
+
         hook.set_cbd(ud);
         <span class="kw">let </span>name = str2cstring(name);
         <span class="kw">unsafe </span>{
@@ -1453,20 +1456,20 @@
                                   event_name  : <span class="kw-2">&amp;</span>str,
                                   pri         : Priority,
                                   callback    : F,
-                                  user_data   : UserData) 
+                                  user_data   : UserData)
         -&gt; Hook
-    <span class="kw">where 
+    <span class="kw">where
         </span>F: FnMut(<span class="kw-2">&amp;</span>Hexchat, <span class="kw-2">&amp;</span>[String], <span class="kw-2">&amp;</span>UserData) -&gt; Eat
     {
         <span class="kw">let </span>hook = Hook::new();
         <span class="kw">let </span>ud   = Box::new(
-                    CallbackData::new_print_data( 
+                    CallbackData::new_print_data(
                                       Box::new(callback),
                                       user_data,
                                       hook.clone()
                                   ));
         <span class="kw">let </span>ud = Box::into_raw(ud) <span class="kw">as </span><span class="kw-2">*mut </span>c_void;
-        
+
         hook.set_cbd(ud);
         <span class="kw">let </span>event_name = str2cstring(event_name);
         <span class="kw">unsafe </span>{
@@ -1501,9 +1504,9 @@
                                         name        : <span class="kw-2">&amp;</span>str,
                                         pri         : Priority,
                                         callback    : F,
-                                        user_data   : UserData) 
+                                        user_data   : UserData)
         -&gt; Hook
-    <span class="kw">where 
+    <span class="kw">where
         </span>F: FnMut(<span class="kw-2">&amp;</span>Hexchat, <span class="kw-2">&amp;</span>[String], <span class="kw-2">&amp;</span>EventAttrs, <span class="kw-2">&amp;</span>UserData)
            -&gt; Eat
     {
@@ -1515,7 +1518,7 @@
                                       hook.clone()
                                   ));
         <span class="kw">let </span>ud = Box::into_raw(ud) <span class="kw">as </span><span class="kw-2">*mut </span>c_void;
-        
+
         hook.set_cbd(ud);
         <span class="kw">let </span>name = str2cstring(name);
         <span class="kw">unsafe </span>{
@@ -1545,9 +1548,9 @@
     </span><span class="kw">pub fn </span>hook_timer&lt;F: <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>,
                                   timeout   : i64,
                                   callback  : F,
-                                  user_data : UserData) 
+                                  user_data : UserData)
         -&gt; Hook
-    <span class="kw">where 
+    <span class="kw">where
         </span>F: FnMut(<span class="kw-2">&amp;</span>Hexchat, <span class="kw-2">&amp;</span>UserData) -&gt; i32
     {
         <span class="kw">let </span>hook = Hook::new();
@@ -1557,9 +1560,9 @@
                                             hook.clone()
                                         ));
         <span class="kw">let </span>ud = Box::into_raw(ud) <span class="kw">as </span><span class="kw-2">*mut </span>c_void;
-        
+
         hook.set_cbd(ud);
-        
+
         <span class="kw">unsafe </span>{
             hook.set((<span class="self">self</span>.c_hook_timer)(<span class="self">self</span>,
                                          timeout <span class="kw">as </span>c_int,
@@ -1586,7 +1589,7 @@
     <span class="kw">fn </span>hook_timer_once(<span class="kw-2">&amp;</span><span class="self">self</span>,
                        timeout   : i64,
                        callback  : Box&lt;TimerCallbackOnce&gt;,
-                       user_data : UserData) 
+                       user_data : UserData)
         -&gt; Hook
     {
         <span class="comment">// TODO - Put the function signatures somewhere logical (?)
@@ -1598,9 +1601,9 @@
                                             hook.clone()
                                         ));
         <span class="kw">let </span>ud = Box::into_raw(ud) <span class="kw">as </span><span class="kw-2">*mut </span>c_void;
-        
+
         hook.set_cbd(ud);
-        
+
         <span class="kw">unsafe </span>{
             hook.set((<span class="self">self</span>.c_hook_timer)(<span class="self">self</span>,
                                          timeout <span class="kw">as </span>c_int,
@@ -1608,16 +1611,16 @@
                                          ud));
         }
         hook
-    }                                   
+    }
 
     <span class="doccomment">/// Registers a callback to be called after the given timeout.
     </span><span class="kw">pub fn </span>hook_fd&lt;F: <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>,
                                fd        : i32,
                                flags     : i32,
                                callback  : F,
-                               user_data : UserData) 
+                               user_data : UserData)
         -&gt; Hook
-    <span class="kw">where 
+    <span class="kw">where
         </span>F: FnMut(<span class="kw-2">&amp;</span>Hexchat, i32, i32, <span class="kw-2">&amp;</span>UserData) -&gt; Eat
     {
         <span class="kw">let </span>hook = Hook::new();
@@ -1627,9 +1630,9 @@
                                             hook.clone()
                                         ));
         <span class="kw">let </span>ud = Box::into_raw(ud) <span class="kw">as </span><span class="kw-2">*mut </span>c_void;
-        
+
         hook.set_cbd(ud);
-        
+
         <span class="kw">unsafe </span>{
             hook.set((<span class="self">self</span>.c_hook_fd)(<span class="self">self</span>,
                                       fd <span class="kw">as </span>c_int,
@@ -1670,7 +1673,7 @@
         <span class="self">self</span>.emit_print_impl(<span class="number">0</span>, <span class="kw-2">&amp;</span>event_attrs, event_name, var_args)
     }
 
-    
+
     <span class="doccomment">/// Issues one of the Hexchat IRC events. The command works for any of the
     /// events listed in Settings &gt; Text Events dialog.
     /// # Arguments
@@ -1683,7 +1686,7 @@
     </span><span class="kw">pub fn </span>emit_print_attrs(<span class="kw-2">&amp;</span><span class="self">self</span>,
                             event_attrs : <span class="kw-2">&amp;</span>EventAttrs,
                             event_name  : <span class="kw-2">&amp;</span>str,
-                            var_args    : <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]) 
+                            var_args    : <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str])
         -&gt; <span class="prelude-ty">Result</span>&lt;(), HexchatError&gt;
     {
         <span class="self">self</span>.emit_print_impl(<span class="number">1</span>, event_attrs, event_name, var_args)
@@ -1705,25 +1708,25 @@
                        ver          : i32,
                        event_attrs  : <span class="kw-2">&amp;</span>EventAttrs,
                        event_name   : <span class="kw-2">&amp;</span>str,
-                       var_args     : <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]) 
+                       var_args     : <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str])
         -&gt; <span class="prelude-ty">Result</span>&lt;(), HexchatError&gt;
     {
         <span class="kw">let </span><span class="kw-2">mut </span>args   = <span class="macro">vec!</span>[];
         <span class="kw">let     </span>name   = str2cstring(event_name);
         <span class="kw">let     </span>va_len = var_args.len();
-        
-        <span class="comment">// We don&#39;t know if there are 6 items in var_args - so Clippy&#39;s 
+
+        <span class="comment">// We don&#39;t know if there are 6 items in var_args - so Clippy&#39;s
         // suggestion would fail. This range loop is fine.
         </span><span class="attr">#[allow(clippy::needless_range_loop)]
         </span><span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">6 </span>{
             args.push(str2cstring(<span class="kw">if </span>i &lt; va_len { var_args[i] } <span class="kw">else </span>{ <span class="string">&quot;&quot; </span>}));
         }
-       
+
         <span class="comment">// TODO - If empty strings don&#39;t suffice as a nop param, then construct
         //        another vector containing pointers and pad with nulls.
         </span><span class="kw">unsafe </span>{
             <span class="kw">use </span>HexchatError::<span class="kw-2">*</span>;
-            
+
             <span class="kw">if </span>ver == <span class="number">0 </span>{
                 <span class="kw">let </span>result = (<span class="self">self</span>.c_emit_print)(
                                     <span class="self">self</span>,
@@ -1816,7 +1819,7 @@
     }
 
     <span class="doccomment">/// Returns a `Context` object bound to the requested server/channel.
-    /// The object provides methods like `print()` that will execute the 
+    /// The object provides methods like `print()` that will execute the
     /// Hexchat print command in that tab/window related to the context.
     /// The `Context::find()` can also be invoked to find a context.
     /// # Arguments
@@ -1864,10 +1867,10 @@
         <span class="kw">let </span>info  = <span class="kw">unsafe </span>{ (<span class="self">self</span>.c_get_info)(<span class="self">self</span>, idstr.as_ptr()) };
         <span class="kw">if </span>!info.is_null() {
             <span class="kw">match </span>id {
-                <span class="string">&quot;win_ptr&quot;  </span>| <span class="string">&quot;gtkwin_ptr&quot;  </span>=&gt; { 
+                <span class="string">&quot;win_ptr&quot;  </span>| <span class="string">&quot;gtkwin_ptr&quot;  </span>=&gt; {
                     <span class="prelude-val">Some</span>((info <span class="kw">as </span>u64).to_string())
                 },
-                <span class="kw">_ </span>=&gt; { 
+                <span class="kw">_ </span>=&gt; {
                     <span class="prelude-val">Some</span>(pchar2string(info))
                 },
             }
@@ -1918,9 +1921,9 @@
     </span><span class="kw">pub fn </span>list_get(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;ListIterator&gt; {
         ListIterator::new(name)
     }
-    
+
     <span class="doccomment">/// Writes a variable name and value to a configuration file maintained
-    /// by Hexchat for your plugin. These can be accessed later using 
+    /// by Hexchat for your plugin. These can be accessed later using
     /// `pluginpref_get()`. *A character representing the type of the pref is
     /// prepended to the value output to the config file. `pluginpref_get()`
     /// uses this when reading back values from the config file to return the
@@ -1969,7 +1972,7 @@
         } <span class="kw">else </span>{ <span class="prelude-val">None </span>}
     }
 
-    <span class="doccomment">/// Returns a list of all the plugin pref variable names your plugin 
+    <span class="doccomment">/// Returns a list of all the plugin pref variable names your plugin
     /// registered using `pluginpref_set()`. `pluginpref_get()` can be invoked
     /// with each item to get their values.
     /// # Returns
@@ -2016,7 +2019,7 @@
                          filename : <span class="kw-2">&amp;</span>str,
                          name     : <span class="kw-2">&amp;</span>str,
                          desc     : <span class="kw-2">&amp;</span>str,
-                         version  : <span class="kw-2">&amp;</span>str) 
+                         version  : <span class="kw-2">&amp;</span>str)
         -&gt; Plugin
     {
         Plugin::new(filename, name, desc, version)
@@ -2095,7 +2098,7 @@
     }
 }
 
-<span class="comment">// Apply the same attribute to all items in the block, but don&#39;t compile it as 
+<span class="comment">// Apply the same attribute to all items in the block, but don&#39;t compile it as
 // an actual block.
 </span><span class="macro">macro_rules! </span>apply_attrib {
     (<span class="attr">#![<span class="macro-nonterminal">$attr</span>:meta] </span>$( <span class="macro-nonterminal">$it</span>:item )<span class="kw-2">*</span>) =&gt; { $( <span class="attr">#[<span class="macro-nonterminal">$attr</span>] </span><span class="macro-nonterminal">$it </span>)* }
@@ -2145,7 +2148,7 @@
 }
 
 <span class="doccomment">/// Mirrors the C struct for `hexchat_event_attrs`. It holds the timestamps
-/// for the callback invocations for callbacks registered using 
+/// for the callback invocations for callbacks registered using
 /// `hexchat_print_attrs()`, and similar commands.
 </span><span class="attr">#[repr(C)]
 </span><span class="kw">pub struct </span>EventAttrs {
@@ -2170,12 +2173,9 @@
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>HexchatError {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
-        <span class="kw">use </span>HexchatError::<span class="kw-2">*</span>;
-        <span class="kw">match </span><span class="self">self </span>{
-            CommandFailed(message) =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;CommandFailed(\&quot;{}\&quot;)&quot;</span>, message)
-            },
-        }
+        <span class="kw">let </span><span class="kw-2">mut </span>s = <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="self">self</span>);
+        s.retain(|c| c != <span class="string">&#39;&quot;&#39;</span>);
+        <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, s)
     }
 }
 <span class="comment">/*

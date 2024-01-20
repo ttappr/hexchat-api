@@ -134,13 +134,37 @@
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
-</pre></div><pre class="rust"><code>
-<span class="doccomment">//! A thread-safe wrapper for the `Hexchat` object. The methods of the object
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+</pre></div><pre class="rust"><code><span class="attr">#![cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
+
+</span><span class="doccomment">//! A thread-safe wrapper for the `Hexchat` object. The methods of the object
 //! will execute on the Hexchat main thread when called from another thread.
 //! The client code doesn&#39;t have to worry about synchronization; that&#39;s taken
 //! care of internally by `ThreadSafeHexchat`.
 
-</span><span class="kw">use </span><span class="kw">crate</span>::hexchat::<span class="kw-2">*</span>;
+</span><span class="kw">use </span><span class="kw">crate</span>::ContextError;
+<span class="kw">use </span><span class="kw">crate</span>::hexchat::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::thread_facilities::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::threadsafe_context::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::threadsafe_list_iterator::<span class="kw-2">*</span>;
@@ -151,43 +175,46 @@
 /// enough utility to code that needs to invoke Hexchat from other threads.
 ///
 </span><span class="attr">#[derive(Clone, Copy)]
-</span><span class="kw">pub struct </span>ThreadSafeHexchat {
-    <span class="attr">#[allow(dead_code)] </span><span class="comment">// Never read...yet.
-    </span>hc: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Hexchat,
-}
+</span><span class="kw">pub struct </span>ThreadSafeHexchat;
 
 <span class="kw">unsafe impl </span>Send <span class="kw">for </span>ThreadSafeHexchat {}
 <span class="kw">unsafe impl </span>Sync <span class="kw">for </span>ThreadSafeHexchat {}
 
 <span class="kw">impl </span>ThreadSafeHexchat {
     <span class="doccomment">/// Constructs a `ThreadSafeHexchat` object that wraps `Hexchat`.
-    </span><span class="kw">pub </span>(<span class="kw">crate</span>) 
-    <span class="kw">fn </span>new(hc: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Hexchat) -&gt; <span class="self">Self </span>{
-        ThreadSafeHexchat { hc }
+    </span><span class="kw">pub </span>(<span class="kw">crate</span>)
+    <span class="kw">fn </span>new(_hc: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Hexchat) -&gt; <span class="self">Self </span>{
+        ThreadSafeHexchat
     }
-    
+
     <span class="doccomment">/// Prints the string passed to it to the active Hexchat window.
     /// # Arguments
     /// * `text` - The text to print.
     ///
-    </span><span class="kw">pub fn </span>print(<span class="kw-2">&amp;</span><span class="self">self</span>, text: <span class="kw-2">&amp;</span>str) {
+    </span><span class="kw">pub fn </span>print(<span class="kw-2">&amp;</span><span class="self">self</span>, text: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), HexchatError&gt; {
+        <span class="kw">use </span>HexchatError::<span class="kw-2">*</span>;
         <span class="kw">let </span>text = text.to_string();
         <span class="kw">let </span>result = main_thread(<span class="kw">move </span>|hc| hc.print(<span class="kw-2">&amp;</span>text));
-        result.get();
+        result.get().map_or_else(
+            |err| <span class="prelude-val">Err</span>(CommandFailed(err.to_string())),
+            <span class="prelude-val">Ok</span>)
     }
-    
+
     <span class="doccomment">/// Invokes the Hexchat command specified by `command`.
     /// # Arguments
     /// * `command` - The Hexchat command to invoke.
     ///
-    </span><span class="kw">pub fn </span>command(<span class="kw-2">&amp;</span><span class="self">self</span>, command: <span class="kw-2">&amp;</span>str) {
+    </span><span class="kw">pub fn </span>command(<span class="kw-2">&amp;</span><span class="self">self</span>, command: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), HexchatError&gt; {
+        <span class="kw">use </span>HexchatError::<span class="kw-2">*</span>;
         <span class="kw">let </span>command = command.to_string();
         <span class="kw">let </span>result = main_thread(<span class="kw">move </span>|hc| hc.command(<span class="kw-2">&amp;</span>command));
-        result.get();
+        result.get().map_or_else(
+            |err| <span class="prelude-val">Err</span>(CommandFailed(err.to_string())),
+            <span class="prelude-val">Ok</span>)
     }
-    
+
     <span class="doccomment">/// Returns a `ThreadSafeContext` object bound to the requested channel.
-    /// The object provides methods like `print()` that will execute the 
+    /// The object provides methods like `print()` that will execute the
     /// Hexchat print command in that tab/window related to the context.
     /// The `Context::find()` can also be invoked to find a context.
     /// # Arguments
@@ -195,18 +222,24 @@
     /// * `channel`  - The channel name for the context (e.g. &quot;##rust&quot;).
     /// # Returns
     /// * the thread-safe context was found, i.e. if the user is joined to the
-    ///   channel specified currently, a `Some(&lt;Context&gt;)` is returned with the
-    ///   context object; `None` otherwise.
+    ///   channel specified currently, the context or a `ContextError` if the
+    ///   context wasn&#39;t found, or another problem occurred..
     ///
-    </span><span class="kw">pub fn </span>find_context(<span class="kw-2">&amp;</span><span class="self">self</span>, 
-                        network : <span class="kw-2">&amp;</span>str, 
-                        channel : <span class="kw-2">&amp;</span>str) 
-        -&gt; <span class="prelude-ty">Option</span>&lt;ThreadSafeContext&gt;
+    </span><span class="kw">pub fn </span>find_context(<span class="kw-2">&amp;</span><span class="self">self</span>,
+                        network : <span class="kw-2">&amp;</span>str,
+                        channel : <span class="kw-2">&amp;</span>str)
+        -&gt; <span class="prelude-ty">Result</span>&lt;ThreadSafeContext, ContextError&gt;
     {
+        <span class="kw">use </span>ContextError::<span class="kw-2">*</span>;
         <span class="kw">let </span>data = (network.to_string(), channel.to_string());
         main_thread(<span class="kw">move </span>|hc| {
             hc.find_context(<span class="kw-2">&amp;</span>data.<span class="number">0</span>, <span class="kw-2">&amp;</span>data.<span class="number">1</span>).map(ThreadSafeContext::new)
         }).get()
+        .map_or_else(
+            |err| <span class="prelude-val">Err</span>(ThreadSafeOperationFailed(err.to_string())),
+            |res| res.map_or_else(
+                || <span class="prelude-val">Err</span>(AcquisitionFailed(network.into(), channel.into())),
+                <span class="prelude-val">Ok</span>))
     }
 
     <span class="doccomment">/// This should be invoked from the main thread. The context object returned
@@ -218,16 +251,20 @@
     /// the Hexchat API within the context the object is bound to. Also,
     /// `Context::get()` will return a context object for the current context.
     /// # Returns
-    /// * The `ThreadSafeContext` for the currently active context. This usually 
+    /// * The `ThreadSafeContext` for the currently active context. This usually
     ///   means the channel window the user has visible in the GUI.
     ///
-    </span><span class="kw">pub fn </span>get_context(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;ThreadSafeContext&gt; {
-        <span class="comment">//self.hc.get_context().map(ThreadSafeContext::new)
-        </span>main_thread(|hc| {
+    </span><span class="kw">pub fn </span>get_context(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;ThreadSafeContext, ContextError&gt; {
+        <span class="kw">use </span>ContextError::<span class="kw-2">*</span>;
+        main_thread(|hc| {
             hc.get_context().map(ThreadSafeContext::new)
-        }).get()
+        }).get().map_or_else(
+            |err| <span class="prelude-val">Err</span>(ThreadSafeOperationFailed(err.to_string())),
+            |res| res.map_or_else(
+                || <span class="prelude-val">Err</span>(AcquisitionFailed(<span class="string">&quot;?&quot;</span>.into(), <span class="string">&quot;?&quot;</span>.into())),
+                <span class="prelude-val">Ok</span>))
     }
-        
+
     <span class="doccomment">/// Retrieves the info data with the given `id`. It returns None on failure
     /// and `Some(String)` on success. All information is returned as String
     /// data - even the &quot;win_ptr&quot;/&quot;gtkwin_ptr&quot; values, which can be parsed
@@ -238,22 +275,28 @@
     ///          Plugin Interface page under `hexchat_get_info()`. These include
     ///          &quot;channel&quot;, &quot;network&quot;, &quot;topic&quot;, etc.
     /// # Returns
-    /// * `Some(&lt;String&gt;)` is returned with the string value of the info
-    ///   requested. `None` is returned if there is no info with the requested
-    ///   `id`.
+    /// * The string is returned for the info requested. `HexchatError`` is 
+    ///   returned if there is no info with the requested `id` or another 
+    ///   problem occurred.
     ///
-    </span><span class="kw">pub fn </span>get_info(<span class="kw-2">&amp;</span><span class="self">self</span>, id: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
+    </span><span class="kw">pub fn </span>get_info(<span class="kw-2">&amp;</span><span class="self">self</span>, id: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;String, HexchatError&gt; {
+        <span class="kw">use </span>HexchatError::<span class="kw-2">*</span>;
         <span class="kw">let </span>id = id.to_string();
         main_thread(<span class="kw">move </span>|hc| {
             hc.get_info(<span class="kw-2">&amp;</span>id)
         }).get()
+        .map_or_else(
+            |err| <span class="prelude-val">Err</span>(CommandFailed(err.to_string())),
+            |res| res.map_or_else(
+                || <span class="prelude-val">Err</span>(CommandFailed(<span class="string">&quot;No info found&quot;</span>.into())),
+                <span class="prelude-val">Ok</span>))
     }
-    
+
     <span class="doccomment">/// Creates an iterator for the requested Hexchat list. This is modeled
     /// after how Hexchat implements the listing feature: rather than load
     /// all the list items up front, an internal list pointer is advanced
     /// to the current item, and the fields of which are accessible through
-    /// the iterator&#39;s `.get_field()` function. 
+    /// the iterator&#39;s `.get_field()` function.
     /// See the Hexchat Plugin Interface web page for more information on the
     /// related lists.
     /// # Arguments
@@ -266,8 +309,9 @@
         <span class="kw">let </span>list = list.to_string();
         main_thread(<span class="kw">move </span>|hc| {
             hc.list_get(<span class="kw-2">&amp;</span>list).map(ThreadSafeListIterator::create)
-        }).get()
+        }).get().unwrap()
     }
-}
+    <span class="comment">// TODO - Get back to this after updating list iterator.
+</span>}
 
 </code></pre></div></section></main></body></html>

@@ -232,10 +232,10 @@
 }
 
 <span class="doccomment">/// Reduces the syntax required to output formatted text to the current
-/// hexchat window. Internally it invokes 
+/// hexchat window. Internally it invokes
 /// `hexchat.print(&amp;format!(&quot;&lt;format-string&gt;&quot;, arg1, arg2, ...)`.
-/// Using the macro, this becomes 
-/// `hc_print!(&quot;&lt;format_string&gt;&quot;, arg1, arg2, ...)`. To print from another 
+/// Using the macro, this becomes
+/// `hc_print!(&quot;&lt;format_string&gt;&quot;, arg1, arg2, ...)`. To print from another
 /// thread `hc_print_th!()` can be used.
 /// ```
 /// use hexchat_api::hc_print;
@@ -248,7 +248,7 @@
 /// * `ctx=(network, channel)` - Sets the context to print in.
 /// * `fmt`     - The format string.
 /// * `argv`    - The varibale length formatted arguments.
-/// 
+///
 </span><span class="attr">#[macro_export]
 </span><span class="macro">macro_rules! </span>hc_print {
     ( ctx = (<span class="macro-nonterminal">$network</span>:expr, <span class="macro-nonterminal">$channel</span>:expr), $( <span class="macro-nonterminal">$arg</span>:tt )* ) =&gt; {
@@ -262,7 +262,7 @@
 
 <span class="doccomment">/// Used by `hc_print!()` to print to a specific context. This function is
 /// not intended to be used directly.
-/// 
+///
 </span><span class="attr">#[doc(hidden)]
 </span><span class="kw">pub fn </span>print_with_ctx_inner(network: <span class="kw-2">&amp;</span>str, channel: <span class="kw-2">&amp;</span>str, msg: <span class="kw-2">&amp;</span>str) {
     <span class="kw">let </span>hc = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>PHEXCHAT };
@@ -281,7 +281,7 @@
 
 <span class="doccomment">/// Used by `hc_print!()` to print to the active Hexchat window. This function
 /// is not intended to be used directly.
-/// 
+///
 </span><span class="attr">#[doc(hidden)]
 </span><span class="kw">pub fn </span>print_inner(msg: <span class="kw-2">&amp;</span>str) {
     <span class="kw">let </span>hc = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>PHEXCHAT };
@@ -302,7 +302,7 @@
 /// * `ctx=(network, channel)` - Sets the context to print in.
 /// * `fmt`     - The format string.
 /// * `argv`    - The varibale length formatted arguments.
-/// 
+///
 </span><span class="attr">#[macro_export]
 </span><span class="macro">macro_rules! </span>hc_print_th {
     (  ctx = (<span class="macro-nonterminal">$network</span>:expr, <span class="macro-nonterminal">$channel</span>:expr), $( <span class="macro-nonterminal">$arg</span>:tt )* ) =&gt; {
@@ -322,7 +322,7 @@
 
 <span class="doccomment">/// Executes a command in the active Hexchat window. Provided for convenience
 /// to support formatted string commands.
-/// 
+///
 </span><span class="attr">#[macro_export]
 </span><span class="macro">macro_rules! </span>hc_command {
     ( $( <span class="macro-nonterminal">$arg</span>:tt )* ) =&gt; {
@@ -332,7 +332,7 @@
 
 <span class="doccomment">/// Executes a command on the main thread. This is useful for executing
 /// commands from spawned threads.
-/// 
+///
 </span><span class="attr">#[macro_export]
 </span><span class="macro">macro_rules! </span>hc_command_th {
     ( $( <span class="macro-nonterminal">$arg</span>:tt )* ) =&gt; {
@@ -343,7 +343,7 @@
 
 <span class="doccomment">/// Executes a command in the active Hexchat window. This function is not
 /// intended to be used directly.
-/// 
+///
 </span><span class="attr">#[doc(hidden)]
 </span><span class="kw">pub fn </span>command_inner(cmd: <span class="kw-2">&amp;</span>str) {
     <span class="kw">let </span>hc = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>PHEXCHAT };

@@ -369,6 +369,7 @@
 <a href="#369" id="369">369</a>
 <a href="#370" id="370">370</a>
 <a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
 </pre></div><pre class="rust"><code>
 <span class="doccomment">//! This module provides a Rust wrapper for Hexchat&#39;s list related API. A list
 //! can be accessed by creating a `ListIterator` by passing the name of one of
@@ -381,9 +382,13 @@
 </span><span class="kw">use </span>libc::c_void;
 <span class="kw">use </span>libc::time_t;
 <span class="kw">use </span>std::cell::RefCell;
+<span class="attr">#[cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
+</span><span class="kw">use </span>std::thread;
 <span class="kw">use </span>std::{fmt, error};
 <span class="kw">use </span>std::rc::Rc;
 
+<span class="attr">#[cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
+</span><span class="kw">use </span><span class="kw">crate</span>::MAIN_THREAD_ID;
 <span class="kw">use </span><span class="kw">crate</span>::context::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::hexchat::Hexchat;
 <span class="kw">use </span><span class="kw">crate</span>::hexchat_entry_points::PHEXCHAT;
@@ -416,6 +421,9 @@
     ///   `Ok` holds a `ListIterator` instance.
     ///
     </span><span class="kw">pub fn </span>new(list_name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
+        <span class="attr">#[cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
+        </span><span class="macro">assert!</span>(thread::current().id() == <span class="kw">unsafe </span>{ MAIN_THREAD_ID.unwrap() },
+                <span class="string">&quot;ListIterator::new() must be called from the main thread.&quot;</span>);
         <span class="kw">let </span>name     = str2cstring(list_name);
         <span class="kw">let </span>hc       = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>PHEXCHAT };
         <span class="kw">let </span>list_ptr = <span class="kw">unsafe </span>{ (hc.c_list_get)(hc, name.as_ptr()) };
@@ -458,7 +466,7 @@
             <span class="prelude-val">None
         </span>}
     }
-    
+
     <span class="doccomment">/// Eagerly constructs a vector of `ListItem`s. The iterator will be spent
     /// afterward.
     ///
@@ -466,7 +474,7 @@
         <span class="self">self</span>.map(ListItem::from).collect()
     }
 
-    <span class="doccomment">/// Creates a `ListItem` from the field data at the current position in 
+    <span class="doccomment">/// Creates a `ListItem` from the field data at the current position in
     /// the list.
     ///
     </span><span class="kw">pub fn </span>get_item(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ListItem {
@@ -720,22 +728,16 @@
     NotStarted(String),
     NotAvailable(String),
     ListIteratorDropped(String),
+    ThreadSafeOperationFailed(String),
 }
 
 <span class="kw">impl </span>error::Error <span class="kw">for </span>ListError {}
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>ListError {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
-        <span class="kw">match </span><span class="self">self </span>{
-            UnknownList(msg)  =&gt; { <span class="macro">write!</span>(f, <span class="string">&quot;UnknownList(\&quot;{}\&quot;)&quot;</span>, msg) },
-            UnknownField(msg) =&gt; { <span class="macro">write!</span>(f, <span class="string">&quot;UnknownField(\&quot;{}\&quot;)&quot;</span>, msg) },
-            UnknownType(msg)  =&gt; { <span class="macro">write!</span>(f, <span class="string">&quot;UnknownType(\&quot;{:?}\&quot;)&quot;</span>, msg) },
-            NotStarted(msg)   =&gt; { <span class="macro">write!</span>(f, <span class="string">&quot;NotStarted(\&quot;{}\&quot;)&quot;</span>, msg) },
-            NotAvailable(msg) =&gt; { <span class="macro">write!</span>(f, <span class="string">&quot;NotAvailable(\&quot;{}\&quot;)&quot;</span>, msg) },
-            ListIteratorDropped(msg) =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;ListIteratorDropped(\&quot;{}\&quot;)&quot;</span>, msg)
-            },
-        }
+        <span class="kw">let </span><span class="kw-2">mut </span>s = <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="self">self</span>);
+        s.retain(|c| c != <span class="string">&#39;&quot;&#39;</span>);
+        <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, s)
     }
 }
 

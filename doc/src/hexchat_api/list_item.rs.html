@@ -83,7 +83,7 @@
 <a href="#83" id="83">83</a>
 </pre></div><pre class="rust"><code>
 <span class="doccomment">//! A list item for the `ListIterator` and `ThreadSafeListIterator` items that
-//! can populate a vector generated using `ThreadSafeListIterator.to_vec()`, 
+//! can populate a vector generated using `ThreadSafeListIterator.to_vec()`,
 //! or using the same function of `ListIterator`. `ListItem`s can also be
 //! obtained using the `.get_item()` method of the list classes.
 
@@ -138,7 +138,7 @@
 }
 
 <span class="kw">impl </span>From&lt;ListIterator&gt; <span class="kw">for </span>ListItem {
-    <span class="doccomment">/// Consructs a list item from the given `ListIterator` instance and 
+    <span class="doccomment">/// Consructs a list item from the given `ListIterator` instance and
     /// consumes it. The item is constructed from the fields retrieved from
     /// the iterator at its current position.
     ///
@@ -152,7 +152,7 @@
 }
 
 <span class="kw">impl </span>From&lt;<span class="kw-2">&amp;</span>ListIterator&gt; <span class="kw">for </span>ListItem {
-    <span class="doccomment">/// Constructs a list item from the iterator reference at its current 
+    <span class="doccomment">/// Constructs a list item from the iterator reference at its current
     /// position.
     ///
     </span><span class="kw">fn </span>from(list: <span class="kw-2">&amp;</span>ListIterator) -&gt; <span class="self">Self </span>{

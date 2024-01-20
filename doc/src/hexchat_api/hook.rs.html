@@ -194,14 +194,14 @@
 //! with Hexchat. The Rust-style hook can be used to unhook commands directly
 //! via its `unhook()` function. This object protects against attempts to
 //! unhook the same callback more than once, which can crash Hexchat.
-//! 
+//!
 //! The `unhook()` function returns the user_data that was registered with
 //! the associated callback, passing ownership to the caller. Invoking
 //! `unhook()` more than once returns `None`.
-//! 
+//!
 //! The hooks can be cloned. Internally, clones safely share the same hook
 //! pointer. When hooks go out of scope, they do not remove their associated
-//! commands. Hooks can be ignored by the plugin if there is no need to 
+//! commands. Hooks can be ignored by the plugin if there is no need to
 //! unhook commands. The most relevant use of a hook could be to cancel
 //! timer callbacks.
 
@@ -216,7 +216,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::hexchat_entry_points::PHEXCHAT;
 <span class="kw">use </span><span class="kw">crate</span>::user_data::<span class="kw-2">*</span>;
 
-<span class="doccomment">/// A synchronized global list of the hooks. This gets initialized when a 
+<span class="doccomment">/// A synchronized global list of the hooks. This gets initialized when a
 /// plugin is loaded from within the `lib_hexchat_plugin_init()` function
 /// before the plugin author&#39;s registered init function is invoked.
 ///
@@ -229,7 +229,7 @@
     cbd_box_ptr : <span class="kw-2">*const </span>c_void,
 }
 
-<span class="doccomment">/// A wrapper for Hexchat callback hooks. These hooks are returned when 
+<span class="doccomment">/// A wrapper for Hexchat callback hooks. These hooks are returned when
 /// registering callbacks and can be used to unregister (unhook) them.
 /// `Hook`s can be cloned to share a reference to the same callback hook.
 ///
@@ -246,7 +246,7 @@
     ///
     </span><span class="kw">pub </span>(<span class="kw">crate</span>) <span class="kw">fn </span>new() -&gt; <span class="self">Self </span>{
 
-        <span class="kw">let </span>hook = Hook { 
+        <span class="kw">let </span>hook = Hook {
             data: Arc::new(
                     RwLock::new(
                         <span class="prelude-val">Some</span>(
@@ -256,24 +256,24 @@
                                     cbd_box_ptr : null::&lt;c_void&gt;(),
                         })))),
         };
-                   
+
         <span class="kw">if let </span><span class="prelude-val">Some</span>(hook_list_rwlock) = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;</span>HOOK_LIST } {
             <span class="comment">// Acquire global hook list write lock.
             </span><span class="kw">let </span>wlock     = hook_list_rwlock.write();
             <span class="kw">let </span>hook_list = <span class="kw-2">&amp;mut *</span>wlock.unwrap();
-            
+
             <span class="comment">// Clean up dead hooks.
-            </span>hook_list.retain(|h| 
+            </span>hook_list.retain(|h|
                 !h.data.read().unwrap().as_ref().unwrap().hook_ptr.is_null()
             );
-            
+
             <span class="comment">// Store newly created hook in global list.
             </span>hook_list.push(hook.clone());
         }
 
         hook
     }
-    
+
     <span class="doccomment">/// Sets the value of the internal hook pointer. This is used by the hooking
     /// functions in hexchat.rs.
     ///
@@ -300,28 +300,28 @@
     }
 
     <span class="doccomment">/// Unhooks the related callback from Hexchat. The user_data object is
-    /// returned. Subsequent calls to `unhook()` will return `None`. The 
+    /// returned. Subsequent calls to `unhook()` will return `None`. The
     /// callback that was registered with Hexchat will be unhooked and dropped.
     /// Ownership of the `user_data` will be passed to the caller.
     /// # Returns
     /// * The user data that was registered with the callback using one of the
-    ///   hexchat hook functions. 
+    ///   hexchat hook functions.
     ///
     </span><span class="kw">pub fn </span>unhook(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; UserData {
         <span class="kw">unsafe </span>{
             <span class="kw">if let </span><span class="prelude-val">Some</span>(hl_rwlock) = <span class="kw-2">&amp;</span>HOOK_LIST {
                 <span class="kw">let </span>_rlock = hl_rwlock.read();
-                
+
                 <span class="kw">let </span>ptr_data = <span class="kw-2">&amp;mut </span><span class="self">self</span>.data.write().unwrap();
-                
+
                 <span class="comment">// Determine if the Hook is still alive (non-null ptr).
                 </span><span class="kw">if </span>!ptr_data.as_ref().unwrap().hook_ptr.is_null() {
-                
+
                     <span class="comment">// Unhook the callback.
                     </span><span class="kw">let </span>hc = <span class="kw-2">&amp;*</span>PHEXCHAT;
                     <span class="kw">let </span>hp = ptr_data.as_ref().unwrap().hook_ptr;
                     <span class="kw">let _  </span>= (hc.c_unhook)(hc, hp);
-                    
+
                     <span class="comment">// ^ _ should be our user_data, but we can&#39;t rely on Hexchat
                     // to return a valid user_data pointer on unload, so we have
                     // to maintain it ourselves.
@@ -333,8 +333,8 @@
                     </span><span class="kw">let </span>cd = ptr_data.as_ref().unwrap().cbd_box_ptr;
                     <span class="kw">let </span>cd = <span class="kw-2">&amp;mut </span>(<span class="kw-2">*</span>(cd <span class="kw">as </span><span class="kw-2">*mut </span>CallbackData));
                     <span class="kw">let </span>cd = <span class="kw-2">&amp;mut </span>Box::from_raw(cd);
-                    
-                    <span class="comment">// Give the caller the `user_data` the plugin registered 
+
+                    <span class="comment">// Give the caller the `user_data` the plugin registered
                     // with the callback.
                     </span><span class="kw">return </span>cd.take_data();
                 }
@@ -343,7 +343,7 @@
         }
     }
 
-    <span class="doccomment">/// Called automatically within `lib_hexchat_plugin_init()` when a plugin is 
+    <span class="doccomment">/// Called automatically within `lib_hexchat_plugin_init()` when a plugin is
     /// loaded. This initializes the synchronized global static hook list.
     ///
     </span><span class="kw">pub </span>(<span class="kw">crate</span>) <span class="kw">fn </span>init() {
@@ -351,11 +351,11 @@
             HOOK_LIST = <span class="prelude-val">Some</span>(RwLock::new(Vec::new()));
         }
     }
-    
+
     <span class="doccomment">/// Called when a plugin is unloaded by Hexchat. This happens when the user
     /// opens the &quot;Plugins and Scripts&quot; dialog and unloads/reloads the plugin,
     /// or the user issues one of the slash &quot;/&quot; commands to perform the same
-    /// operation. This function iterates over each hook, calling their 
+    /// operation. This function iterates over each hook, calling their
     /// `unhook()` method which grabs ownership of the `CallbackData` objects
     /// and drops them as they go out of scope ensuring their destructors
     /// are called.
@@ -369,7 +369,7 @@
             }
         }
         <span class="kw">unsafe </span>{
-            <span class="comment">// This causes the `RwLock` and hook vector to be dropped. 
+            <span class="comment">// This causes the `RwLock` and hook vector to be dropped.
             // plugin authors need to ensure that no threads are running when
             // their plugins are unloading - or one may try to access the lock
             // and hook vector after they&#39;ve been destroyed.

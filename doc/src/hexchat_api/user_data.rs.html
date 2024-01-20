@@ -244,7 +244,7 @@
     ///         is the return type that gets wrapped in an `Option` and returned
     ///         by `apply()`.
     /// # Returns
-    /// * Returns the return value of function `f` if the downcast is 
+    /// * Returns the return value of function `f` if the downcast is
     ///   successful.
     ///
     </span><span class="kw">pub fn </span>apply&lt;D:<span class="lifetime">&#39;static</span>, F, R&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; R
@@ -265,7 +265,7 @@
             NoData =&gt; { <span class="macro">panic!</span>(<span class="string">&quot;Can&#39;t downcast `NoData`.&quot;</span>) },
         }
     }
-    
+
     <span class="doccomment">/// Same as the `apply()` function except allows mutable access to the
     /// user data contents.
     ///
@@ -291,7 +291,7 @@
 
 <span class="kw">impl </span>Clone <span class="kw">for </span>UserData {
     <span class="doccomment">/// The clone operation for `UserData` allows each variant to be cloned,
-    /// except for `BoxedData`. The reason `BoxedData` is prohibited is to 
+    /// except for `BoxedData`. The reason `BoxedData` is prohibited is to
     /// deter sharing a box between callbacks, as that&#39;s not what
     /// a box is meant to be used for. One of the shared variants is more
     /// appropriate to share access to user data.
@@ -301,7 +301,7 @@
             SharedData(d) =&gt; { SharedData(d.clone()) },
             SyncData(d)   =&gt; { SyncData(d.clone()) },
             NoData        =&gt; { NoData },
-            BoxedData(<span class="kw">_</span>)  =&gt; { 
+            BoxedData(<span class="kw">_</span>)  =&gt; {
                 <span class="macro">panic!</span>(<span class="string">&quot;Can&#39;t clone `BoxedData`. If user data needs to be \
                         shared, The `SharedData` or `SyncData` variants of \
                        `UserData` should be used.&quot;</span>)
@@ -312,7 +312,7 @@
 
 <span class="kw">impl </span>Default <span class="kw">for </span>UserData {
     <span class="doccomment">/// Implemented to support the `take()` operation in `CallbackData` so the
-    /// user data can be retrieved with ownership when a callback is 
+    /// user data can be retrieved with ownership when a callback is
     /// deregistered. That take operation replaces the user data the callback
     /// owns with the default value (`NoData`).
     ///

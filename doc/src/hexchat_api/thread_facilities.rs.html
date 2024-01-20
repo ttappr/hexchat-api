@@ -222,24 +222,104 @@
 <a href="#222" id="222">222</a>
 <a href="#223" id="223">223</a>
 <a href="#224" id="224">224</a>
-</pre></div><pre class="rust"><code>
-<span class="doccomment">//! This module provides facilities for accessing Hexchat from routines  
-//! running on threads other than Hexchat&#39;s main thread. 
-//! 
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+</pre></div><pre class="rust"><code><span class="attr">#![cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
+
+</span><span class="doccomment">//! This module provides facilities for accessing Hexchat from routines
+//! running on threads other than Hexchat&#39;s main thread.
+//!
 //! Hexchat&#39;s plugin API isn&#39;t inherently thread-safe, however plugins
 //! can spawn separate threads and invoke Hexchat&#39;s API by placing routines
-//! to execute on Hexchat&#39;s main thread. 
-//! 
-//! `main_thread()` makes it easy to declare a function, or closure, that 
+//! to execute on Hexchat&#39;s main thread.
+//!
+//! `main_thread()` makes it easy to declare a function, or closure, that
 //! contains Hexchat API calls. Once executed, it uses the timer feature
 //! of Hexchat to delegate. The function or closure can return any sendable
 //! cloneable value, and `main_thread()` will pass that back to the calling
-//! thread via an `AsyncResult` object. This can either be ignored, and 
+//! thread via an `AsyncResult` object. This can either be ignored, and
 //! the thread can continue doing other work, or `AsyncResult.get()` can be
 //! invoked on the result object; this call will block until the main thread
 //! has finished executing the callback.
 
 </span><span class="kw">use </span>std::collections::LinkedList;
+<span class="kw">use </span>std::error::Error;
+<span class="kw">use </span>std::fmt::{Display, <span class="self">self</span>, Formatter};
 <span class="kw">use </span>std::sync::{Arc, Condvar, Mutex};
 <span class="kw">use </span>std::thread;
 
@@ -252,34 +332,89 @@
 <span class="kw">const </span>TASK_SPURT_SIZE: i32 = <span class="number">5</span>;
 <span class="kw">const </span>TASK_REST_MSECS: i64 = <span class="number">2</span>;
 
-<span class="comment">// The type of the queue that closures will be added to and pulled from to run 
+<span class="comment">// The type of the queue that closures will be added to and pulled from to run
 // on the main thread of Hexchat.
-</span><span class="kw">type </span>TaskQueue = LinkedList&lt;Box&lt;<span class="kw">dyn </span>FnMut() + Sync + Send&gt;&gt;;
+</span><span class="kw">type </span>TaskQueue = LinkedList&lt;Box&lt;<span class="kw">dyn </span>Task&gt;&gt;;
 
 <span class="doccomment">/// The task queue that other threads use to schedule tasks to run on the
 /// main thread. It is guarded by a `Mutex`.
 ///
-</span><span class="kw">static </span><span class="kw-2">mut </span>TASK_QUEUE: <span class="prelude-ty">Option</span>&lt;Arc&lt;Mutex&lt;TaskQueue&gt;&gt;&gt; = <span class="prelude-val">None</span>;
+</span><span class="kw">static </span><span class="kw-2">mut </span>TASK_QUEUE: <span class="prelude-ty">Option</span>&lt;Arc&lt;Mutex&lt;<span class="prelude-ty">Option</span>&lt;TaskQueue&gt;&gt;&gt;&gt; = <span class="prelude-val">None</span>;
 
 <span class="doccomment">/// The main thread&#39;s ID is captured and used by `main_thread()` to determine
 /// whether it is being called from the main thread or not. If not, the
 /// callback can be invoked right away. Otherwise, it gets scheduled.
-/// 
-</span><span class="kw">static </span><span class="kw-2">mut </span>MAIN_THREAD_ID: <span class="prelude-ty">Option</span>&lt;thread::ThreadId&gt; = <span class="prelude-val">None</span>;
+///
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">static </span><span class="kw-2">mut </span>MAIN_THREAD_ID: <span class="prelude-ty">Option</span>&lt;thread::ThreadId&gt; = <span class="prelude-val">None</span>;
 
-<span class="doccomment">/// Stops and removes the main thread task queue handler. Otherwise it will
-/// keep checking the queue while doing nothing useful - which isn&#39;t 
-/// necessarily bad. Performance is unaffected either way.
+<span class="doccomment">/// Base trait for items placed on the task queue.
 ///
-/// Support for `main_thread()` is on by default. After this function is 
-/// invoked, `main_thread()` should not be used and threads in general risk
-/// crashing the software if they try to access Hexchat directly without
-/// the `main_thread()`. `ThreadSafeContext` and `ThreadSafeListIterator` 
-/// should also not be used after this function is called, since they rely on 
-/// `main_thread()` internally.
+</span><span class="kw">trait </span>Task : Send {
+    <span class="kw">fn </span>execute(<span class="kw-2">&amp;mut </span><span class="self">self</span>, hexchat: <span class="kw-2">&amp;</span>Hexchat);
+    <span class="kw">fn </span>set_error(<span class="kw-2">&amp;mut </span><span class="self">self</span>, error: <span class="kw-2">&amp;</span>str);
+}
+
+<span class="doccomment">/// A task that executes a closure on the main thread.
 ///
-</span><span class="kw">pub fn </span>turn_off_threadsafe_features() {
-    main_thread_deinit();
+</span><span class="kw">struct </span>ConcreteTask&lt;F, R&gt;
+<span class="kw">where
+    </span>F: FnMut(<span class="kw-2">&amp;</span>Hexchat) -&gt; R,
+    R: Clone + Send,
+{
+    callback : F,
+    result   : AsyncResult&lt;R&gt;,
+}
+
+<span class="kw">impl</span>&lt;F, R&gt; ConcreteTask&lt;F, R&gt;
+<span class="kw">where
+    </span>F: FnMut(<span class="kw-2">&amp;</span>Hexchat) -&gt; R,
+    R: Clone + Send,
+{
+    <span class="kw">fn </span>new(callback: F, result: AsyncResult&lt;R&gt;) -&gt; <span class="self">Self </span>{
+        ConcreteTask {
+            callback,
+            result,
+        }
+    }
+}
+
+<span class="kw">impl</span>&lt;F, R&gt; Task <span class="kw">for </span>ConcreteTask&lt;F, R&gt;
+<span class="kw">where
+    </span>F: FnMut(<span class="kw-2">&amp;</span>Hexchat) -&gt; R,
+    R: Clone + Send,
+{
+    <span class="doccomment">/// Executes the closure and sets the result.
+    ///
+    </span><span class="kw">fn </span>execute(<span class="kw-2">&amp;mut </span><span class="self">self</span>, hexchat: <span class="kw-2">&amp;</span>Hexchat) {
+        <span class="self">self</span>.result.set((<span class="self">self</span>.callback)(hexchat));
+    }
+    <span class="doccomment">/// When the task queue is being shut down, this will be called to set the
+    /// result to an error.
+    ///
+    </span><span class="kw">fn </span>set_error(<span class="kw-2">&amp;mut </span><span class="self">self</span>, error: <span class="kw-2">&amp;</span>str) {
+        <span class="self">self</span>.result.set_error(error);
+    }
+}
+
+<span class="kw">unsafe impl</span>&lt;F, R&gt; Send <span class="kw">for </span>ConcreteTask&lt;F, R&gt;
+<span class="kw">where
+    </span>F: FnMut(<span class="kw-2">&amp;</span>Hexchat) -&gt; R,
+    R: Clone + Send,
+{}
+
+<span class="doccomment">/// An error type that can be used to indicate that a task failed. Currently,
+/// this is only used when the task queue is being shut down. This happens
+/// when Hexchat is closing or the addon is being unloaded.
+///
+</span><span class="attr">#[derive(Debug, Clone)]
+</span><span class="kw">pub struct </span>TaskError(<span class="kw">pub</span>(<span class="kw">crate</span>) String);
+
+<span class="kw">impl </span>Error <span class="kw">for </span>TaskError {}
+
+<span class="kw">impl </span>Display <span class="kw">for </span>TaskError {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        <span class="macro">write!</span>(f, <span class="string">&quot;TaskError({})&quot;</span>, <span class="self">self</span>.<span class="number">0</span>)
+    }
 }
 
 <span class="doccomment">/// A result object that allows callbacks operating on a thread to send their
@@ -287,65 +422,70 @@
 /// return data needs to be transferred or not, this object can be used to wait
 /// on the completion of a callback, thus providing synchronization between
 /// threads.
-/// 
-</span><span class="attr">#[derive(Clone)]
+///
+</span><span class="attr">#[allow(clippy::type_complexity)]
+#[derive(Clone)]
 </span><span class="kw">pub struct </span>AsyncResult&lt;T: Clone + Send&gt; {
-    <span class="attr">#[allow(clippy::type_complexity)]
-    </span>data: Arc&lt; (Mutex&lt;(<span class="prelude-ty">Option</span>&lt;T&gt;, bool)&gt;, Condvar) &gt;,
-    
-    <span class="comment">// ^^ ((callback-result, is-done), synchronization-object)
-    // This is the simplified format of the `data` field above.
-</span>}
+    data: Arc&lt;(Mutex&lt;(<span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;T, TaskError&gt;&gt;, bool)&gt;, Condvar)&gt;,
+}
 
 <span class="kw">unsafe impl</span>&lt;T: Clone + Send&gt; Send <span class="kw">for </span>AsyncResult&lt;T&gt; {}
 <span class="kw">unsafe impl</span>&lt;T: Clone + Send&gt; Sync <span class="kw">for </span>AsyncResult&lt;T&gt; {}
 
 <span class="kw">impl</span>&lt;T: Clone + Send&gt; AsyncResult&lt;T&gt; {
     <span class="doccomment">/// Constructor. Initializes the return data to None.
+    ///
     </span><span class="kw">pub </span>(<span class="kw">crate</span>)
     <span class="kw">fn </span>new() -&gt; <span class="self">Self </span>{
         AsyncResult {
-            data: Arc::new((Mutex::new((<span class="prelude-val">None</span>, <span class="bool-val">false</span>)), 
-                            Condvar::new()))
+            data: Arc::new((Mutex::new((<span class="prelude-val">None</span>, <span class="bool-val">false</span>)), Condvar::new()))
         }
     }
     <span class="doccomment">/// Indicates whether the callback executing on another thread is done or
     /// not. This can be used to poll for the result.
-    </span><span class="attr">#[allow(dead_code)]
+    ///
     </span><span class="kw">pub fn </span>is_done(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="kw">let </span>(mtx, <span class="kw">_</span>) = <span class="kw-2">&amp;*</span><span class="self">self</span>.data;
         mtx.lock().unwrap().<span class="number">1
     </span>}
     <span class="doccomment">/// Blocking call to retrieve the return data from a callback on another
     /// thread.
-    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; T {
+    ///
+    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;T, TaskError&gt; {
         <span class="kw">let </span>(mtx, cvar) = <span class="kw-2">&amp;*</span><span class="self">self</span>.data;
         <span class="kw">let </span><span class="kw-2">mut </span>guard   = mtx.lock().unwrap();
         <span class="kw">while </span>!guard.<span class="number">1 </span>{
             guard = cvar.wait(guard).unwrap();
         }
-        guard.<span class="number">0</span>.as_ref().unwrap().clone()
+        guard.<span class="number">0</span>.take().unwrap()
     }
     <span class="doccomment">/// Sets the return data for the async result. This will unblock the
     /// receiver waiting on the result from `get()`.
+    ///
     </span><span class="kw">pub </span>(<span class="kw">crate</span>)
     <span class="kw">fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>, result: T) {
         <span class="kw">let </span>(mtx, cvar) = <span class="kw-2">&amp;*</span><span class="self">self</span>.data;
         <span class="kw">let </span><span class="kw-2">mut </span>guard   = mtx.lock().unwrap();
-               <span class="kw-2">*</span>guard   = (<span class="prelude-val">Some</span>(result), <span class="bool-val">true</span>);
-        cvar.notify_one();
+               <span class="kw-2">*</span>guard   = (<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(result)), <span class="bool-val">true</span>);
+        cvar.notify_all();
+    }
+    <span class="kw">fn </span>set_error(<span class="kw-2">&amp;</span><span class="self">self</span>, error: <span class="kw-2">&amp;</span>str) {
+        <span class="kw">let </span>(mtx, cvar) = <span class="kw-2">&amp;*</span><span class="self">self</span>.data;
+        <span class="kw">let </span><span class="kw-2">mut </span>guard   = mtx.lock().unwrap();
+               <span class="kw-2">*</span>guard   = (<span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(TaskError(error.into()))), <span class="bool-val">true</span>);
+        cvar.notify_all();
     }
 }
 
 <span class="doccomment">/// Executes a closure from the Hexchat main thread. This function returns
 /// immediately with an AsyncResult object that can be used to retrieve the
 /// result of the operation that will run on the main thread.
-/// 
+///
 /// # Arguments
 /// * `callback` - The callback to execute on the main thread.
-/// 
+///
 </span><span class="kw">pub fn </span>main_thread&lt;F, R&gt;(<span class="kw-2">mut </span>callback: F) -&gt; AsyncResult&lt;R&gt;
-<span class="kw">where 
+<span class="kw">where
     </span>F: FnMut(<span class="kw-2">&amp;</span>Hexchat) -&gt; R + Sync + Send,
     F: <span class="lifetime">&#39;static </span>+ Send,
     R: <span class="lifetime">&#39;static </span>+ Clone + Send,
@@ -358,16 +498,16 @@
     } <span class="kw">else </span>{
         <span class="kw">let </span>res = AsyncResult::new();
         <span class="kw">let </span>cln = res.clone();
-        <span class="kw">let </span>hex = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>PHEXCHAT };
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(task_queue) = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;</span>TASK_QUEUE } {
-            <span class="kw">let </span>cbk = Box::new(
-                <span class="kw">move </span>|| {
-                    cln.set(callback(hex));
-                }
-            );
-            task_queue.lock().unwrap().push_back(cbk);
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(arc) = <span class="kw">unsafe </span>{ TASK_QUEUE.as_ref() } {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(queue) = arc.lock().unwrap().as_mut() {
+                <span class="kw">let </span>task = Box::new(ConcreteTask::new(callback, cln));
+                queue.push_back(task);
+            }
+            <span class="kw">else </span>{
+                res.set_error(<span class="string">&quot;Task queue has been shut down.&quot;</span>);
+            }
         } <span class="kw">else </span>{
-            cln.set(callback(hex));
+            res.set_error(<span class="string">&quot;Task queue has been shut down.&quot;</span>);
         }
         res
     }
@@ -376,34 +516,39 @@
 <span class="doccomment">/// This initializes the fundamental thread-safe features of this library.
 /// A mutex guarded task queue is created, and a timer function is registered
 /// that handles the queue at intervals. If a thread requires fast response,
-/// the handler will field its requests one after another for up to 
+/// the handler will field its requests one after another for up to
 /// `TASK_SPURT_SIZE` times without rest.
 ///
 </span><span class="kw">pub </span>(<span class="kw">crate</span>)
 <span class="kw">fn </span>main_thread_init() {
     <span class="kw">unsafe </span>{ MAIN_THREAD_ID = <span class="prelude-val">Some</span>(thread::current().id()) }
     <span class="kw">if unsafe </span>{ TASK_QUEUE.is_none() } {
-        <span class="kw">unsafe </span>{ 
-            TASK_QUEUE = <span class="prelude-val">Some</span>(Arc::new(Mutex::new(LinkedList::new()))); 
+        <span class="kw">unsafe </span>{
+            TASK_QUEUE = <span class="prelude-val">Some</span>(Arc::new(Mutex::new(<span class="prelude-val">Some</span>(LinkedList::new()))));
         }
         <span class="kw">let </span>hex = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>PHEXCHAT };
-        
+
         hex.hook_timer(
             TASK_REST_MSECS,
             <span class="kw">move </span>|_hc, _ud| {
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(task_queue) = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;</span>TASK_QUEUE } {
-                    <span class="kw">let </span><span class="kw-2">mut </span>count = <span class="number">1</span>;
-                    
-                    <span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>callback) 
-                        = task_queue.lock().unwrap().pop_front() {
-                        callback();
-                        count += <span class="number">1</span>;
-                        <span class="kw">if </span>count &gt; TASK_SPURT_SIZE { 
-                            <span class="kw">break  
-                        </span>}
-                    }
-                    <span class="number">1 </span><span class="comment">// Keep going.
-                </span>} <span class="kw">else </span>{
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(arc) = <span class="kw">unsafe </span>{ TASK_QUEUE.as_ref() } {
+                    <span class="kw">if </span>arc.lock().unwrap().is_some() {
+                        <span class="kw">let </span><span class="kw-2">mut </span>count = <span class="number">1</span>;
+
+                        <span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>task)
+                            = arc.lock().unwrap().as_mut()
+                                .and_then(|q| q.pop_front()) {
+                            task.execute(hex);
+                            count += <span class="number">1</span>;
+                            <span class="kw">if </span>count &gt; TASK_SPURT_SIZE {
+                                <span class="kw">break
+                            </span>}
+                        }
+                        <span class="number">1 </span><span class="comment">// Keep going.
+                    </span>} <span class="kw">else </span>{
+                        <span class="number">0 </span><span class="comment">// Task queue is gone, remove timer callback.
+                    </span>}
+                } <span class="kw">else </span>{
                     <span class="number">0 </span><span class="comment">// Task queue is gone, remove timer callback.
                 </span>}
             },
@@ -411,13 +556,7 @@
     }
 }
 
-<span class="comment">// TODO - Make the thread-safe features optional, so we won&#39;t have the queue
-//        timer handler needlessly running if an addon doesn&#39;t use threads.
-
-// TODO - Do something about threads blocked on a .get() on any outstanding
-//        AsyncResult&#39;s.
-
-</span><span class="doccomment">/// Called when the an addon is being unloaded. This eliminates the task queue.
+<span class="doccomment">/// Called when the an addon is being unloaded. This eliminates the task queue.
 /// Any holders of `AsyncResult` objects that are blocked on `.get()` may be
 /// waiting forever. This can be called from addons if the thread-safe
 /// features aren&#39;t going to be utilized. No need to have a timer callback
@@ -425,25 +564,40 @@
 ///
 </span><span class="kw">pub </span>(<span class="kw">crate</span>)
 <span class="kw">fn </span>main_thread_deinit() {
-    <span class="kw">unsafe </span>{ TASK_QUEUE = <span class="prelude-val">None </span>}
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(queue) = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;</span>TASK_QUEUE } {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>queue ) = queue.lock().unwrap().take() {
+            <span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>task) = queue.pop_front() {
+                task.set_error(<span class="string">&quot;Task queue is being shut down.&quot;</span>);
+            }
+        }
+    }
+    <span class="kw">unsafe </span>{ TASK_QUEUE = <span class="prelude-val">None</span>; }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+<span class="doccomment">/// Stops and removes the main thread task queue handler. Otherwise it will
+/// keep checking the queue while doing nothing useful - which isn&#39;t
+/// necessarily bad. Performance is unaffected either way.
+///
+/// Support for `main_thread()` is on by default. After this function is
+/// invoked, `main_thread()` should not be used and threads in general risk
+/// crashing the software if they try to access Hexchat directly without
+/// the `main_thread()`. `ThreadSafeContext` and `ThreadSafeListIterator`
+/// should also not be used after this function is called, since they rely on
+/// `main_thread()` internally.
+///
+/// # Safety
+/// While this will disable the handling of the main thread task queue, it
+/// doesn&#39;t prevent the plugin author from spawning threads and attempting to
+/// use the features of the threadsafe objects this crate provides. If the
+/// plugin author intends to use `ThreadSafeContext`, `ThreadSafeListIterator`,
+/// or invoke `main_thread()` directly, then this function should not be called.
+///
+</span><span class="attr">#[deprecated(
+    since = <span class="string">&quot;0.2.6&quot;</span>,
+    note = <span class="string">&quot;This function is no longer necessary. Threadsafe features can be \
+            turned off by specifying `features = []` in the Cargo.toml file \
+            for the `hexchat-api` dependency.&quot;</span>)]
+</span><span class="kw">pub unsafe fn </span>turn_off_threadsafe_features() {
+    main_thread_deinit();
+}
 </code></pre></div></section></main></body></html>

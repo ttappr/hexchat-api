@@ -238,8 +238,33 @@
 <a href="#238" id="238">238</a>
 <a href="#239" id="239">239</a>
 <a href="#240" id="240">240</a>
-</pre></div><pre class="rust"><code>
-<span class="doccomment">//! This module provides a thread-safe wrapper class for the Hexchat 
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+</pre></div><pre class="rust"><code><span class="attr">#![cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
+
+</span><span class="doccomment">//! This module provides a thread-safe wrapper class for the Hexchat
 //! `ListIterator`. The methods it provides can be invoked from threads other
 //! than the Hexchat main thread safely.
 
@@ -259,12 +284,12 @@
 /// additional code necessary to make that happen in the client code.
 ///
 /// Objects of this struct can iterate over Hexchat&#39;s lists from other threads.
-/// Because each operation is delegated to the main thread from the current 
-/// thread, they are not going to be as fast as the methods of `ListIterator` 
+/// Because each operation is delegated to the main thread from the current
+/// thread, they are not going to be as fast as the methods of `ListIterator`
 /// used exclusively in the main thread without switching to other threads.
 /// The plus to objects of this struct iterating and printing long lists is they
 /// won&#39;t halt or lag the Hexchat UI. The list can print item by item, while
-/// while Hexchat is able to handle its traffic, printing chat messages, and 
+/// while Hexchat is able to handle its traffic, printing chat messages, and
 /// other tasks.
 ///
 </span><span class="attr">#[derive(Clone)]
@@ -280,66 +305,85 @@
     /// # Arguments
     /// * `list_iter` - The list iterator to wrap.
     ///
-    </span><span class="kw">pub </span>(<span class="kw">crate</span>) 
+    </span><span class="kw">pub </span>(<span class="kw">crate</span>)
     <span class="kw">fn </span>create(list_iter: ListIterator) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ 
-            list_iter: Arc::new(RwLock::new(<span class="prelude-val">Some</span>(SendWrapper::new(list_iter)))) 
+        <span class="self">Self </span>{
+            list_iter: Arc::new(RwLock::new(<span class="prelude-val">Some</span>(SendWrapper::new(list_iter))))
         }
     }
-    
+
     <span class="doccomment">/// Produces the list associated with `name`.
     /// # Arguments
     /// * `name` - The name of the list to get.
     /// # Returns
     /// * A thread-safe object representing one of Hexchat&#39;s internal lists.
     ///
-    </span><span class="kw">pub fn </span>new(name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>name = name.to_string();
+    </span><span class="kw">pub fn </span>new(name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, ListError&gt; {
+        <span class="kw">use </span>ListError::<span class="kw-2">*</span>;
+        <span class="kw">let </span>cname = name.to_string();
         main_thread(<span class="kw">move </span>|<span class="kw">_</span>| {
-            ListIterator::new(<span class="kw-2">&amp;</span>name).map(|list| 
+            ListIterator::new(<span class="kw-2">&amp;</span>cname).map(|list|
                 ThreadSafeListIterator {
-                    list_iter: 
+                    list_iter:
                         Arc::new(RwLock::new(<span class="prelude-val">Some</span>(SendWrapper::new(list))))
                 })}
         ).get()
+        .map_or_else(
+            |err| <span class="prelude-val">Err</span>(ThreadSafeOperationFailed(err.to_string())),
+            |res| res.map_or_else(|| <span class="prelude-val">Err</span>(UnknownList(name.into())), <span class="prelude-val">Ok</span>))
     }
-    
+
     <span class="doccomment">/// Returns a vector of the names of the fields supported by the list
     /// the list iterator represents.
     ///
-    </span><span class="kw">pub fn </span>get_field_names(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;String&gt; {
+    </span><span class="kw">pub fn </span>get_field_names(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;String&gt;, ListError&gt; {
+        <span class="kw">use </span>ListError::<span class="kw-2">*</span>;
         <span class="kw">let </span>me = <span class="self">self</span>.clone();
         main_thread(<span class="kw">move </span>|<span class="kw">_</span>| {
-            me.list_iter.read().unwrap().as_ref()
-                        .expect(<span class="string">&quot;ListIterator dropped from threadsafe context.&quot;</span>)
-                        .get_field_names().to_vec()
+            <span class="prelude-val">Ok</span>(me.list_iter.read().unwrap().as_ref()
+                 .ok_or_else(
+                    || ListIteratorDropped(<span class="string">&quot;ListIterator dropped from \
+                                            threadsafe context.&quot;</span>.into()))<span class="question-mark">?
+                 </span>.get_field_names().to_vec())
         }).get()
+        .map_or_else(|err| <span class="prelude-val">Err</span>(ThreadSafeOperationFailed(err.to_string())),
+                     |res| res)
     }
-    
+
     <span class="doccomment">/// Constructs a vector of list items on the main thread all at once. The
     /// iterator will be spent after the operation.
     ///
-    </span><span class="kw">pub fn </span>to_vec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;ListItem&gt; {
+    </span><span class="kw">pub fn </span>to_vec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;ListItem&gt;, ListError&gt; {
+        <span class="kw">use </span>ListError::<span class="kw-2">*</span>;
         <span class="kw">let </span>me = <span class="self">self</span>.clone();
         main_thread(<span class="kw">move </span>|<span class="kw">_</span>| {
-            me.list_iter.read().unwrap().as_ref()
-                        .expect(<span class="string">&quot;ListIterator dropped from threadsafe context.&quot;</span>)
-                        .to_vec()
+            <span class="prelude-val">Ok</span>(me.list_iter.read().unwrap().as_ref()
+                 .ok_or_else(
+                    ||ListIteratorDropped(<span class="string">&quot;ListIterator dropped from \
+                                           threadsafe context.&quot;</span>.into()))<span class="question-mark">?
+                 </span>.to_vec())
         }).get()
+        .map_or_else(|err| <span class="prelude-val">Err</span>(ThreadSafeOperationFailed(err.to_string())),
+                     |res| res)
     }
-    
+
     <span class="doccomment">/// Creates a `ListItem` from the field data at the current position in the
     /// list.
     ///
-    </span><span class="kw">pub fn </span>get_item(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ListItem {
+    </span><span class="kw">pub fn </span>get_item(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;ListItem, ListError&gt; {
+        <span class="kw">use </span>ListError::<span class="kw-2">*</span>;
         <span class="kw">let </span>me = <span class="self">self</span>.clone();
         main_thread(<span class="kw">move </span>|<span class="kw">_</span>| {
-            me.list_iter.read().unwrap().as_ref()
-                        .expect(<span class="string">&quot;ListIterator dropped from threadsafe context.&quot;</span>)
-                        .get_item()
+            <span class="prelude-val">Ok</span>(me.list_iter.read().unwrap().as_ref()
+                 .ok_or_else(
+                    ||ListIteratorDropped(<span class="string">&quot;ListIterator dropped from \
+                                           threadsafe context.&quot;</span>.into()))<span class="question-mark">?
+                 </span>.get_item())
         }).get()
+        .map_or_else(|err| <span class="prelude-val">Err</span>(ThreadSafeOperationFailed(err.to_string())),
+                     |res| res)
     }
-    
+
     <span class="doccomment">/// Returns the value for the field of the requested name.
     ///
     /// # Arguments
@@ -351,13 +395,14 @@
     ///   error types. The values are returned as `FieldValue` tuples that hold
     ///   the requested data.
     ///
-    </span><span class="kw">pub fn </span>get_field(<span class="kw-2">&amp;</span><span class="self">self</span>, 
+    </span><span class="kw">pub fn </span>get_field(<span class="kw-2">&amp;</span><span class="self">self</span>,
                      name: <span class="kw-2">&amp;</span>str
-                    ) -&gt; <span class="prelude-ty">Result</span>&lt;ThreadSafeFieldValue, ListError&gt; 
+                    ) -&gt; <span class="prelude-ty">Result</span>&lt;ThreadSafeFieldValue, ListError&gt;
     {
+        <span class="kw">use </span>ListError::<span class="kw-2">*</span>;
         <span class="kw">use </span>FieldValue <span class="kw">as </span>FV;
         <span class="kw">use </span>ThreadSafeFieldValue <span class="kw">as </span>TSFV;
-        
+
         <span class="kw">let </span>name = name.to_string();
         <span class="kw">let </span>me = <span class="self">self</span>.clone();
         main_thread(<span class="kw">move </span>|<span class="kw">_</span>| {
@@ -394,6 +439,9 @@
                     </span>.to_string()))
             }
         }).get()
+        .map_or_else(|err| <span class="prelude-val">Err</span>(ThreadSafeOperationFailed(err.to_string())),
+                     |res| res)
+
     }
 }
 
@@ -407,7 +455,7 @@
             } <span class="kw">else </span>{
                 <span class="prelude-val">None
             </span>}
-        }).get()
+        }).get().unwrap_or(<span class="prelude-val">None</span>)
     }
 }
 
@@ -418,7 +466,7 @@
         <span class="kw">let </span>has_more = main_thread(<span class="kw">move </span>|<span class="kw">_</span>| {
             me.list_iter.write().unwrap().as_mut()
                         .map_or(<span class="bool-val">false</span>, |it| it.next().is_some())
-        }).get();
+        }).get().unwrap_or(<span class="bool-val">false</span>);
         <span class="kw">if </span>has_more {
             <span class="prelude-val">Some</span>(<span class="self">self</span>)
         } <span class="kw">else </span>{
@@ -439,7 +487,7 @@
     }
 }
 
-<span class="doccomment">/// Thread-safe versions of the `FieldValue` variants provided by 
+<span class="doccomment">/// Thread-safe versions of the `FieldValue` variants provided by
 /// `ListIterator`.
 /// # Variants
 /// * StringVal    - A string has been returned. The enum item holds its value.

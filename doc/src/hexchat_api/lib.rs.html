@@ -41,13 +41,17 @@
 <a href="#41" id="41">41</a>
 <a href="#42" id="42">42</a>
 <a href="#43" id="43">43</a>
+<a href="#44" id="44">44</a>
+<a href="#45" id="45">45</a>
+<a href="#46" id="46">46</a>
+<a href="#47" id="47">47</a>
 </pre></div><pre class="rust"><code>
-<span class="doccomment">//! This crate provides a Rust interface to the 
+<span class="doccomment">//! This crate provides a Rust interface to the
 //! [Hexchat Plugin Interface](https://hexchat.readthedocs.io/en/latest/plugins.html)
-//! The primary object of the interface is 
+//! The primary object of the interface is
 //! [Hexchat](https://ttappr.github.io/hexchat_api/hexchat_api/struct.Hexchat.html),
-//! which exposes an interface with functions that mirror the C functions 
-//! listed on the Hexchat docs page linked above.  
+//! which exposes an interface with functions that mirror the C functions
+//! listed on the Hexchat docs page linked above.
 
 </span><span class="kw">mod </span>hook;
 <span class="kw">mod </span>callback_data;
@@ -76,10 +80,14 @@
 <span class="kw">pub use </span>list_item::<span class="kw-2">*</span>;
 <span class="kw">pub use </span>list_iterator::<span class="kw-2">*</span>;
 <span class="kw">pub use </span>plugin::<span class="kw-2">*</span>;
-<span class="kw">pub use </span>thread_facilities::<span class="kw-2">*</span>;
-<span class="kw">pub use </span>threadsafe_context::<span class="kw-2">*</span>;
-<span class="kw">pub use </span>threadsafe_hexchat::<span class="kw-2">*</span>;
-<span class="kw">pub use </span>threadsafe_list_iterator::<span class="kw-2">*</span>;
+<span class="attr">#[cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
+</span><span class="kw">pub use </span>thread_facilities::<span class="kw-2">*</span>;
+<span class="attr">#[cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
+</span><span class="kw">pub use </span>threadsafe_context::<span class="kw-2">*</span>;
+<span class="attr">#[cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
+</span><span class="kw">pub use </span>threadsafe_hexchat::<span class="kw-2">*</span>;
+<span class="attr">#[cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
+</span><span class="kw">pub use </span>threadsafe_list_iterator::<span class="kw-2">*</span>;
 <span class="kw">pub use </span>user_data::<span class="kw-2">*</span>;
 <span class="attr">#[allow(unused_imports)]
 </span><span class="kw">pub use </span>utils::<span class="kw-2">*</span>;
