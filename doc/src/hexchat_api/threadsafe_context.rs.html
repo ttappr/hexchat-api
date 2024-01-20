@@ -261,6 +261,7 @@
 <a href="#261" id="261">261</a>
 <a href="#262" id="262">262</a>
 <a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
 </pre></div><pre class="rust"><code><span class="attr">#![cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
 
 </span><span class="doccomment">//! A thread-safe version of `Context`. The methods of these objects will
@@ -296,7 +297,8 @@
 
 <span class="kw">impl </span>ThreadSafeContext {
     <span class="doccomment">/// Creates a new `ThreadSafeContext` object, which wraps a `Context` object
-    /// internally.
+    /// internally. Only to be called from the main thread internally.
+    /// 
     </span><span class="kw">pub </span>(<span class="kw">crate</span>)
     <span class="kw">fn </span>new(ctx: Context) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ ctx: Arc::new(RwLock::new(<span class="prelude-val">Some</span>(SendWrapper::new(ctx)))) }

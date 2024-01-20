@@ -164,6 +164,8 @@
 <a href="#164" id="164">164</a>
 <a href="#165" id="165">165</a>
 <a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
 </pre></div><pre class="rust"><code><span class="attr">#![cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
 
 </span><span class="doccomment">//! A thread-safe wrapper for the `Hexchat` object. The methods of the object
@@ -190,7 +192,9 @@
 <span class="kw">unsafe impl </span>Sync <span class="kw">for </span>ThreadSafeHexchat {}
 
 <span class="kw">impl </span>ThreadSafeHexchat {
-    <span class="doccomment">/// Constructs a `ThreadSafeHexchat` object that wraps `Hexchat`.
+    <span class="doccomment">/// Constructs a `ThreadSafeHexchat` object that wraps `Hexchat`. Only to
+    /// be called from the main thread internally.
+    /// 
     </span><span class="kw">pub </span>(<span class="kw">crate</span>)
     <span class="kw">fn </span>new(_hc: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Hexchat) -&gt; <span class="self">Self </span>{
         ThreadSafeHexchat
