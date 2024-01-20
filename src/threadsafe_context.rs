@@ -10,6 +10,8 @@ use std::sync::RwLock;
 
 use send_wrapper::SendWrapper;
 
+//use crate::PHEXCHAT;
+//use crate::UserData;
 use crate::context::*;
 use crate::thread_facilities::*;
 use crate::threadsafe_list_iterator::*;
@@ -214,3 +216,19 @@ impl Drop for ThreadSafeContext {
         }
     }
 }
+/*
+// This crashes Hexchat for some reason.
+fn mt_drop(me: ThreadSafeContext) {
+    let hc = unsafe { &*PHEXCHAT };
+    hc.hook_timer(
+        1, 
+        move |_, _| {
+            if let Ok(mut ctx) = me.ctx.write() {
+                ctx.take();
+            }
+            0
+        },
+        UserData::NoData
+    );
+}
+*/

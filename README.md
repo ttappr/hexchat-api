@@ -67,7 +67,7 @@ Simply include an entry in your Rust project's `Cargo.toml` file:
 
 ```toml
 [dependencies]
-hexchat-api = "0.2"
+hexchat-api = "0.3"
 ```
 
 ## Template

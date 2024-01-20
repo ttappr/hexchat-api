@@ -10,6 +10,8 @@ use std::sync::RwLock;
 
 use send_wrapper::SendWrapper;
 
+//use crate::PHEXCHAT;
+//use crate::UserData;
 use crate::list_item::*;
 use crate::list_iterator::*;
 use crate::thread_facilities::*;
@@ -222,6 +224,22 @@ impl Drop for ThreadSafeListIterator {
         }
     }
 }
+/*
+// This crashes Hexchat for some reason.
+fn mt_drop(me: ThreadSafeListIterator) {
+    let hc = unsafe { &*PHEXCHAT };
+    hc.hook_timer(
+        1, 
+        move |_, _| {
+            if let Ok(mut ctx) = me.list_iter.write() {
+                ctx.take();
+            }
+            0
+        },
+        UserData::NoData
+    );
+}
+*/
 
 /// Thread-safe versions of the `FieldValue` variants provided by
 /// `ListIterator`.
