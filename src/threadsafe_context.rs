@@ -57,8 +57,14 @@ impl ThreadSafeContext {
     /// to contain a predictable `Context`. Executing it from a thread can
     /// yield a wrapped `Context` for an unexpected channel.
     ///
-    pub fn get() -> Option<Self> {
-        main_thread(|_| Context::get().map(Self::new)).get().unwrap()
+    pub fn get() -> Result<Self, ContextError> {
+        use ContextError::*;
+        main_thread(|_| Context::get().map(Self::new)).get()
+            .map_or_else(
+                |err| Err(ThreadSafeOperationFailed(err.to_string())),
+                |res| res.map_or_else(
+                    || Err(AcquisitionFailed("?".into(), "?".into())), 
+                    |ctx| Ok(ctx)))
     }
     
     /// Gets a `ThreadSafeContext` object associated with the given channel.
@@ -68,24 +74,31 @@ impl ThreadSafeContext {
     /// # Returns
     /// * `Some(ThreadSafeContext)` on success, and `None` on failure.
     ///
-    pub fn find(network: &str, channel: &str) -> Option<Self> {
+    pub fn find(network: &str, channel: &str) -> Result<Self, ContextError> {
+        use ContextError::*;
         let data = (network.to_string(), channel.to_string());
-        main_thread(move |_| {
-            Context::find(&data.0, &data.1).map(Self::new)
-        }).get().unwrap()
+        main_thread(move |_| Context::find(&data.0, &data.1).map(Self::new))
+        .get()
+        .map_or_else(
+            |err| Err(ThreadSafeOperationFailed(err.to_string())),
+            |res| res.map_or_else(
+                || Err(AcquisitionFailed(network.into(), channel.into())), 
+                |ctx| Ok(ctx)))
     }
 
     /// Prints the message to the `ThreadSafeContext` object's Hexchat context.
     /// This is how messages can be printed to Hexchat windows apart from the
     /// currently active one.    
     pub fn print(&self, message: &str) -> Result<(), ContextError> {
+        use ContextError::*;
         let message = message.to_string();
         let me = self.clone();
         main_thread(move |_| {
             me.ctx.read().unwrap().as_ref()
                   .expect("Context dropped from threadsafe context.")
                   .print(&message)
-        }).get().unwrap()
+        }).get().unwrap_or_else(
+            |err| Err(ThreadSafeOperationFailed(err.to_string())))
     }
     
     /// Prints without waiting for asynchronous completion. This will print
@@ -112,26 +125,34 @@ impl ThreadSafeContext {
     /// Issues a command in the context held by the `ThreadSafeContext` object.
     ///
     pub fn command(&self, command: &str) -> Result<(), ContextError> {
+        use ContextError::*;
         let command = command.to_string();
         let me = self.clone();
         main_thread(move |_| {
             me.ctx.read().unwrap().as_ref()
                   .expect("Context dropped from threadsafe context.")
                   .command(&command)
-        }).get().unwrap()
+        }).get().unwrap_or_else(
+            |err| Err(ThreadSafeOperationFailed(err.to_string())))
     }
 
     /// Gets information from the channel/window that the `ThreadSafeContext` 
     /// object holds an internal pointer to.
     ///
-    pub fn get_info(&self, info: &str) -> Result<Option<String>, ContextError> {
+    pub fn get_info(&self, info: &str) -> Result<String, ContextError> {
+        use ContextError::*;
         let info = info.to_string();
         let me = self.clone();
         main_thread(move |_| {
             me.ctx.read().unwrap().as_ref()
                   .expect("Context dropped from threadsafe context.")
                   .get_info(&info)
-        }).get().unwrap()
+            }).get()
+            .map_or_else(
+                |err| Err(ThreadSafeOperationFailed(err.to_string())),
+                |res| res.map_or_else(
+                    |err| Err(err), 
+                    |info| info.ok_or(OperationFailed("no data".into()))))
     }
     
     /// Issues a print event to the context held by the `ThreadSafeContext` 

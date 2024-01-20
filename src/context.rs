@@ -265,6 +265,7 @@ pub enum ContextError {
     AcquisitionFailed(String, String),
     OperationFailed(String),
     ContextDropped(String),
+    ThreadSafeOperationFailed(String),
 }
 
 impl error::Error for ContextError {}
@@ -281,6 +282,9 @@ impl fmt::Display for ContextError {
             },
             ContextDropped(reason) => {
                 write!(f, "ContextDropped(\"{}\")", reason)
+            },
+            ThreadSafeOperationFailed(reason) => {
+                write!(f, "ThreadSafeOperationFailed(\"{}\")", reason)
             },
         }
     }
