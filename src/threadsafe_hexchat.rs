@@ -145,8 +145,8 @@ impl ThreadSafeHexchat {
     /// # Arguments
     /// * `name` - The name of the list to iterate over.
     /// # Returns
-    /// * If the list exists, `Some(ThreadSafeListIterator)` is returned; `None`
-    ///   otherwise.
+    /// * If the list exists, a `ThreadSafeListIterator` is returned otherwise,
+    ///   an error is returned.
     ///
     pub fn list_get(&self, list: &str) 
         -> Result<ThreadSafeListIterator, ListError> 
@@ -162,6 +162,5 @@ impl ThreadSafeHexchat {
                 || Err(UnknownList("List not found".into())),
                 Ok))
     }
-    // TODO - Get back to this after updating list iterator.
 }
 
