@@ -45,8 +45,8 @@ impl ListIterator {
     /// * `list_name` - The name of one of the Hexchat lists ('channels', 'dcc',
     ///                'ignore', 'notify', 'users').
     /// # Returns
-    /// * An `Result` where `Err` means no such list of that name exists, and
-    ///   `Ok` holds a `ListIterator` instance.
+    /// * An iterator to the list of the requested name, or `None` if the list
+    ///   doesn't exist.
     ///
     pub fn new(list_name: &str) -> Option<Self> {
         #[cfg(feature = "threadsafe")]
