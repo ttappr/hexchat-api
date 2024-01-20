@@ -237,6 +237,13 @@ impl Context {
             iter.ok_or_else(|| ListNotFound(list.to_string()))
         }
     }
+
+    pub fn network(&self) -> String {
+        cstring2string(&self.data.network)
+    }
+    pub fn channel(&self) -> String {
+        cstring2string(&self.data.channel)
+    }
 }
 
 impl fmt::Display for Context {
