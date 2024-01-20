@@ -197,12 +197,15 @@ where
     } else {
         let res = AsyncResult::new();
         let cln = res.clone();
-        let arc = unsafe { TASK_QUEUE.as_ref().unwrap() };
-        if let Some(queue) = arc.lock().unwrap().as_mut() {
-            let task = Box::new(ConcreteTask::new(callback, cln));
-            queue.push_back(task);
-        } 
-        else {
+        if let Some(arc) = unsafe { TASK_QUEUE.as_ref() } {
+            if let Some(queue) = arc.lock().unwrap().as_mut() {
+                let task = Box::new(ConcreteTask::new(callback, cln));
+                queue.push_back(task);
+            } 
+            else {
+                res.set_error("Task queue has been shut down.");
+            }
+        } else {
             res.set_error("Task queue has been shut down.");
         }
         res
@@ -227,20 +230,23 @@ fn main_thread_init() {
         hex.hook_timer(
             TASK_REST_MSECS,
             move |_hc, _ud| {
-                let arc = unsafe { TASK_QUEUE.as_ref().unwrap() };
-                if arc.lock().unwrap().is_some() {
-                    let mut count = 1;
-                    
-                    while let Some(mut task) 
-                        = arc.lock().unwrap().as_mut()
-                             .and_then(|q| q.pop_front()) {
-                        task.execute(hex);
-                        count += 1;
-                        if count > TASK_SPURT_SIZE { 
-                            break  
+                if let Some(arc) = unsafe { TASK_QUEUE.as_ref() } {
+                    if arc.lock().unwrap().is_some() {
+                        let mut count = 1;
+                        
+                        while let Some(mut task) 
+                            = arc.lock().unwrap().as_mut()
+                                .and_then(|q| q.pop_front()) {
+                            task.execute(hex);
+                            count += 1;
+                            if count > TASK_SPURT_SIZE { 
+                                break  
+                            }
                         }
-                    }
-                    1 // Keep going.
+                        1 // Keep going.
+                    } else {
+                        0 // Task queue is gone, remove timer callback.
+                        }
                 } else {
                     0 // Task queue is gone, remove timer callback.
                 }
@@ -264,6 +270,7 @@ fn main_thread_deinit() {
             }
         }
     }
+    unsafe { TASK_QUEUE = None; }
 }
 
 /// Stops and removes the main thread task queue handler. Otherwise it will
