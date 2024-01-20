@@ -1,6 +1,6 @@
 #![cfg(feature = "threadsafe")]
 
-//! This module provides a thread-safe wrapper class for the Hexchat 
+//! This module provides a thread-safe wrapper class for the Hexchat
 //! `ListIterator`. The methods it provides can be invoked from threads other
 //! than the Hexchat main thread safely.
 
@@ -20,12 +20,12 @@ use crate::threadsafe_context::*;
 /// additional code necessary to make that happen in the client code.
 ///
 /// Objects of this struct can iterate over Hexchat's lists from other threads.
-/// Because each operation is delegated to the main thread from the current 
-/// thread, they are not going to be as fast as the methods of `ListIterator` 
+/// Because each operation is delegated to the main thread from the current
+/// thread, they are not going to be as fast as the methods of `ListIterator`
 /// used exclusively in the main thread without switching to other threads.
 /// The plus to objects of this struct iterating and printing long lists is they
 /// won't halt or lag the Hexchat UI. The list can print item by item, while
-/// while Hexchat is able to handle its traffic, printing chat messages, and 
+/// while Hexchat is able to handle its traffic, printing chat messages, and
 /// other tasks.
 ///
 #[derive(Clone)]
@@ -41,66 +41,85 @@ impl ThreadSafeListIterator {
     /// # Arguments
     /// * `list_iter` - The list iterator to wrap.
     ///
-    pub (crate) 
+    pub (crate)
     fn create(list_iter: ListIterator) -> Self {
-        Self { 
-            list_iter: Arc::new(RwLock::new(Some(SendWrapper::new(list_iter)))) 
+        Self {
+            list_iter: Arc::new(RwLock::new(Some(SendWrapper::new(list_iter))))
         }
     }
-    
+
     /// Produces the list associated with `name`.
     /// # Arguments
     /// * `name` - The name of the list to get.
     /// # Returns
     /// * A thread-safe object representing one of Hexchat's internal lists.
     ///
-    pub fn new(name: &str) -> Option<Self> {
-        let name = name.to_string();
+    pub fn new(name: &str) -> Result<Self, ListError> {
+        use ListError::*;
+        let cname = name.to_string();
         main_thread(move |_| {
-            ListIterator::new(&name).map(|list| 
+            ListIterator::new(&cname).map(|list|
                 ThreadSafeListIterator {
-                    list_iter: 
+                    list_iter:
                         Arc::new(RwLock::new(Some(SendWrapper::new(list))))
                 })}
-        ).get().unwrap()
+        ).get()
+        .map_or_else(
+            |err| Err(ThreadSafeOperationFailed(err.to_string())),
+            |res| res.map_or_else(|| Err(UnknownList(name.into())), Ok))
     }
-    
+
     /// Returns a vector of the names of the fields supported by the list
     /// the list iterator represents.
     ///
-    pub fn get_field_names(&self) -> Vec<String> {
+    pub fn get_field_names(&self) -> Result<Vec<String>, ListError> {
+        use ListError::*;
         let me = self.clone();
         main_thread(move |_| {
-            me.list_iter.read().unwrap().as_ref()
-                        .expect("ListIterator dropped from threadsafe context.")
-                        .get_field_names().to_vec()
-        }).get().unwrap()
+            Ok(me.list_iter.read().unwrap().as_ref()
+                 .ok_or_else(
+                    || ListIteratorDropped("ListIterator dropped from \
+                                            threadsafe context.".into()))?
+                 .get_field_names().to_vec())
+        }).get()
+        .map_or_else(|err| Err(ThreadSafeOperationFailed(err.to_string())),
+                     |res| res)
     }
-    
+
     /// Constructs a vector of list items on the main thread all at once. The
     /// iterator will be spent after the operation.
     ///
-    pub fn to_vec(&self) -> Vec<ListItem> {
+    pub fn to_vec(&self) -> Result<Vec<ListItem>, ListError> {
+        use ListError::*;
         let me = self.clone();
         main_thread(move |_| {
-            me.list_iter.read().unwrap().as_ref()
-                        .expect("ListIterator dropped from threadsafe context.")
-                        .to_vec()
-        }).get().unwrap()
+            Ok(me.list_iter.read().unwrap().as_ref()
+                 .ok_or_else(
+                    ||ListIteratorDropped("ListIterator dropped from \
+                                           threadsafe context.".into()))?
+                 .to_vec())
+        }).get()
+        .map_or_else(|err| Err(ThreadSafeOperationFailed(err.to_string())),
+                     |res| res)
     }
-    
+
     /// Creates a `ListItem` from the field data at the current position in the
     /// list.
     ///
-    pub fn get_item(&self) -> ListItem {
+    pub fn get_item(&self) -> Result<ListItem, ListError> {
+        use ListError::*;
         let me = self.clone();
         main_thread(move |_| {
-            me.list_iter.read().unwrap().as_ref()
-                        .expect("ListIterator dropped from threadsafe context.")
-                        .get_item()
-        }).get().unwrap()
+            Ok(me.list_iter.read().unwrap().as_ref()
+                 .ok_or_else(
+                    ||ListIteratorDropped("ListIterator dropped from \
+                                           threadsafe context.".into()))?
+                 .get_item())
+        }).get()
+        .map_or_else(|err| Err(ThreadSafeOperationFailed(err.to_string())),
+                     |res| res)
     }
-    
+
     /// Returns the value for the field of the requested name.
     ///
     /// # Arguments
@@ -112,13 +131,14 @@ impl ThreadSafeListIterator {
     ///   error types. The values are returned as `FieldValue` tuples that hold
     ///   the requested data.
     ///
-    pub fn get_field(&self, 
+    pub fn get_field(&self,
                      name: &str
-                    ) -> Result<ThreadSafeFieldValue, ListError> 
+                    ) -> Result<ThreadSafeFieldValue, ListError>
     {
+        use ListError::*;
         use FieldValue as FV;
         use ThreadSafeFieldValue as TSFV;
-        
+
         let name = name.to_string();
         let me = self.clone();
         main_thread(move |_| {
@@ -154,7 +174,10 @@ impl ThreadSafeListIterator {
                     "ListIterator dropped from threadsafe context."
                     .to_string()))
             }
-        }).get().unwrap()
+        }).get()
+        .map_or_else(|err| Err(ThreadSafeOperationFailed(err.to_string())),
+                     |res| res)
+
     }
 }
 
@@ -168,7 +191,7 @@ impl Iterator for ThreadSafeListIterator {
             } else {
                 None
             }
-        }).get().unwrap()
+        }).get().unwrap_or(None)
     }
 }
 
@@ -179,7 +202,7 @@ impl Iterator for &ThreadSafeListIterator {
         let has_more = main_thread(move |_| {
             me.list_iter.write().unwrap().as_mut()
                         .map_or(false, |it| it.next().is_some())
-        }).get().unwrap();
+        }).get().unwrap_or(false);
         if has_more {
             Some(self)
         } else {
@@ -200,7 +223,7 @@ impl Drop for ThreadSafeListIterator {
     }
 }
 
-/// Thread-safe versions of the `FieldValue` variants provided by 
+/// Thread-safe versions of the `FieldValue` variants provided by
 /// `ListIterator`.
 /// # Variants
 /// * StringVal    - A string has been returned. The enum item holds its value.

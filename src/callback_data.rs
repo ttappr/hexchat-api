@@ -1,5 +1,5 @@
 
-//! The `CallbackData` object holds all the information about a callback 
+//! The `CallbackData` object holds all the information about a callback
 //! needed to manage the `user_data` and  invoke it safely and correctly.
 //! The objects of this module are used internally. This file also contains
 //! type declarations for the Rust-facing callback signatures.
@@ -12,7 +12,7 @@ use core::mem;
 
 use UCallback::*;
 
-/// Holds the Rust-implemented function, or closure, of a registered Hexchat 
+/// Holds the Rust-implemented function, or closure, of a registered Hexchat
 /// callback.
 ///
 #[allow(dead_code)]
@@ -27,7 +27,7 @@ enum UCallback {
 }
 impl Default for UCallback {
     /// Supports `mem::take()` for the `TimerOnce` callback invocation.
-    /// The value of that callback is replaced with `OnceDone` when 
+    /// The value of that callback is replaced with `OnceDone` when
     /// `mem::take()` is performed on it in `timer_once_cb()`.
     fn default() -> Self { OnceDone }
 }
@@ -36,12 +36,12 @@ impl Default for UCallback {
 /// Pointers to instances of this struct are registered with the Hexchat
 /// callbacks. On the C-facing side, this is the `user_data` passed to the
 /// native callback wrappers (like `c_print_callback()`). When invoked by
-/// Hexchat, the native callbacks receive a pointer to a `user_data` 
-/// (`CallbackData`) object, which the wrapper then uses to invoke the 
-/// Rust-implemented callback held in the `UCallback` field below. The `data` 
+/// Hexchat, the native callbacks receive a pointer to a `user_data`
+/// (`CallbackData`) object, which the wrapper then uses to invoke the
+/// Rust-implemented callback held in the `UCallback` field below. The `data`
 /// field holds the user data registered for the Rust-facing callback, and is
 /// passed to it when invoked.
-pub (crate) 
+pub (crate)
 struct CallbackData {
     callback    : UCallback,
     data        : UserData,
@@ -51,10 +51,10 @@ struct CallbackData {
 impl CallbackData {
     /// Creates callback data for a regular command or server command.
     pub (crate)
-    fn new_command_data(callback : Box<Callback>, 
+    fn new_command_data(callback : Box<Callback>,
                         data     : UserData,
                         hook     : Hook
-                       ) -> Self 
+                       ) -> Self
     {
         let callback = Command(callback);
         CallbackData { callback, data, hook  }
@@ -62,7 +62,7 @@ impl CallbackData {
 
     /// Creates callback data for a print callback.
     pub (crate)
-    fn new_print_data(callback  : Box<PrintCallback>, 
+    fn new_print_data(callback  : Box<PrintCallback>,
                       data      : UserData,
                       hook      : Hook
                      ) -> Self
@@ -73,7 +73,7 @@ impl CallbackData {
 
     /// Creates callback data for a print attrs callback.
     pub (crate)
-    fn new_print_attrs_data(callback : Box<PrintAttrsCallback>, 
+    fn new_print_attrs_data(callback : Box<PrintAttrsCallback>,
                             data     : UserData,
                             hook     : Hook
                            ) -> Self
@@ -84,7 +84,7 @@ impl CallbackData {
 
     /// Creates callback data for a timer callback.
     pub (crate)
-    fn new_timer_data(callback : Box<TimerCallback>, 
+    fn new_timer_data(callback : Box<TimerCallback>,
                       data     : UserData,
                       hook     : Hook
                      ) -> Self
@@ -92,7 +92,7 @@ impl CallbackData {
         let callback = Timer(callback);
         CallbackData { callback, data, hook }
     }
-    
+
     #[allow(dead_code)]
     pub (crate)
     fn new_timer_once_data(callback : Box<TimerCallbackOnce>,
@@ -104,10 +104,10 @@ impl CallbackData {
         CallbackData { callback, data, hook }
     }
 
-    
+
     /// Creates callback data for a fd callback.
     pub (crate)
-    fn new_fd_data(callback : Box<FdCallback>, 
+    fn new_fd_data(callback : Box<FdCallback>,
                    data     : UserData,
                    hook     : Hook
                   ) -> Self
@@ -117,13 +117,13 @@ impl CallbackData {
     }
 
     /// Returns a reference to the Rust-facing `user_data` that was
-    /// registered with the callback.    
+    /// registered with the callback.
     #[inline]
     pub (crate)
     fn get_user_data(&self) -> &UserData {
         &self.data
     }
-    
+
     /// Returns the `user_data` held by the `CallbackData` object, passing
     /// ownership to the caller. The data field in the `CallbackData` object is
     /// replaced with `NoData`.
@@ -138,9 +138,9 @@ impl CallbackData {
     #[inline]
     pub (crate)
     unsafe fn command_cb(&mut self,
-                         hc       : &Hexchat, 
-                         word     : &[String], 
-                         word_eol : &[String], 
+                         hc       : &Hexchat,
+                         word     : &[String],
+                         word_eol : &[String],
                          ud       : &UserData
                         ) -> Eat
     {
@@ -150,17 +150,17 @@ impl CallbackData {
             panic!("Invoked wrong type in CallbackData.");
         }
     }
-    
+
     /// Invokes the callback held in the `callback` field. This is invoked by
     /// `c_print_callback()` which is the C-side registered callback for each
     /// print callback.
     #[inline]
     pub (crate)
     unsafe fn print_cb(&mut self,
-                       hc       : &Hexchat, 
-                       word     : &[String], 
+                       hc       : &Hexchat,
+                       word     : &[String],
                        ud       : &UserData
-                      ) -> Eat 
+                      ) -> Eat
     {
         if let Print(callback) = &mut self.callback {
             (*callback)(hc, word, ud)
@@ -168,7 +168,7 @@ impl CallbackData {
             panic!("Invoked wrong type in CallbackData.");
         }
     }
-    
+
     /// Invokes the callback held in the `callback` field. This is invoked by
     /// `c_print_attrs_callback()`.
     #[inline]
@@ -186,7 +186,7 @@ impl CallbackData {
             panic!("Invoked wrong type in CallbackData.");
         }
     }
-    
+
     /// Invokes the callback held in the `callback` field. This is invoked by
     /// c_timer_callback()`.
     #[inline]
@@ -228,16 +228,16 @@ impl CallbackData {
             },
         }
     }
-    
+
 
     /// Invokes the callback held in the `callback` field. This is invoked by
     /// c_fd_callback()`.
     #[inline]
     pub (crate)
-    unsafe fn fd_cb(&mut self, 
-                    hc    : &Hexchat, 
-                    fd    : i32, 
-                    flags : i32, 
+    unsafe fn fd_cb(&mut self,
+                    hc    : &Hexchat,
+                    fd    : i32,
+                    flags : i32,
                     ud    : &UserData) -> Eat
     {
         if let FD(callback) = &mut self.callback {
@@ -248,9 +248,9 @@ impl CallbackData {
     }
 }
 
-/// The Rust-facing function signature corresponding to the C-facing  
+/// The Rust-facing function signature corresponding to the C-facing
 /// `C_Callback`. Note that, unlike the C API, the Rust-facing callback
-/// signatures include a reference to the Hexchat pointer for 
+/// signatures include a reference to the Hexchat pointer for
 /// convenience.
 pub (crate)
 type Callback = dyn FnMut(&Hexchat,
@@ -259,47 +259,47 @@ type Callback = dyn FnMut(&Hexchat,
                           &UserData
                          ) -> Eat;
 
-/// The Rust-facing function signature corresponding to the C-facing  
+/// The Rust-facing function signature corresponding to the C-facing
 /// `C_PrintCallback`. Note that, unlike the C API, the Rust-facing callback
-/// signatures include a reference to the Hexchat pointer for 
+/// signatures include a reference to the Hexchat pointer for
 /// convenience.
 pub (crate)
-type PrintCallback 
+type PrintCallback
               = dyn FnMut(&Hexchat,
                           &[String],
                           &UserData
                          ) -> Eat;
 
-/// The Rust-facing function signature corresponding to the C-facing  
+/// The Rust-facing function signature corresponding to the C-facing
 /// `C_PrintAttrsCallback`. Note that, unlike the C API, the Rust-facing callback
-/// signatures include a reference to the Hexchat pointer for 
+/// signatures include a reference to the Hexchat pointer for
 /// convenience.
 pub (crate)
-type PrintAttrsCallback 
+type PrintAttrsCallback
               = dyn FnMut(&Hexchat,
                           &[String],
                           &EventAttrs,
                           &UserData
                          ) -> Eat;
 
-/// The Rust-facing function signature corresponding to the C-facing  
+/// The Rust-facing function signature corresponding to the C-facing
 /// `C_TimerCallback`. Note that, unlike the C API, the Rust-facing callback
-/// signatures include a reference to the Hexchat pointer for 
+/// signatures include a reference to the Hexchat pointer for
 /// convenience.
 pub (crate)
-type TimerCallback 
+type TimerCallback
               = dyn FnMut(&Hexchat, &UserData) -> i32;
-              
+
 pub (crate)
-type TimerCallbackOnce 
+type TimerCallbackOnce
               = dyn FnOnce(&Hexchat, &UserData) -> i32;
 
 
-/// The Rust-facing function signature corresponding to the C-facing  
+/// The Rust-facing function signature corresponding to the C-facing
 /// `C_FdCallback`. Note that, unlike the C API, the Rust-facing callback
-/// signatures include a reference to the Hexchat pointer for 
+/// signatures include a reference to the Hexchat pointer for
 /// convenience.
 pub (crate)
-type FdCallback 
+type FdCallback
               = dyn FnMut(&Hexchat, i32, i32, &UserData) -> Eat;
-              
+

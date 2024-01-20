@@ -94,7 +94,7 @@ impl ListIterator {
             None
         }
     }
-    
+
     /// Eagerly constructs a vector of `ListItem`s. The iterator will be spent
     /// afterward.
     ///
@@ -102,7 +102,7 @@ impl ListIterator {
         self.map(ListItem::from).collect()
     }
 
-    /// Creates a `ListItem` from the field data at the current position in 
+    /// Creates a `ListItem` from the field data at the current position in
     /// the list.
     ///
     pub fn get_item(&self) -> ListItem {
@@ -356,22 +356,16 @@ pub enum ListError {
     NotStarted(String),
     NotAvailable(String),
     ListIteratorDropped(String),
+    ThreadSafeOperationFailed(String),
 }
 
 impl error::Error for ListError {}
 
 impl fmt::Display for ListError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            UnknownList(msg)  => { write!(f, "UnknownList(\"{}\")", msg) },
-            UnknownField(msg) => { write!(f, "UnknownField(\"{}\")", msg) },
-            UnknownType(msg)  => { write!(f, "UnknownType(\"{:?}\")", msg) },
-            NotStarted(msg)   => { write!(f, "NotStarted(\"{}\")", msg) },
-            NotAvailable(msg) => { write!(f, "NotAvailable(\"{}\")", msg) },
-            ListIteratorDropped(msg) => {
-                write!(f, "ListIteratorDropped(\"{}\")", msg)
-            },
-        }
+        let mut s = format!("{:?}", self);
+        s.retain(|c| c != '"');
+        write!(f, "{}", s)
     }
 }
 

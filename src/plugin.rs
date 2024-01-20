@@ -39,7 +39,7 @@ impl Plugin {
     pub fn new(file_name    : &str,
                plugin_name  : &str,
                description  : &str,
-               version      : &str) 
+               version      : &str)
         -> Plugin
     {
         unsafe {

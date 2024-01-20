@@ -19,7 +19,7 @@ use crate::utils::*;
 pub (crate)
 extern "C" fn c_callback(word        : *const *const c_char,
                          word_eol    : *const *const c_char,
-                         user_data   : *mut c_void) 
+                         user_data   : *mut c_void)
     -> c_int
 {
     catch_unwind(|| {
@@ -40,12 +40,12 @@ extern "C" fn c_callback(word        : *const *const c_char,
 /// `user_data`.
 pub (crate)
 extern "C" fn c_print_callback(word      : *const *const c_char,
-                               user_data : *mut c_void) 
+                               user_data : *mut c_void)
     -> c_int
 {
     catch_unwind(|| {
         let word = argv2svec(word, 1);
-        
+
         unsafe {
             let cd = user_data as *mut CallbackData;
             let hc = &*PHEXCHAT;
@@ -60,12 +60,12 @@ extern "C" fn c_print_callback(word      : *const *const c_char,
 pub (crate)
 extern "C" fn c_print_attrs_callback(word      : *const *const c_char,
                                      attrs     : *const EventAttrs,
-                                     user_data : *mut c_void) 
+                                     user_data : *mut c_void)
     -> c_int
 {
     catch_unwind(|| {
         let word = argv2svec(word, 1);
-        
+
         unsafe {
             let cd = user_data as *mut CallbackData;
             let hc = &*PHEXCHAT;
@@ -108,7 +108,7 @@ extern "C" fn c_timer_callback_once(user_data: *mut c_void) -> c_int {
 /// callbacks.
 pub (crate)
 extern "C" fn c_fd_callback(fd: c_int, flags: c_int, user_data: *mut c_void)
-    -> c_int 
+    -> c_int
 {
     catch_unwind(|| {
         unsafe {

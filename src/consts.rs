@@ -18,7 +18,7 @@ pub enum ChanFlag {
     SCROLLBACK          = 0x2000,
     SCROLLBACK_UNSET    = 0x4000,
     STRIP_COLORS        = 0x8000,
-    STRIP_COLORS_UNSET  =0x10000,    
+    STRIP_COLORS_UNSET  =0x10000,
 }
 
 /// Channel types.
@@ -27,7 +27,7 @@ pub enum ChanType {
     CHANNEL                  = 2,
     DIALOG                   = 3,
     NOTICE                   = 4,
-    SNOTICE                  = 5,    
+    SNOTICE                  = 5,
 }
 
 /// DCC status values.
