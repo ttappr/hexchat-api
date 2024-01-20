@@ -206,8 +206,8 @@ impl Context {
     /// Gets information from the channel/window that the `Context` object
     /// holds an internal pointer to.
     ///
-    pub fn get_info(&self, list: &str) -> Result<Option<String>, ContextError>
-    {
+    pub fn get_info(&self, list: &str) -> Result<String, ContextError> {
+        use ContextError::*;
         let data = &*self.data;
         unsafe {
             let ptr = self.acquire()?;
@@ -215,7 +215,7 @@ impl Context {
             (data.hc.c_set_context)(data.hc, ptr);
             let result = data.hc.get_info(list);
             (data.hc.c_set_context)(data.hc, prior);
-            Ok(result)
+            result.ok_or_else(|| InfoNotFound(list.to_string()))
         }
     }
 
@@ -225,7 +225,7 @@ impl Context {
     /// list.
     ///
     pub fn list_get(&self, list: &str)
-        -> Result<Option<ListIterator>, ContextError>
+        -> Result<ListIterator, ContextError>
     {
         let data = &*self.data;
         unsafe {
@@ -234,7 +234,7 @@ impl Context {
             (data.hc.c_set_context)(data.hc, ptr);
             let iter = ListIterator::new(list);
             (data.hc.c_set_context)(data.hc, prior);
-            Ok(iter)
+            iter.ok_or_else(|| ListNotFound(list.to_string()))
         }
     }
 }
@@ -267,6 +267,7 @@ pub enum ContextError {
     ContextDropped(String),
     ThreadSafeOperationFailed(String),
     ListNotFound(String),
+    InfoNotFound(String),
 }
 
 impl error::Error for ContextError {}
@@ -289,6 +290,9 @@ impl fmt::Display for ContextError {
             },
             ListNotFound(list) => {
                 write!(f, "ListNotFound(\"{}\")", list)
+            },
+            InfoNotFound(info) => {
+                write!(f, "InfoNotFound(\"{}\")", info)
             },
         }
     }

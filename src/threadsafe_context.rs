@@ -14,19 +14,6 @@ use crate::context::*;
 use crate::thread_facilities::*;
 use crate::threadsafe_list_iterator::*;
 
-// TODO - AsyncResult.get() now returns a Result. If the main thread handler
-//        was shut down, the threads wating on results should be notified
-//        somehow. The functions that wait on results currently will panic
-//        when the main thread handler goes down, which is not terrible, but
-//        not ideal. The methods of the threadsafe objects should probably
-//        return results so the waiting threads can perform error handling 
-//        instead of being immediately terminated on panic.
-//        The return values for methods in ThreadSafeContext and
-//        ThreadSafeListIterator could be simplified a bit by flattening the
-//        Result's they return, rather than returning nested Options and 
-//        Results.
-
-
 /// A thread-safe version of `Context`. Its methods automatically execute on
 /// the Hexchat main thread. The full set of methods of `Context` aren't 
 /// fully implemented for this struct because some can't be trusted to produce
@@ -63,8 +50,8 @@ impl ThreadSafeContext {
             .map_or_else(
                 |err| Err(ThreadSafeOperationFailed(err.to_string())),
                 |res| res.map_or_else(
-                    || Err(AcquisitionFailed("?".into(), "?".into())), 
-                    Ok))
+                        || Err(AcquisitionFailed("?".into(), "?".into())), 
+                        Ok))
     }
     
     /// Gets a `ThreadSafeContext` object associated with the given channel.
@@ -82,8 +69,8 @@ impl ThreadSafeContext {
         .map_or_else(
             |err| Err(ThreadSafeOperationFailed(err.to_string())),
             |res| res.map_or_else(
-                || Err(AcquisitionFailed(network.into(), channel.into())), 
-                Ok))
+                    || Err(AcquisitionFailed(network.into(), channel.into())), 
+                    Ok))
     }
 
     /// Prints the message to the `ThreadSafeContext` object's Hexchat context.
@@ -154,9 +141,7 @@ impl ThreadSafeContext {
             }).get()
             .map_or_else(
                 |err| Err(ThreadSafeOperationFailed(err.to_string())),
-                |res| res.map_or_else(
-                    Err, 
-                    |info| info.ok_or(OperationFailed("no data".into()))))
+                |res| res)
     }
     
     /// Issues a print event to the context held by the `ThreadSafeContext` 
@@ -198,12 +183,8 @@ impl ThreadSafeContext {
         main_thread(move |_| {
             if let Some(ctx) = me.ctx.read().unwrap().as_ref() {
                 match ctx.list_get(&name) {
-                    Ok(opt) => {
-                        if let Some(list) = opt {
-                            Ok(ThreadSafeListIterator::create(list))
-                        } else {
-                            Err(ListNotFound(name.clone()))
-                        }
+                    Ok(list) => {
+                        Ok(ThreadSafeListIterator::create(list))
                     },
                     Err(err) => Err(err),
                 }
