@@ -191,7 +191,7 @@ impl Iterator for ThreadSafeListIterator {
             } else {
                 None
             }
-        }).get().unwrap()
+        }).get().unwrap_or(None)
     }
 }
 
@@ -202,7 +202,7 @@ impl Iterator for &ThreadSafeListIterator {
         let has_more = main_thread(move |_| {
             me.list_iter.write().unwrap().as_mut()
                         .map_or(false, |it| it.next().is_some())
-        }).get().unwrap();
+        }).get().unwrap_or(false);
         if has_more {
             Some(self)
         } else {
