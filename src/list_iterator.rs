@@ -9,6 +9,7 @@
 
 use libc::c_void;
 use libc::time_t;
+use core::panic;
 use std::cell::RefCell;
 #[cfg(feature = "threadsafe")]
 use std::thread;
@@ -324,6 +325,80 @@ pub enum FieldValue {
     TimeVal      (time_t),
 }
 
+impl FieldValue {
+    /// Convert a StringVal variant to a String.
+    /// 
+    pub fn str(self) -> String {
+        match self {
+            StringVal(s) => s,
+            _ => panic!("Can't convert {:?} to String.", self),
+        }
+    }
+    /// Convert an IntVal variant to an i32.
+    /// 
+    pub fn int(self) -> i32 {
+        match self {
+            IntVal(i) => i,
+            _ => panic!("Can't convert {:?} to i32.", self),
+        }
+    }
+    /// Convert a PointerVal variant to a u64.
+    /// 
+    pub fn ptr(self) -> u64 {
+        match self {
+            PointerVal(p) => p,
+            _ => panic!("Can't convert {:?} to u64.", self),
+        }
+    }
+    /// Convert a TimeVal variant to a time_t (i64).
+    /// 
+    pub fn time(self) -> time_t {
+        match self {
+            TimeVal(t) => t,
+            _ => panic!("Can't convert {:?} to time_t.", self),
+        }
+    }
+    /// Convert a ContextVal variant to a Context.
+    /// 
+    pub fn ctx(self) -> Context {
+        match self {
+            ContextVal(c) => c,
+            _ => panic!("Can't convert {:?} to Context.", self),
+        }
+    }
+}
+
+impl From<FieldValue> for String {
+    fn from(v: FieldValue) -> Self {
+        v.str()
+    }
+}
+
+impl From<FieldValue> for i32 {
+    fn from(v: FieldValue) -> Self {
+        v.int()
+    }
+}
+
+impl From<FieldValue> for u64 {
+    fn from(v: FieldValue) -> Self {
+        v.ptr()
+    }
+}
+
+impl From<FieldValue> for time_t {
+    fn from(v: FieldValue) -> Self {
+        v.time()
+    }
+}
+
+impl From<FieldValue> for Context {
+    fn from(v: FieldValue) -> Self {
+        v.ctx()
+    }
+}
+
+
 impl fmt::Display for FieldValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -348,6 +423,12 @@ impl fmt::Display for FieldValue {
 /// * `NotStarted`   - This indicates field names were accessed before the
 ///                    iterator had been. started. `next()` needs to be invoked
 ///                    before the fields of the current item can be accessed.
+/// * `NotAvailable` - This indicates a requested item is not available.
+/// * `ListIteratorDropped` 
+///                  - This indicates the list iterator has been dropped.
+/// * `ThreadSafeOperationFailed`
+///                 - This indicates a thread safe operation failed.
+/// 
 #[derive(Debug, Clone)]
 pub enum ListError {
     UnknownList(String),
