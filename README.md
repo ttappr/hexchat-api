@@ -36,22 +36,35 @@ hexchat.hook_command(
     Priority::Norm,
 
     |hc, word, word_eol, ud| {
+        // Grab a threadsafe version of the API.
+        let hcx = hc.threadsafe();
+
         // Spawn a new thread.
-        thread::spawn(|| {
+        thread::spawn(|| -> Result<(), HexchatError> {
             // Send a task to the main thread to have executed and
-            // get its AsyncResult object.
-            let async_result
-                    = main_thread(|hc| {
+            // get its `AsyncResult` object.
+            let ares = main_thread(|hc| {
                         hc.print("Hello from main thread!");
 
                         "This is the return value from main!"
                     });
-            // Get the return data from the main thread callback
-            // (blocks).
-            let result = async_result.get();
+            // Get the return data from the main thread callback.
+            // The call to `ares.get()` blocks.
+            let result = ares.get();
 
             hc_print_th!("Spawned thread received from main \
                           thread: {}", result);
+
+            // Grab a threadsafe context to the focused channel.
+            let ctx = hcx.get_context();
+
+            // Get a threadsafe list iterator.
+            let user_list = hcx.list_get("users")?;
+
+            for user in user_list {
+                // Print user nicknames via the context object.
+                ctx.print(&user.get_field("nick")?.str())?;
+            }
         });
         Eat::All
     },
@@ -67,7 +80,7 @@ Simply include an entry in your Rust project's `Cargo.toml` file:
 
 ```toml
 [dependencies]
-hexchat-api = "0.2"
+hexchat-api = "0.3"
 ```
 
 ## Template
@@ -119,13 +132,16 @@ fn plugin_init(hc: &Hexchat) -> i32 {
 
                         hc.print("Hello, Hexchat!");
 
+                        // Apply an operation to the string
+                        // in the `UserData`.
                         user_data.apply(|msg: &&str| {
                             hc.print(msg);
                         });
 
                         Eat::All
                     },
-                    "Prints \"Hello, Hexchat!\", and the user data.",
+                    "Prints \"Hello, Hexchat!\", \
+                    and the user data.",
                     udata);
     1
 }
@@ -173,5 +189,5 @@ name = "hexchat_plugin_template"
 crate-type = ["cdylib"]
 
 [dependencies]
-hexchat-api = "0.2"
+hexchat-api = "0.3"
 ```
