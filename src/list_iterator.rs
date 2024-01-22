@@ -124,7 +124,7 @@ impl ListIterator {
     ///
     /// # Returns
     /// * A `Result` where `Ok` holds the field data, and `Err` indicates the
-    ///   field doesn't exist or some other problem. See [HexchtError] for the
+    ///   field doesn't exist or some other problem. See [HexchatError] for the
     ///   error types. The values are returned as `FieldValue` tuples that hold
     ///   the requested data.
     ///
@@ -329,7 +329,7 @@ pub enum FieldValue {
 
 impl FieldValue {
     /// Convert a StringVal variant to a String. FieldValue also implements
-    /// From<String> so you can also use `let s: String = fv.into();` 
+    /// `From<String>`` so you can also use `let s: String = fv.into();` 
     /// to convert.
     /// 
     pub fn str(self) -> String {
@@ -339,7 +339,7 @@ impl FieldValue {
         }
     }
     /// Convert an IntVal variant to an i32. FieldValue also implements
-    /// From<i32> so you can also use `let i: i32 = fv.into();`
+    /// `From<i32>` so you can also use `let i: i32 = fv.into();`
     /// to convert.
     /// 
     pub fn int(self) -> i32 {
@@ -349,7 +349,7 @@ impl FieldValue {
         }
     }
     /// Convert a PointerVal variant to a u64. FieldValue also implements
-    /// From<u64> so you can also use `let p: u64 = fv.into();`
+    /// `From<u64>` so you can also use `let p: u64 = fv.into();`
     /// to convert.
     /// 
     pub fn ptr(self) -> u64 {
@@ -359,7 +359,7 @@ impl FieldValue {
         }
     }
     /// Convert a TimeVal variant to a time_t (i64). FieldValue also implements
-    /// From<time_t> so you can also use `let t: time_t = fv.into();`
+    /// `From<time_t>` so you can also use `let t: time_t = fv.into();`
     /// to convert.
     /// 
     pub fn time(self) -> time_t {
@@ -369,7 +369,7 @@ impl FieldValue {
         }
     }
     /// Convert a ContextVal variant to a Context. FieldValue also implements
-    /// From<Context> so you can also use `let c: Context = fv.into();`
+    /// `From<Context>` so you can also use `let c: Context = fv.into();`
     /// to convert.
     /// 
     pub fn ctx(self) -> Context {

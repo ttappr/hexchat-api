@@ -19,6 +19,8 @@ use crate::threadsafe_context::*;
 
 use HexchatError::*;
 
+const DROPPED_ERR: &str = "ListIterator dropped from threadsafe context.";
+
 /// A thread-safe wrapper class for the Hexchat `ListIterator`. The methods
 /// provided, internally execute on the Hexchat main thread without any
 /// additional code necessary to make that happen in the client code.
@@ -76,9 +78,7 @@ impl ThreadSafeListIterator {
         let me = self.clone();
         main_thread(move |_| {
             Ok(me.list_iter.read().unwrap().as_ref()
-                 .ok_or_else(
-                    || ListIteratorDropped("ListIterator dropped from \
-                                            threadsafe context.".into()))?
+                 .ok_or_else(|| ListIteratorDropped(DROPPED_ERR.into()))?
                  .get_field_names().to_vec())
         }).get().and_then(|r| r)
     }
@@ -90,9 +90,7 @@ impl ThreadSafeListIterator {
         let me = self.clone();
         main_thread(move |_| {
             Ok(me.list_iter.read().unwrap().as_ref()
-                 .ok_or_else(
-                    ||ListIteratorDropped("ListIterator dropped from \
-                                           threadsafe context.".into()))?
+                 .ok_or_else(||ListIteratorDropped(DROPPED_ERR.into()))?
                  .to_vec())
         }).get().and_then(|r| r)
     }
@@ -104,9 +102,7 @@ impl ThreadSafeListIterator {
         let me = self.clone();
         main_thread(move |_| {
             Ok(me.list_iter.read().unwrap().as_ref()
-                 .ok_or_else(
-                    ||ListIteratorDropped("ListIterator dropped from \
-                                           threadsafe context.".into()))?
+                 .ok_or_else(||ListIteratorDropped(DROPPED_ERR.into()))?
                  .get_item())
         }).get().and_then(|r| r)
     }
@@ -160,12 +156,9 @@ impl ThreadSafeListIterator {
                     },
                 }
             } else {
-                Err(ListIteratorDropped(
-                    "ListIterator dropped from threadsafe context."
-                    .to_string()))
+                Err(ListIteratorDropped(DROPPED_ERR.into()))
             }
         }).get().and_then(|r| r)
-
     }
 }
 
@@ -251,7 +244,7 @@ use ThreadSafeFieldValue::*;
 
 impl ThreadSafeFieldValue {
     /// Convert a StringVal variant to a String. FieldValue also implements
-    /// From<String> so you can also use `let s: String = fv.into();` 
+    /// `From<String>` so you can also use `let s: String = fv.into();` 
     /// to convert.
     /// 
     pub fn str(self) -> String {
@@ -261,7 +254,7 @@ impl ThreadSafeFieldValue {
         }
     }
     /// Convert an IntVal variant to an i32. FieldValue also implements
-    /// From<i32> so you can also use `let i: i32 = fv.into();`
+    /// `From<i32>` so you can also use `let i: i32 = fv.into();`
     /// to convert.
     /// 
     pub fn int(self) -> i32 {
@@ -271,7 +264,7 @@ impl ThreadSafeFieldValue {
         }
     }
     /// Convert a PointerVal variant to a u64. FieldValue also implements
-    /// From<u64> so you can also use `let p: u64 = fv.into();`
+    /// `From<u64>` so you can also use `let p: u64 = fv.into();`
     /// to convert.
     /// 
     pub fn ptr(self) -> u64 {
@@ -281,7 +274,7 @@ impl ThreadSafeFieldValue {
         }
     }
     /// Convert a TimeVal variant to a time_t (i64). FieldValue also implements
-    /// From<time_t> so you can also use `let t: time_t = fv.into();`
+    /// `From<time_t>` so you can also use `let t: time_t = fv.into();`
     /// to convert.
     /// 
     pub fn time(self) -> time_t {
@@ -291,7 +284,7 @@ impl ThreadSafeFieldValue {
         }
     }
     /// Convert a ContextVal variant to a Context. FieldValue also implements
-    /// From<Context> so you can also use `let c: Context = fv.into();`
+    /// `From<Context>` so you can also use `let c: Context = fv.into();`
     /// to convert.
     /// 
     pub fn ctx(self) -> ThreadSafeContext {

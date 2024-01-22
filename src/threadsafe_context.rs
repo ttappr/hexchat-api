@@ -17,6 +17,8 @@ use crate::threadsafe_list_iterator::*;
 
 use HexchatError::*;
 
+const DROPPED_ERR: &str = "Context dropped from threadsafe context.";
+
 /// A thread-safe version of `Context`. Its methods automatically execute on
 /// the Hexchat main thread. The full set of methods of `Context` aren't
 /// fully implemented for this struct because some can't be trusted to produce
@@ -77,8 +79,7 @@ impl ThreadSafeContext {
         let me = self.clone();
         main_thread(move |_| {
             me.ctx.read().unwrap().as_ref()
-                  .ok_or_else(|| ContextDropped("Context dropped from \
-                                                 threadsafe context.".into()))?
+                  .ok_or_else(|| ContextDropped(DROPPED_ERR.into()))?
                   .print(&message)
         }).get().and_then(|r| r)
     }
@@ -111,8 +112,7 @@ impl ThreadSafeContext {
         let me = self.clone();
         main_thread(move |_| {
             me.ctx.read().unwrap().as_ref()
-                  .ok_or_else(|| ContextDropped("Context dropped from \
-                                                 threadsafe context.".into()))?
+                  .ok_or_else(|| ContextDropped(DROPPED_ERR.into()))?
                   .command(&command)
         }).get().and_then(|r| r)
     }
@@ -125,8 +125,7 @@ impl ThreadSafeContext {
         let me = self.clone();
         main_thread(move |_| {
             me.ctx.read().unwrap().as_ref()
-                  .ok_or_else(||ContextDropped("Context dropped from \
-                                                threadsafe context.".into()))?
+                  .ok_or_else(|| ContextDropped(DROPPED_ERR.into()))?
                   .get_info(&info)
             }).get().and_then(|r| r)
     }
@@ -147,8 +146,7 @@ impl ThreadSafeContext {
                                             .map(|s| s.as_str())
                                             .collect();
             me.ctx.read().unwrap().as_ref()
-                  .ok_or_else(|| ContextDropped("Context dropped from \
-                                                 threadsafe context.".into()))?
+                  .ok_or_else(|| ContextDropped(DROPPED_ERR.into()))?
                   .emit_print(&data.0, var_args.as_slice())
         }).get().and_then(|r| r)
     }
@@ -171,8 +169,7 @@ impl ThreadSafeContext {
                     Err(err) => Err(err),
                 }
             } else {
-                Err(ContextDropped("Context dropped from threadsafe \
-                                    context.".to_string()))
+                Err(ContextDropped(DROPPED_ERR.into()))
             }
         }).get().and_then(|r| r)
     }
@@ -184,8 +181,7 @@ impl ThreadSafeContext {
             if let Some(ctx) = me.ctx.read().unwrap().as_ref() {
                 Ok(ctx.network())
             } else {
-                Err(ContextDropped("Context dropped from threadsafe \
-                                    context.".to_string()))
+                Err(ContextDropped(DROPPED_ERR.into()))
             }
         }).get().and_then(|r| r)
     }
@@ -198,8 +194,7 @@ impl ThreadSafeContext {
             if let Some(ctx) = me.ctx.read().unwrap().as_ref() {
                 Ok(ctx.channel())
             } else {
-                Err(ContextDropped("Context dropped from threadsafe \
-                                    context.".to_string()))
+                Err(ContextDropped(DROPPED_ERR.into()))
             }
         }).get().and_then(|r| r)
     }
