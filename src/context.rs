@@ -89,9 +89,8 @@ impl Context {
     }
 
     /// This will create a new `Context` that represents the currently active
-    /// context (window/tab, channel/network) open on the user's screen. A
-    /// `Result<Context, ()>` is returned with either the context, or an
-    /// error result if it coulnd't be obtained.
+    /// context (window/tab, channel/network) open on the user's screen. An
+    /// `Context` object is returned, or `None` if it couldn't be obtained.
     /// 
     pub fn get() -> Option<Self> {
         #[cfg(feature = "threadsafe")]

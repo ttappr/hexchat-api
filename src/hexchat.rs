@@ -587,8 +587,8 @@ impl Hexchat {
     /// # Arguments
     /// * `context` - The `Context` to make the currently active context.
     /// # Returns
-    /// * A result (`Result<(), ContextError`) where `Ok(())` indicates
-    ///   the context has been switched, and a `ContextError` if it didn't.
+    /// * A result (`Result<(), HexchatError>) where `Ok(())` indicates
+    ///   the context has been switched, and a `HexchatError` if it didn't.
     ///
     pub fn set_context(&self, context: &Context) -> Result<(), HexchatError> {
         context.set()

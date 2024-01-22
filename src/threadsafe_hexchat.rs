@@ -62,7 +62,7 @@ impl ThreadSafeHexchat {
     /// * `channel`  - The channel name for the context (e.g. "##rust").
     /// # Returns
     /// * the thread-safe context was found, i.e. if the user is joined to the
-    ///   channel specified currently, the context or a `ContextError` if the
+    ///   channel specified currently, the context or a `HexchatError` if the
     ///   context wasn't found, or another problem occurred..
     ///
     pub fn find_context(&self,
@@ -115,7 +115,7 @@ impl ThreadSafeHexchat {
     ///          Plugin Interface page under `hexchat_get_info()`. These include
     ///          "channel", "network", "topic", etc.
     /// # Returns
-    /// * The string is returned for the info requested. `HexchatError`` is 
+    /// * The string is returned for the info requested. `HexchatError` is 
     ///   returned if there is no info with the requested `id` or another 
     ///   problem occurred.
     ///

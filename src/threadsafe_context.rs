@@ -60,7 +60,7 @@ impl ThreadSafeContext {
     /// * `network` - The network of the channel to get the context for.
     /// * `channel` - The channel to get the context of.
     /// # Returns
-    /// * `Ok(ThreadSafeContext)` on success, and `ContextError` on failure.
+    /// * `Ok(ThreadSafeContext)` on success, and `HexchatError` on failure.
     ///
     pub fn find(network: &str, channel: &str) -> Result<Self, HexchatError> {
         let data = (network.to_string(), channel.to_string());
@@ -161,10 +161,8 @@ impl ThreadSafeContext {
         }).get().unwrap_or_else(Err)
     }
 
-    /// Gets a `ListIterator` from the context held by the `Context` object.
-    /// If the list doesn't exist, the `OK()` result will contain `None`;
-    /// otherwise it will hold the `listIterator` object for the requested
-    /// list.
+    /// Gets a `ThreadSafeListIterator` from the context.  If the list doesn't 
+    /// exist, or a problem occurs, an error will be returned.
     ///
     pub fn list_get(&self,
                     name: &str)

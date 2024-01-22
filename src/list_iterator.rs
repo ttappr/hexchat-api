@@ -124,7 +124,7 @@ impl ListIterator {
     ///
     /// # Returns
     /// * A `Result` where `Ok` holds the field data, and `Err` indicates the
-    ///   field doesn't exist or some other problem. See `ListError` for the
+    ///   field doesn't exist or some other problem. See [HexchtError] for the
     ///   error types. The values are returned as `FieldValue` tuples that hold
     ///   the requested data.
     ///
