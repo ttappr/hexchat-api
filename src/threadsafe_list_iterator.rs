@@ -8,6 +8,7 @@ use std::sync::Arc;
 use std::fmt;
 use std::sync::RwLock;
 
+use libc::time_t;
 use send_wrapper::SendWrapper;
 
 use crate::HexchatError;
@@ -230,7 +231,7 @@ pub enum ThreadSafeFieldValue {
     IntVal      (i32),
     PointerVal  (u64),
     ContextVal  (ThreadSafeContext),
-    TimeVal     (i64),
+    TimeVal     (time_t),
 }
 
 unsafe impl Send for ThreadSafeFieldValue {}
@@ -249,6 +250,88 @@ impl fmt::Display for ThreadSafeFieldValue {
     }
 }
 
+use ThreadSafeFieldValue::*;
 
+impl ThreadSafeFieldValue {
+    /// Convert a StringVal variant to a String. FieldValue also implements
+    /// From<String> so you can also use `let s: String = fv.into();` 
+    /// to convert.
+    /// 
+    pub fn str(self) -> String {
+        match self {
+            StringVal(s) => s,
+            _ => panic!("Can't convert {:?} to String.", self),
+        }
+    }
+    /// Convert an IntVal variant to an i32. FieldValue also implements
+    /// From<i32> so you can also use `let i: i32 = fv.into();`
+    /// to convert.
+    /// 
+    pub fn int(self) -> i32 {
+        match self {
+            IntVal(i) => i,
+            _ => panic!("Can't convert {:?} to i32.", self),
+        }
+    }
+    /// Convert a PointerVal variant to a u64. FieldValue also implements
+    /// From<u64> so you can also use `let p: u64 = fv.into();`
+    /// to convert.
+    /// 
+    pub fn ptr(self) -> u64 {
+        match self {
+            PointerVal(p) => p,
+            _ => panic!("Can't convert {:?} to u64.", self),
+        }
+    }
+    /// Convert a TimeVal variant to a time_t (i64). FieldValue also implements
+    /// From<time_t> so you can also use `let t: time_t = fv.into();`
+    /// to convert.
+    /// 
+    pub fn time(self) -> time_t {
+        match self {
+            TimeVal(t) => t,
+            _ => panic!("Can't convert {:?} to time_t.", self),
+        }
+    }
+    /// Convert a ContextVal variant to a Context. FieldValue also implements
+    /// From<Context> so you can also use `let c: Context = fv.into();`
+    /// to convert.
+    /// 
+    pub fn ctx(self) -> ThreadSafeContext {
+        match self {
+            ContextVal(c) => c,
+            _ => panic!("Can't convert {:?} to Context.", self),
+        }
+    }
+}
 
+impl From<ThreadSafeFieldValue> for String {
+    fn from(v: ThreadSafeFieldValue) -> Self {
+        v.str()
+    }
+}
+
+impl From<ThreadSafeFieldValue> for i32 {
+    fn from(v: ThreadSafeFieldValue) -> Self {
+        v.int()
+    }
+}
+
+impl From<ThreadSafeFieldValue> for u64 {
+    fn from(v: ThreadSafeFieldValue) -> Self {
+        v.ptr()
+    }
+}
+
+impl From<ThreadSafeFieldValue> for time_t {
+    fn from(v: ThreadSafeFieldValue) -> Self {
+        v.time()
+    }
+}
+
+impl From<ThreadSafeFieldValue> for ThreadSafeContext {
+    fn from(v: ThreadSafeFieldValue) -> Self {
+        v.ctx()
+    }
+}
 
