@@ -65,6 +65,7 @@ hexchat.hook_command(
                 // Print user nicknames via the context object.
                 ctx.print(&user.get_field("nick")?.str())?;
             }
+            Ok(())
         });
         Eat::All
     },
