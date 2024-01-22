@@ -44,10 +44,10 @@ hexchat.hook_command(
             // Send a task to the main thread to have executed and
             // get its `AsyncResult` object.
             let ares = main_thread(|hc| {
-                        hc.print("Hello from main thread!");
+                hc.print("Hello from main thread!");
 
-                        "This is the return value from main!"
-                    });
+                "This is the return value from main!"
+            });
             // Get the return data from the main thread callback.
             // The call to `ares.get()` blocks.
             let result = ares.get();
@@ -55,7 +55,8 @@ hexchat.hook_command(
             hc_print_th!("Spawned thread received from main \
                           thread: {}", result);
 
-            // Grab a threadsafe context to the focused channel.
+            // Grab a threadsafe context to the currently focused
+            // channel.
             let ctx = hcx.get_context();
 
             // Get a threadsafe list iterator.
