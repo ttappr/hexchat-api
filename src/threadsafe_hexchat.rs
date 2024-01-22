@@ -120,12 +120,12 @@ impl ThreadSafeHexchat {
     ///   problem occurred.
     ///
     pub fn get_info(&self, id: &str) -> Result<String, HexchatError> {
-        let id = id.to_string();
+        let sid = id.to_string();
         main_thread(move |hc| {
-            hc.get_info(&id)
+            hc.get_info(&sid)
         }).get().map_or_else(Err,
                              |res| res.map_or_else(
-                                || Err(InfoNotFound("No info found".into())),
+                                || Err(InfoNotFound(id.into())),
                                 Ok))
     }
 
@@ -145,12 +145,12 @@ impl ThreadSafeHexchat {
     pub fn list_get(&self, list: &str) 
         -> Result<ThreadSafeListIterator, HexchatError> 
     {
-        let list = list.to_string();
+        let slist = list.to_string();
         main_thread(move |hc| {
-            hc.list_get(&list).map(ThreadSafeListIterator::create)
+            hc.list_get(&slist).map(ThreadSafeListIterator::create)
         }).get().map_or_else(Err,
                              |res| res.map_or_else(
-                                || Err(ListNotFound("List not found".into())),
+                                || Err(ListNotFound(list.into())),
                                 Ok))
     }
 }

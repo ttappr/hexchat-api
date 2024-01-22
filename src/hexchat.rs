@@ -529,10 +529,10 @@ impl Hexchat {
                     Ok(())
                 } else {
                     Err(CommandFailed(format!(
-                                    "`.emit_print_attrs(\"{}\", {:?})` \
-                                     failed. Check the event name \
-                                     and data for errors.",
-                                    event_name, var_args)))
+                                      "`.emit_print_attrs(\"{}\", {:?})` \
+                                      failed. Check the event name \
+                                      and data for errors.",
+                                      event_name, var_args)))
                 }
             }
         }
