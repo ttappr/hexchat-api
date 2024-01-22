@@ -237,31 +237,6 @@
 <a href="#237" id="237">237</a>
 <a href="#238" id="238">238</a>
 <a href="#239" id="239">239</a>
-<a href="#240" id="240">240</a>
-<a href="#241" id="241">241</a>
-<a href="#242" id="242">242</a>
-<a href="#243" id="243">243</a>
-<a href="#244" id="244">244</a>
-<a href="#245" id="245">245</a>
-<a href="#246" id="246">246</a>
-<a href="#247" id="247">247</a>
-<a href="#248" id="248">248</a>
-<a href="#249" id="249">249</a>
-<a href="#250" id="250">250</a>
-<a href="#251" id="251">251</a>
-<a href="#252" id="252">252</a>
-<a href="#253" id="253">253</a>
-<a href="#254" id="254">254</a>
-<a href="#255" id="255">255</a>
-<a href="#256" id="256">256</a>
-<a href="#257" id="257">257</a>
-<a href="#258" id="258">258</a>
-<a href="#259" id="259">259</a>
-<a href="#260" id="260">260</a>
-<a href="#261" id="261">261</a>
-<a href="#262" id="262">262</a>
-<a href="#263" id="263">263</a>
-<a href="#264" id="264">264</a>
 </pre></div><pre class="rust"><code><span class="attr">#![cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
 
 </span><span class="doccomment">//! A thread-safe version of `Context`. The methods of these objects will
@@ -274,9 +249,14 @@
 
 <span class="kw">use </span>send_wrapper::SendWrapper;
 
+<span class="kw">use </span><span class="kw">crate</span>::HexchatError;
 <span class="kw">use </span><span class="kw">crate</span>::context::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::thread_facilities::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::threadsafe_list_iterator::<span class="kw-2">*</span>;
+
+<span class="kw">use </span>HexchatError::<span class="kw-2">*</span>;
+
+<span class="kw">const </span>DROPPED_ERR: <span class="kw-2">&amp;</span>str = <span class="string">&quot;Context dropped from threadsafe context.&quot;</span>;
 
 <span class="doccomment">/// A thread-safe version of `Context`. Its methods automatically execute on
 /// the Hexchat main thread. The full set of methods of `Context` aren&#39;t
@@ -307,14 +287,9 @@
     <span class="doccomment">/// Gets the user&#39;s current `Context` wrapped in a `ThreadSafeContext` 
     /// object.
     ///
-    </span><span class="kw">pub fn </span>get() -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, ContextError&gt; {
-        <span class="kw">use </span>ContextError::<span class="kw-2">*</span>;
+    </span><span class="kw">pub fn </span>get() -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, HexchatError&gt; {
         main_thread(|<span class="kw">_</span>| Context::get().map(<span class="self">Self</span>::new)).get()
-            .map_or_else(
-                |err| <span class="prelude-val">Err</span>(ThreadSafeOperationFailed(err.to_string())),
-                |res| res.map_or_else(
-                        || <span class="prelude-val">Err</span>(AcquisitionFailed(<span class="string">&quot;?&quot;</span>.into(), <span class="string">&quot;?&quot;</span>.into())),
-                        <span class="prelude-val">Ok</span>))
+        .and_then(|r| r.ok_or_else(|| ContextAcquisitionFailed(<span class="string">&quot;?, ?&quot;</span>.into())))
     }
 
     <span class="doccomment">/// Gets a `ThreadSafeContext` object associated with the given channel.
@@ -322,35 +297,30 @@
     /// * `network` - The network of the channel to get the context for.
     /// * `channel` - The channel to get the context of.
     /// # Returns
-    /// * `Ok(ThreadSafeContext)` on success, and `ContextError` on failure.
+    /// * `Ok(ThreadSafeContext)` on success, and `HexchatError` on failure.
     ///
-    </span><span class="kw">pub fn </span>find(network: <span class="kw-2">&amp;</span>str, channel: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, ContextError&gt; {
-        <span class="kw">use </span>ContextError::<span class="kw-2">*</span>;
+    </span><span class="kw">pub fn </span>find(network: <span class="kw-2">&amp;</span>str, channel: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, HexchatError&gt; {
         <span class="kw">let </span>data = (network.to_string(), channel.to_string());
         main_thread(<span class="kw">move </span>|<span class="kw">_</span>| Context::find(<span class="kw-2">&amp;</span>data.<span class="number">0</span>, <span class="kw-2">&amp;</span>data.<span class="number">1</span>).map(<span class="self">Self</span>::new))
         .get()
-        .map_or_else(
-            |err| <span class="prelude-val">Err</span>(ThreadSafeOperationFailed(err.to_string())),
-            |res| res.map_or_else(
-                    || <span class="prelude-val">Err</span>(AcquisitionFailed(network.into(), channel.into())),
-                    <span class="prelude-val">Ok</span>))
+        .and_then(|r| r.ok_or_else(|| {
+                    <span class="kw">let </span>msg = <span class="macro">format!</span>(<span class="string">&quot;{}, {}&quot;</span>, network, channel);
+                    ContextAcquisitionFailed(msg) 
+                }))
     }
 
     <span class="doccomment">/// Prints the message to the `ThreadSafeContext` object&#39;s Hexchat context.
     /// This is how messages can be printed to Hexchat windows apart from the
     /// currently active one.
     ///
-    </span><span class="kw">pub fn </span>print(<span class="kw-2">&amp;</span><span class="self">self</span>, message: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), ContextError&gt; {
-        <span class="kw">use </span>ContextError::<span class="kw-2">*</span>;
+    </span><span class="kw">pub fn </span>print(<span class="kw-2">&amp;</span><span class="self">self</span>, message: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), HexchatError&gt; {
         <span class="kw">let </span>message = message.to_string();
         <span class="kw">let </span>me = <span class="self">self</span>.clone();
         main_thread(<span class="kw">move </span>|<span class="kw">_</span>| {
             me.ctx.read().unwrap().as_ref()
-                  .ok_or_else(|| ContextDropped(<span class="string">&quot;Context dropped from \
-                                                 threadsafe context.&quot;</span>.into()))<span class="question-mark">?
+                  .ok_or_else(|| ContextDropped(DROPPED_ERR.into()))<span class="question-mark">?
                   </span>.print(<span class="kw-2">&amp;</span>message)
-        }).get().unwrap_or_else(
-            |err| <span class="prelude-val">Err</span>(ThreadSafeOperationFailed(err.to_string())))
+        }).get().and_then(|r| r)
     }
 
     <span class="doccomment">/// Prints without waiting for asynchronous completion. This will print
@@ -376,45 +346,35 @@
 
     <span class="doccomment">/// Issues a command in the context held by the `ThreadSafeContext` object.
     ///
-    </span><span class="kw">pub fn </span>command(<span class="kw-2">&amp;</span><span class="self">self</span>, command: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), ContextError&gt; {
-        <span class="kw">use </span>ContextError::<span class="kw-2">*</span>;
+    </span><span class="kw">pub fn </span>command(<span class="kw-2">&amp;</span><span class="self">self</span>, command: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), HexchatError&gt; {
         <span class="kw">let </span>command = command.to_string();
         <span class="kw">let </span>me = <span class="self">self</span>.clone();
         main_thread(<span class="kw">move </span>|<span class="kw">_</span>| {
             me.ctx.read().unwrap().as_ref()
-                  .ok_or_else(|| ContextDropped(<span class="string">&quot;Context dropped from \
-                                                 threadsafe context.&quot;</span>.into()))<span class="question-mark">?
+                  .ok_or_else(|| ContextDropped(DROPPED_ERR.into()))<span class="question-mark">?
                   </span>.command(<span class="kw-2">&amp;</span>command)
-        }).get()
-        .map_or_else(|err| <span class="prelude-val">Err</span>(ThreadSafeOperationFailed(err.to_string())),
-                     |res| res)
+        }).get().and_then(|r| r)
     }
 
     <span class="doccomment">/// Gets information from the channel/window that the `ThreadSafeContext`
     /// object holds an internal pointer to.
     ///
-    </span><span class="kw">pub fn </span>get_info(<span class="kw-2">&amp;</span><span class="self">self</span>, info: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;String, ContextError&gt; {
-        <span class="kw">use </span>ContextError::<span class="kw-2">*</span>;
+    </span><span class="kw">pub fn </span>get_info(<span class="kw-2">&amp;</span><span class="self">self</span>, info: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;String, HexchatError&gt; {
         <span class="kw">let </span>info = info.to_string();
         <span class="kw">let </span>me = <span class="self">self</span>.clone();
         main_thread(<span class="kw">move </span>|<span class="kw">_</span>| {
             me.ctx.read().unwrap().as_ref()
-                  .ok_or_else(||ContextDropped(<span class="string">&quot;Context dropped from \
-                                                threadsafe context.&quot;</span>.into()))<span class="question-mark">?
+                  .ok_or_else(|| ContextDropped(DROPPED_ERR.into()))<span class="question-mark">?
                   </span>.get_info(<span class="kw-2">&amp;</span>info)
-            }).get()
-            .map_or_else(
-                |err| <span class="prelude-val">Err</span>(ThreadSafeOperationFailed(err.to_string())),
-                |res| res)
+            }).get().and_then(|r| r)
     }
 
     <span class="doccomment">/// Issues a print event to the context held by the `ThreadSafeContext`
     /// object.
     ///
     </span><span class="kw">pub fn </span>emit_print(<span class="kw-2">&amp;</span><span class="self">self</span>, event_name: <span class="kw-2">&amp;</span>str, var_args: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str])
-        -&gt; <span class="prelude-ty">Result</span>&lt;(), ContextError&gt;
+        -&gt; <span class="prelude-ty">Result</span>&lt;(), HexchatError&gt;
     {
-        <span class="kw">use </span>ContextError::<span class="kw-2">*</span>;
         <span class="kw">let </span>var_args: Vec&lt;String&gt; = var_args.iter()
                                             .map(|s| s.to_string())
                                             .collect();
@@ -425,23 +385,18 @@
                                             .map(|s| s.as_str())
                                             .collect();
             me.ctx.read().unwrap().as_ref()
-                  .ok_or_else(|| ContextDropped(<span class="string">&quot;Context dropped from \
-                                                 threadsafe context.&quot;</span>.into()))<span class="question-mark">?
+                  .ok_or_else(|| ContextDropped(DROPPED_ERR.into()))<span class="question-mark">?
                   </span>.emit_print(<span class="kw-2">&amp;</span>data.<span class="number">0</span>, var_args.as_slice())
-        }).get().unwrap_or_else(
-            |err| <span class="prelude-val">Err</span>(ThreadSafeOperationFailed(err.to_string())))
+        }).get().and_then(|r| r)
     }
 
-    <span class="doccomment">/// Gets a `ListIterator` from the context held by the `Context` object.
-    /// If the list doesn&#39;t exist, the `OK()` result will contain `None`;
-    /// otherwise it will hold the `listIterator` object for the requested
-    /// list.
+    <span class="doccomment">/// Gets a `ThreadSafeListIterator` from the context.  If the list doesn&#39;t 
+    /// exist, or a problem occurs, an error will be returned.
     ///
     </span><span class="kw">pub fn </span>list_get(<span class="kw-2">&amp;</span><span class="self">self</span>,
                     name: <span class="kw-2">&amp;</span>str)
-        -&gt; <span class="prelude-ty">Result</span>&lt;ThreadSafeListIterator, ContextError&gt;
+        -&gt; <span class="prelude-ty">Result</span>&lt;ThreadSafeListIterator, HexchatError&gt;
     {
-        <span class="kw">use </span>ContextError::<span class="kw-2">*</span>;
         <span class="kw">let </span>name = name.to_string();
         <span class="kw">let </span>me = <span class="self">self</span>.clone();
         main_thread(<span class="kw">move </span>|<span class="kw">_</span>| {
@@ -453,39 +408,34 @@
                     <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(err),
                 }
             } <span class="kw">else </span>{
-                <span class="prelude-val">Err</span>(ContextDropped(<span class="string">&quot;Context dropped from threadsafe \
-                                    context.&quot;</span>.to_string()))
+                <span class="prelude-val">Err</span>(ContextDropped(DROPPED_ERR.into()))
             }
-        }).get().unwrap()
+        }).get().and_then(|r| r)
     }
     <span class="doccomment">/// Returns the network name associated with the context.
     /// 
-    </span><span class="kw">pub fn </span>network(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;String, ContextError&gt; {
-        <span class="kw">use </span>ContextError::<span class="kw-2">*</span>;
+    </span><span class="kw">pub fn </span>network(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;String, HexchatError&gt; {
         <span class="kw">let </span>me = <span class="self">self</span>.clone();
         main_thread(<span class="kw">move </span>|<span class="kw">_</span>| {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(ctx) = me.ctx.read().unwrap().as_ref() {
                 <span class="prelude-val">Ok</span>(ctx.network())
             } <span class="kw">else </span>{
-                <span class="prelude-val">Err</span>(ContextDropped(<span class="string">&quot;Context dropped from threadsafe \
-                                    context.&quot;</span>.to_string()))
+                <span class="prelude-val">Err</span>(ContextDropped(DROPPED_ERR.into()))
             }
-        }).get().unwrap()
+        }).get().and_then(|r| r)
     }
 
     <span class="doccomment">/// Returns the channel name associated with the context.
     /// 
-    </span><span class="kw">pub fn </span>channel(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;String, ContextError&gt; {
-        <span class="kw">use </span>ContextError::<span class="kw-2">*</span>;
+    </span><span class="kw">pub fn </span>channel(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;String, HexchatError&gt; {
         <span class="kw">let </span>me = <span class="self">self</span>.clone();
         main_thread(<span class="kw">move </span>|<span class="kw">_</span>| {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(ctx) = me.ctx.read().unwrap().as_ref() {
                 <span class="prelude-val">Ok</span>(ctx.channel())
             } <span class="kw">else </span>{
-                <span class="prelude-val">Err</span>(ContextDropped(<span class="string">&quot;Context dropped from threadsafe \
-                                    context.&quot;</span>.to_string()))
+                <span class="prelude-val">Err</span>(ContextDropped(DROPPED_ERR.into()))
             }
-        }).get().unwrap()
+        }).get().and_then(|r| r)
     }
 }
 

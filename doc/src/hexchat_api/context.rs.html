@@ -267,61 +267,6 @@
 <a href="#267" id="267">267</a>
 <a href="#268" id="268">268</a>
 <a href="#269" id="269">269</a>
-<a href="#270" id="270">270</a>
-<a href="#271" id="271">271</a>
-<a href="#272" id="272">272</a>
-<a href="#273" id="273">273</a>
-<a href="#274" id="274">274</a>
-<a href="#275" id="275">275</a>
-<a href="#276" id="276">276</a>
-<a href="#277" id="277">277</a>
-<a href="#278" id="278">278</a>
-<a href="#279" id="279">279</a>
-<a href="#280" id="280">280</a>
-<a href="#281" id="281">281</a>
-<a href="#282" id="282">282</a>
-<a href="#283" id="283">283</a>
-<a href="#284" id="284">284</a>
-<a href="#285" id="285">285</a>
-<a href="#286" id="286">286</a>
-<a href="#287" id="287">287</a>
-<a href="#288" id="288">288</a>
-<a href="#289" id="289">289</a>
-<a href="#290" id="290">290</a>
-<a href="#291" id="291">291</a>
-<a href="#292" id="292">292</a>
-<a href="#293" id="293">293</a>
-<a href="#294" id="294">294</a>
-<a href="#295" id="295">295</a>
-<a href="#296" id="296">296</a>
-<a href="#297" id="297">297</a>
-<a href="#298" id="298">298</a>
-<a href="#299" id="299">299</a>
-<a href="#300" id="300">300</a>
-<a href="#301" id="301">301</a>
-<a href="#302" id="302">302</a>
-<a href="#303" id="303">303</a>
-<a href="#304" id="304">304</a>
-<a href="#305" id="305">305</a>
-<a href="#306" id="306">306</a>
-<a href="#307" id="307">307</a>
-<a href="#308" id="308">308</a>
-<a href="#309" id="309">309</a>
-<a href="#310" id="310">310</a>
-<a href="#311" id="311">311</a>
-<a href="#312" id="312">312</a>
-<a href="#313" id="313">313</a>
-<a href="#314" id="314">314</a>
-<a href="#315" id="315">315</a>
-<a href="#316" id="316">316</a>
-<a href="#317" id="317">317</a>
-<a href="#318" id="318">318</a>
-<a href="#319" id="319">319</a>
-<a href="#320" id="320">320</a>
-<a href="#321" id="321">321</a>
-<a href="#322" id="322">322</a>
-<a href="#323" id="323">323</a>
-<a href="#324" id="324">324</a>
 </pre></div><pre class="rust"><code>
 <span class="doccomment">//! Objects of the `Context` class represent Hexchat contexts, which are
 //! associated with channels the user is currently in. These are usually
@@ -335,8 +280,7 @@
 //! ensure the `Context` is still valid. If that fails a `AcquisitionFailed`
 //! error is returned with the network/channel strings as data.
 
-</span><span class="kw">use </span>std::error;
-<span class="kw">use </span>std::fmt;
+</span><span class="kw">use </span>std::fmt;
 <span class="kw">use </span>std::ffi::CString;
 <span class="kw">use </span>std::rc::Rc;
 <span class="attr">#[cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
@@ -344,13 +288,16 @@
 
 <span class="attr">#[cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
 </span><span class="kw">use </span><span class="kw">crate</span>::MAIN_THREAD_ID;
-<span class="kw">use </span><span class="kw">crate</span>::hexchat::{Hexchat, hexchat_context, HexchatError};
+<span class="kw">use </span><span class="kw">crate</span>::errors::HexchatError;
+<span class="kw">use </span><span class="kw">crate</span>::hexchat::{Hexchat, hexchat_context};
 <span class="kw">use </span><span class="kw">crate</span>::hexchat_entry_points::PHEXCHAT;
 <span class="kw">use </span><span class="kw">crate</span>::list_iterator::ListIterator;
 <span class="kw">use </span><span class="kw">crate</span>::utils::<span class="kw-2">*</span>;
 
-<span class="kw">use </span>ContextError::<span class="kw-2">*</span>;
-<span class="kw">use </span>HexchatError::<span class="kw-2">*</span>;
+<span class="comment">//use ContextError::*;
+//use HexchatError::*;
+</span><span class="kw">use </span>HexchatError::ContextAcquisitionFailed; 
+<span class="kw">use </span>HexchatError::ContextOperationFailed;
 
 <span class="attr">#[derive(Debug)]
 </span><span class="kw">struct </span>ContextData {
@@ -411,9 +358,8 @@
     }
 
     <span class="doccomment">/// This will create a new `Context` that represents the currently active
-    /// context (window/tab, channel/network) open on the user&#39;s screen. A
-    /// `Result&lt;Context, ()&gt;` is returned with either the context, or an
-    /// error result if it coulnd&#39;t be obtained.
+    /// context (window/tab, channel/network) open on the user&#39;s screen. An
+    /// `Context` object is returned, or `None` if it couldn&#39;t be obtained.
     /// 
     </span><span class="kw">pub fn </span>get() -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
         <span class="attr">#[cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
@@ -452,7 +398,7 @@
     /// `AcquisitionFailed(network, channel)` otherwise.
     /// 
     </span><span class="attr">#[inline]
-    </span><span class="kw">fn </span>acquire(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">*const </span>hexchat_context, ContextError&gt; {
+    </span><span class="kw">fn </span>acquire(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">*const </span>hexchat_context, HexchatError&gt; {
         <span class="kw">let </span>data = <span class="kw-2">&amp;*</span><span class="self">self</span>.data;
         <span class="kw">let </span>ptr = <span class="kw">unsafe </span>{
             (data.hc.c_find_context)(data.hc,
@@ -462,21 +408,23 @@
         <span class="kw">if </span>!ptr.is_null() {
             <span class="prelude-val">Ok</span>(ptr)
         } <span class="kw">else </span>{
-            <span class="prelude-val">Err</span>(AcquisitionFailed(cstring2string(<span class="kw-2">&amp;</span>data.network),
-                                  cstring2string(<span class="kw-2">&amp;</span>data.channel)))
+            <span class="kw">let </span>msg = <span class="macro">format!</span>(<span class="string">&quot;{}, {}&quot;</span>, 
+                              cstring2string(<span class="kw-2">&amp;</span>data.network),
+                              cstring2string(<span class="kw-2">&amp;</span>data.channel));
+            <span class="prelude-val">Err</span>(ContextAcquisitionFailed(msg))
         }
     }
 
     <span class="doccomment">/// Sets the currently active context to the context the `Context` object
     /// points to internally.
     ///
-    </span><span class="kw">pub fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), ContextError&gt; {
+    </span><span class="kw">pub fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), HexchatError&gt; {
         <span class="kw">let </span>data = <span class="kw-2">&amp;*</span><span class="self">self</span>.data;
         <span class="kw">unsafe </span>{
             <span class="kw">let </span>ptr = <span class="self">self</span>.acquire()<span class="question-mark">?</span>;
             <span class="kw">if </span>(data.hc.c_set_context)(data.hc, ptr) &gt; <span class="number">0 </span>{
                 <span class="prelude-val">Ok</span>(())
-            } <span class="kw">else </span>{ <span class="prelude-val">Err</span>(OperationFailed(<span class="string">&quot;.set() failed.&quot;</span>.to_string())) }
+            } <span class="kw">else </span>{ <span class="prelude-val">Err</span>(ContextOperationFailed(<span class="string">&quot;.set() failed.&quot;</span>.to_string())) }
         }
     }
 
@@ -484,7 +432,7 @@
     /// how messages can be printed to Hexchat windows apart from the currently
     /// active one.
     ///
-    </span><span class="kw">pub fn </span>print(<span class="kw-2">&amp;</span><span class="self">self</span>, message: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), ContextError&gt; {
+    </span><span class="kw">pub fn </span>print(<span class="kw-2">&amp;</span><span class="self">self</span>, message: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), HexchatError&gt; {
         <span class="kw">let </span>data = <span class="kw-2">&amp;*</span><span class="self">self</span>.data;
         <span class="kw">unsafe </span>{
             <span class="kw">let </span>ptr = <span class="self">self</span>.acquire()<span class="question-mark">?</span>;
@@ -499,7 +447,7 @@
     <span class="doccomment">/// Issues a print event to the context held by the `Context` object.
     ///
     </span><span class="kw">pub fn </span>emit_print(<span class="kw-2">&amp;</span><span class="self">self</span>, event_name: <span class="kw-2">&amp;</span>str, var_args: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str])
-        -&gt; <span class="prelude-ty">Result</span>&lt;(), ContextError&gt;
+        -&gt; <span class="prelude-ty">Result</span>&lt;(), HexchatError&gt;
     {
         <span class="kw">let </span>data = <span class="kw-2">&amp;*</span><span class="self">self</span>.data;
         <span class="kw">unsafe </span>{
@@ -508,17 +456,14 @@
             (data.hc.c_set_context)(data.hc, ptr);
             <span class="kw">let </span>result = data.hc.emit_print(event_name, var_args);
             (data.hc.c_set_context)(data.hc, prior);
-            <span class="kw">if let </span><span class="prelude-val">Err</span>(CommandFailed(msg)) = result {
-                <span class="prelude-val">Err</span>(OperationFailed(msg))
-            } <span class="kw">else </span>{
-                <span class="prelude-val">Ok</span>(())
-            }
+            result<span class="question-mark">?</span>;
+            <span class="prelude-val">Ok</span>(())
         }
     }
 
     <span class="doccomment">/// Issues a command in the context held by the `Context` object.
     ///
-    </span><span class="kw">pub fn </span>command(<span class="kw-2">&amp;</span><span class="self">self</span>, command: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), ContextError&gt; {
+    </span><span class="kw">pub fn </span>command(<span class="kw-2">&amp;</span><span class="self">self</span>, command: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), HexchatError&gt; {
         <span class="kw">let </span>data = <span class="kw-2">&amp;*</span><span class="self">self</span>.data;
         <span class="kw">unsafe </span>{
             <span class="kw">let </span>ptr = <span class="self">self</span>.acquire()<span class="question-mark">?</span>;
@@ -533,8 +478,8 @@
     <span class="doccomment">/// Gets information from the channel/window that the `Context` object
     /// holds an internal pointer to.
     ///
-    </span><span class="kw">pub fn </span>get_info(<span class="kw-2">&amp;</span><span class="self">self</span>, list: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;String, ContextError&gt; {
-        <span class="kw">use </span>ContextError::<span class="kw-2">*</span>;
+    </span><span class="kw">pub fn </span>get_info(<span class="kw-2">&amp;</span><span class="self">self</span>, list: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;String, HexchatError&gt; {
+        <span class="kw">use </span>HexchatError::<span class="kw-2">*</span>;
         <span class="kw">let </span>data = <span class="kw-2">&amp;*</span><span class="self">self</span>.data;
         <span class="kw">unsafe </span>{
             <span class="kw">let </span>ptr = <span class="self">self</span>.acquire()<span class="question-mark">?</span>;
@@ -549,8 +494,9 @@
     <span class="doccomment">/// Gets a `ListIterator` from the context held by the `Context` object.
     ///
     </span><span class="kw">pub fn </span>list_get(<span class="kw-2">&amp;</span><span class="self">self</span>, list: <span class="kw-2">&amp;</span>str)
-        -&gt; <span class="prelude-ty">Result</span>&lt;ListIterator, ContextError&gt;
+        -&gt; <span class="prelude-ty">Result</span>&lt;ListIterator, HexchatError&gt;
     {
+        <span class="kw">use </span>HexchatError::ListNotFound;
         <span class="kw">let </span>data = <span class="kw-2">&amp;*</span><span class="self">self</span>.data;
         <span class="kw">unsafe </span>{
             <span class="kw">let </span>ptr = <span class="self">self</span>.acquire()<span class="question-mark">?</span>;
@@ -590,60 +536,4 @@
         <span class="macro">write!</span>(f, <span class="string">&quot;Context(\&quot;{}\&quot;, \&quot;{}\&quot;)&quot;</span>, network, channel)
     }
 }
-
-<span class="doccomment">/// The `Context` functions may encounter an error when invoked depending on
-/// whether the network name and channel name they&#39;re bound to are currently
-/// valid.
-/// # Variants
-/// * `AcquisitionFailed`   - The function was unable to acquire the desired
-///                           context associated with its network and channel
-///                           names.
-/// * `OperationFailed`     - The context acquisition succeeded, but there is
-///                           some problem with the action being performed,
-///                           for instance the requested list for
-///                           `ctx.get_listiter(&quot;foo&quot;)` doesn&#39;t exist.
-/// * `ContextDropped`      - The context object was dropped.
-/// * `ThreadSafeOperationFailed` 
-///                         - This can happen when a `ThreadSafeContext` or 
-///                          `ThreadSafeListIterator` object is used while 
-///                          the plugin is unloading.
-/// * `ListNotFound`        - The requested list doesn&#39;t exist.
-/// * `InfoNotFound`        - The requested info doesn&#39;t exist.
-/// 
-</span><span class="attr">#[derive(Debug, Clone)]
-</span><span class="kw">pub enum </span>ContextError {
-    AcquisitionFailed(String, String),
-    OperationFailed(String),
-    ContextDropped(String),
-    ThreadSafeOperationFailed(String),
-    ListNotFound(String),
-    InfoNotFound(String),
-}
-
-<span class="kw">impl </span>error::Error <span class="kw">for </span>ContextError {}
-
-<span class="kw">impl </span>fmt::Display <span class="kw">for </span>ContextError {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
-        <span class="kw">let </span><span class="kw-2">mut </span>s = <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="self">self</span>);
-        s.retain(|c| c != <span class="string">&#39;&quot;&#39;</span>);
-        <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, s)
-    }
-}
-<span class="comment">/*
-// See the following for the methods to implement:
-//  https://doc.rust-lang.org/src/std/error.rs.html#48-153
-impl error::Error for ContextError {
-    fn source(&amp;self) -&gt; Option&lt;&amp;(dyn error::Error + &#39;static)&gt; {
-        Option::from(match self {
-            AcquisitionFailed(network, channel, err) =&gt; {
-                match err {
-                    Some(err) =&gt; { err },
-                    None =&gt; { None },
-                }
-            },
-            OperationFailed(msg) =&gt; { None },
-        })
-    }
-}
-*/
-</span></code></pre></div></section></main></body></html>
+</code></pre></div></section></main></body></html>

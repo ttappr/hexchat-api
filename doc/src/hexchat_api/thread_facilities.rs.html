@@ -283,22 +283,6 @@
 <a href="#283" id="283">283</a>
 <a href="#284" id="284">284</a>
 <a href="#285" id="285">285</a>
-<a href="#286" id="286">286</a>
-<a href="#287" id="287">287</a>
-<a href="#288" id="288">288</a>
-<a href="#289" id="289">289</a>
-<a href="#290" id="290">290</a>
-<a href="#291" id="291">291</a>
-<a href="#292" id="292">292</a>
-<a href="#293" id="293">293</a>
-<a href="#294" id="294">294</a>
-<a href="#295" id="295">295</a>
-<a href="#296" id="296">296</a>
-<a href="#297" id="297">297</a>
-<a href="#298" id="298">298</a>
-<a href="#299" id="299">299</a>
-<a href="#300" id="300">300</a>
-<a href="#301" id="301">301</a>
 </pre></div><pre class="rust"><code><span class="attr">#![cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
 
 </span><span class="doccomment">//! This module provides facilities for accessing Hexchat from routines
@@ -318,14 +302,12 @@
 //! has finished executing the callback.
 
 </span><span class="kw">use </span>std::collections::LinkedList;
-<span class="kw">use </span>std::error::Error;
-<span class="kw">use </span>std::fmt::{Display, <span class="self">self</span>, Formatter};
 <span class="kw">use </span>std::sync::{Arc, Condvar, Mutex};
 <span class="kw">use </span>std::thread;
 
 <span class="kw">use </span><span class="kw">crate</span>::hexchat::Hexchat;
 <span class="kw">use </span><span class="kw">crate</span>::hexchat_entry_points::PHEXCHAT;
-<span class="kw">use </span><span class="kw">crate</span>::user_data::<span class="kw-2">*</span>;
+<span class="kw">use crate</span>::{user_data::<span class="kw-2">*</span>, HexchatError};
 
 <span class="kw">use </span>UserData::<span class="kw-2">*</span>;
 
@@ -402,21 +384,6 @@
     R: Clone + Send,
 {}
 
-<span class="doccomment">/// An error type that can be used to indicate that a task failed. Currently,
-/// this is only used when the task queue is being shut down. This happens
-/// when Hexchat is closing or the addon is being unloaded.
-///
-</span><span class="attr">#[derive(Debug, Clone)]
-</span><span class="kw">pub struct </span>TaskError(<span class="kw">pub</span>(<span class="kw">crate</span>) String);
-
-<span class="kw">impl </span>Error <span class="kw">for </span>TaskError {}
-
-<span class="kw">impl </span>Display <span class="kw">for </span>TaskError {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">&quot;TaskError({})&quot;</span>, <span class="self">self</span>.<span class="number">0</span>)
-    }
-}
-
 <span class="doccomment">/// A result object that allows callbacks operating on a thread to send their
 /// return value to a receiver calling `get()` from another thread. Whether
 /// return data needs to be transferred or not, this object can be used to wait
@@ -426,7 +393,7 @@
 </span><span class="attr">#[allow(clippy::type_complexity)]
 #[derive(Clone)]
 </span><span class="kw">pub struct </span>AsyncResult&lt;T: Clone + Send&gt; {
-    data: Arc&lt;(Mutex&lt;(<span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;T, TaskError&gt;&gt;, bool)&gt;, Condvar)&gt;,
+    data: Arc&lt;(Mutex&lt;(<span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;T, HexchatError&gt;&gt;, bool)&gt;, Condvar)&gt;,
 }
 
 <span class="kw">unsafe impl</span>&lt;T: Clone + Send&gt; Send <span class="kw">for </span>AsyncResult&lt;T&gt; {}
@@ -451,7 +418,7 @@
     <span class="doccomment">/// Blocking call to retrieve the return data from a callback on another
     /// thread.
     ///
-    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;T, TaskError&gt; {
+    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;T, HexchatError&gt; {
         <span class="kw">let </span>(mtx, cvar) = <span class="kw-2">&amp;*</span><span class="self">self</span>.data;
         <span class="kw">let </span><span class="kw-2">mut </span>guard   = mtx.lock().unwrap();
         <span class="kw">while </span>!guard.<span class="number">1 </span>{
@@ -470,9 +437,10 @@
         cvar.notify_all();
     }
     <span class="kw">fn </span>set_error(<span class="kw-2">&amp;</span><span class="self">self</span>, error: <span class="kw-2">&amp;</span>str) {
+        <span class="kw">use </span>HexchatError::ThreadSafeOperationFailed <span class="kw">as </span>Error;
         <span class="kw">let </span>(mtx, cvar) = <span class="kw-2">&amp;*</span><span class="self">self</span>.data;
         <span class="kw">let </span><span class="kw-2">mut </span>guard   = mtx.lock().unwrap();
-               <span class="kw-2">*</span>guard   = (<span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(TaskError(error.into()))), <span class="bool-val">true</span>);
+               <span class="kw-2">*</span>guard   = (<span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(Error(error.into()))), <span class="bool-val">true</span>);
         cvar.notify_all();
     }
 }

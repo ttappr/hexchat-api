@@ -262,6 +262,69 @@
 <a href="#262" id="262">262</a>
 <a href="#263" id="263">263</a>
 <a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
 </pre></div><pre class="rust"><code><span class="attr">#![cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
 
 </span><span class="doccomment">//! This module provides a thread-safe wrapper class for the Hexchat
@@ -272,12 +335,18 @@
 <span class="kw">use </span>std::fmt;
 <span class="kw">use </span>std::sync::RwLock;
 
+<span class="kw">use </span>libc::time_t;
 <span class="kw">use </span>send_wrapper::SendWrapper;
 
+<span class="kw">use </span><span class="kw">crate</span>::HexchatError;
 <span class="kw">use </span><span class="kw">crate</span>::list_item::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::list_iterator::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::thread_facilities::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::threadsafe_context::<span class="kw-2">*</span>;
+
+<span class="kw">use </span>HexchatError::<span class="kw-2">*</span>;
+
+<span class="kw">const </span>DROPPED_ERR: <span class="kw-2">&amp;</span>str = <span class="string">&quot;ListIterator dropped from threadsafe context.&quot;</span>;
 
 <span class="doccomment">/// A thread-safe wrapper class for the Hexchat `ListIterator`. The methods
 /// provided, internally execute on the Hexchat main thread without any
@@ -318,8 +387,7 @@
     /// # Returns
     /// * A thread-safe object representing one of Hexchat&#39;s internal lists.
     ///
-    </span><span class="kw">pub fn </span>new(name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, ListError&gt; {
-        <span class="kw">use </span>ListError::<span class="kw-2">*</span>;
+    </span><span class="kw">pub fn </span>new(name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, HexchatError&gt; {
         <span class="kw">let </span>cname = name.to_string();
         main_thread(<span class="kw">move </span>|<span class="kw">_</span>| {
             ListIterator::new(<span class="kw-2">&amp;</span>cname).map(|list|
@@ -327,61 +395,43 @@
                     list_iter:
                         Arc::new(RwLock::new(<span class="prelude-val">Some</span>(SendWrapper::new(list))))
                 })}
-        ).get()
-        .map_or_else(
-            |err| <span class="prelude-val">Err</span>(ThreadSafeOperationFailed(err.to_string())),
-            |res| res.map_or_else(|| <span class="prelude-val">Err</span>(UnknownList(name.into())), <span class="prelude-val">Ok</span>))
+        ).get().and_then(|res| res.ok_or_else(|| ListNotFound(name.into())))
     }
 
     <span class="doccomment">/// Returns a vector of the names of the fields supported by the list
     /// the list iterator represents.
     ///
-    </span><span class="kw">pub fn </span>get_field_names(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;String&gt;, ListError&gt; {
-        <span class="kw">use </span>ListError::<span class="kw-2">*</span>;
+    </span><span class="kw">pub fn </span>get_field_names(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;String&gt;, HexchatError&gt; {
         <span class="kw">let </span>me = <span class="self">self</span>.clone();
         main_thread(<span class="kw">move </span>|<span class="kw">_</span>| {
             <span class="prelude-val">Ok</span>(me.list_iter.read().unwrap().as_ref()
-                 .ok_or_else(
-                    || ListIteratorDropped(<span class="string">&quot;ListIterator dropped from \
-                                            threadsafe context.&quot;</span>.into()))<span class="question-mark">?
+                 .ok_or_else(|| ListIteratorDropped(DROPPED_ERR.into()))<span class="question-mark">?
                  </span>.get_field_names().to_vec())
-        }).get()
-        .map_or_else(|err| <span class="prelude-val">Err</span>(ThreadSafeOperationFailed(err.to_string())),
-                     |res| res)
+        }).get().and_then(|r| r)
     }
 
     <span class="doccomment">/// Constructs a vector of list items on the main thread all at once. The
     /// iterator will be spent after the operation.
     ///
-    </span><span class="kw">pub fn </span>to_vec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;ListItem&gt;, ListError&gt; {
-        <span class="kw">use </span>ListError::<span class="kw-2">*</span>;
+    </span><span class="kw">pub fn </span>to_vec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;ListItem&gt;, HexchatError&gt; {
         <span class="kw">let </span>me = <span class="self">self</span>.clone();
         main_thread(<span class="kw">move </span>|<span class="kw">_</span>| {
             <span class="prelude-val">Ok</span>(me.list_iter.read().unwrap().as_ref()
-                 .ok_or_else(
-                    ||ListIteratorDropped(<span class="string">&quot;ListIterator dropped from \
-                                           threadsafe context.&quot;</span>.into()))<span class="question-mark">?
+                 .ok_or_else(||ListIteratorDropped(DROPPED_ERR.into()))<span class="question-mark">?
                  </span>.to_vec())
-        }).get()
-        .map_or_else(|err| <span class="prelude-val">Err</span>(ThreadSafeOperationFailed(err.to_string())),
-                     |res| res)
+        }).get().and_then(|r| r)
     }
 
     <span class="doccomment">/// Creates a `ListItem` from the field data at the current position in the
     /// list.
     ///
-    </span><span class="kw">pub fn </span>get_item(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;ListItem, ListError&gt; {
-        <span class="kw">use </span>ListError::<span class="kw-2">*</span>;
+    </span><span class="kw">pub fn </span>get_item(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;ListItem, HexchatError&gt; {
         <span class="kw">let </span>me = <span class="self">self</span>.clone();
         main_thread(<span class="kw">move </span>|<span class="kw">_</span>| {
             <span class="prelude-val">Ok</span>(me.list_iter.read().unwrap().as_ref()
-                 .ok_or_else(
-                    ||ListIteratorDropped(<span class="string">&quot;ListIterator dropped from \
-                                           threadsafe context.&quot;</span>.into()))<span class="question-mark">?
+                 .ok_or_else(||ListIteratorDropped(DROPPED_ERR.into()))<span class="question-mark">?
                  </span>.get_item())
-        }).get()
-        .map_or_else(|err| <span class="prelude-val">Err</span>(ThreadSafeOperationFailed(err.to_string())),
-                     |res| res)
+        }).get().and_then(|r| r)
     }
 
     <span class="doccomment">/// Returns the value for the field of the requested name.
@@ -397,9 +447,8 @@
     ///
     </span><span class="kw">pub fn </span>get_field(<span class="kw-2">&amp;</span><span class="self">self</span>,
                      name: <span class="kw-2">&amp;</span>str
-                    ) -&gt; <span class="prelude-ty">Result</span>&lt;ThreadSafeFieldValue, ListError&gt;
+                    ) -&gt; <span class="prelude-ty">Result</span>&lt;ThreadSafeFieldValue, HexchatError&gt;
     {
-        <span class="kw">use </span>ListError::<span class="kw-2">*</span>;
         <span class="kw">use </span>FieldValue <span class="kw">as </span>FV;
         <span class="kw">use </span>ThreadSafeFieldValue <span class="kw">as </span>TSFV;
 
@@ -434,14 +483,9 @@
                     },
                 }
             } <span class="kw">else </span>{
-                <span class="prelude-val">Err</span>(ListError::ListIteratorDropped(
-                    <span class="string">&quot;ListIterator dropped from threadsafe context.&quot;
-                    </span>.to_string()))
+                <span class="prelude-val">Err</span>(ListIteratorDropped(DROPPED_ERR.into()))
             }
-        }).get()
-        .map_or_else(|err| <span class="prelude-val">Err</span>(ThreadSafeOperationFailed(err.to_string())),
-                     |res| res)
-
+        }).get().and_then(|r| r)
     }
 }
 
@@ -504,7 +548,7 @@
     IntVal      (i32),
     PointerVal  (u64),
     ContextVal  (ThreadSafeContext),
-    TimeVal     (i64),
+    TimeVal     (time_t),
 }
 
 <span class="kw">unsafe impl </span>Send <span class="kw">for </span>ThreadSafeFieldValue {}
@@ -523,7 +567,89 @@
     }
 }
 
+<span class="kw">use </span>ThreadSafeFieldValue::<span class="kw-2">*</span>;
 
+<span class="kw">impl </span>ThreadSafeFieldValue {
+    <span class="doccomment">/// Convert a StringVal variant to a String. FieldValue also implements
+    /// `From&lt;String&gt;` so you can also use `let s: String = fv.into();` 
+    /// to convert.
+    /// 
+    </span><span class="kw">pub fn </span>str(<span class="self">self</span>) -&gt; String {
+        <span class="kw">match </span><span class="self">self </span>{
+            StringVal(s) =&gt; s,
+            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Can&#39;t convert {:?} to String.&quot;</span>, <span class="self">self</span>),
+        }
+    }
+    <span class="doccomment">/// Convert an IntVal variant to an i32. FieldValue also implements
+    /// `From&lt;i32&gt;` so you can also use `let i: i32 = fv.into();`
+    /// to convert.
+    /// 
+    </span><span class="kw">pub fn </span>int(<span class="self">self</span>) -&gt; i32 {
+        <span class="kw">match </span><span class="self">self </span>{
+            IntVal(i) =&gt; i,
+            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Can&#39;t convert {:?} to i32.&quot;</span>, <span class="self">self</span>),
+        }
+    }
+    <span class="doccomment">/// Convert a PointerVal variant to a u64. FieldValue also implements
+    /// `From&lt;u64&gt;` so you can also use `let p: u64 = fv.into();`
+    /// to convert.
+    /// 
+    </span><span class="kw">pub fn </span>ptr(<span class="self">self</span>) -&gt; u64 {
+        <span class="kw">match </span><span class="self">self </span>{
+            PointerVal(p) =&gt; p,
+            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Can&#39;t convert {:?} to u64.&quot;</span>, <span class="self">self</span>),
+        }
+    }
+    <span class="doccomment">/// Convert a TimeVal variant to a time_t (i64). FieldValue also implements
+    /// `From&lt;time_t&gt;` so you can also use `let t: time_t = fv.into();`
+    /// to convert.
+    /// 
+    </span><span class="kw">pub fn </span>time(<span class="self">self</span>) -&gt; time_t {
+        <span class="kw">match </span><span class="self">self </span>{
+            TimeVal(t) =&gt; t,
+            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Can&#39;t convert {:?} to time_t.&quot;</span>, <span class="self">self</span>),
+        }
+    }
+    <span class="doccomment">/// Convert a ContextVal variant to a Context. FieldValue also implements
+    /// `From&lt;Context&gt;` so you can also use `let c: Context = fv.into();`
+    /// to convert.
+    /// 
+    </span><span class="kw">pub fn </span>ctx(<span class="self">self</span>) -&gt; ThreadSafeContext {
+        <span class="kw">match </span><span class="self">self </span>{
+            ContextVal(c) =&gt; c,
+            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Can&#39;t convert {:?} to Context.&quot;</span>, <span class="self">self</span>),
+        }
+    }
+}
 
+<span class="kw">impl </span>From&lt;ThreadSafeFieldValue&gt; <span class="kw">for </span>String {
+    <span class="kw">fn </span>from(v: ThreadSafeFieldValue) -&gt; <span class="self">Self </span>{
+        v.str()
+    }
+}
+
+<span class="kw">impl </span>From&lt;ThreadSafeFieldValue&gt; <span class="kw">for </span>i32 {
+    <span class="kw">fn </span>from(v: ThreadSafeFieldValue) -&gt; <span class="self">Self </span>{
+        v.int()
+    }
+}
+
+<span class="kw">impl </span>From&lt;ThreadSafeFieldValue&gt; <span class="kw">for </span>u64 {
+    <span class="kw">fn </span>from(v: ThreadSafeFieldValue) -&gt; <span class="self">Self </span>{
+        v.ptr()
+    }
+}
+
+<span class="kw">impl </span>From&lt;ThreadSafeFieldValue&gt; <span class="kw">for </span>time_t {
+    <span class="kw">fn </span>from(v: ThreadSafeFieldValue) -&gt; <span class="self">Self </span>{
+        v.time()
+    }
+}
+
+<span class="kw">impl </span>From&lt;ThreadSafeFieldValue&gt; <span class="kw">for </span>ThreadSafeContext {
+    <span class="kw">fn </span>from(v: ThreadSafeFieldValue) -&gt; <span class="self">Self </span>{
+        v.ctx()
+    }
+}
 
 </code></pre></div></section></main></body></html>
