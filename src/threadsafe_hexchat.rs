@@ -5,12 +5,13 @@
 //! The client code doesn't have to worry about synchronization; that's taken
 //! care of internally by `ThreadSafeHexchat`.
 
-use crate::ContextError;
-use crate::ListError;
+use crate::HexchatError;
 use crate::hexchat::*;
 use crate::thread_facilities::*;
 use crate::threadsafe_context::*;
 use crate::threadsafe_list_iterator::*;
+
+use HexchatError::*;
 
 /// A thread-safe wrapper for the `Hexchat` object.
 /// It implements a subset of the methods provided by the wrapped object.
@@ -37,12 +38,9 @@ impl ThreadSafeHexchat {
     /// * `text` - The text to print.
     ///
     pub fn print(&self, text: &str) -> Result<(), HexchatError> {
-        use HexchatError::*;
         let text = text.to_string();
         let result = main_thread(move |hc| hc.print(&text));
-        result.get().map_or_else(
-            |err| Err(CommandFailed(err.to_string())),
-            Ok)
+        result.get()
     }
 
     /// Invokes the Hexchat command specified by `command`.
@@ -50,12 +48,9 @@ impl ThreadSafeHexchat {
     /// * `command` - The Hexchat command to invoke.
     ///
     pub fn command(&self, command: &str) -> Result<(), HexchatError> {
-        use HexchatError::*;
         let command = command.to_string();
         let result = main_thread(move |hc| hc.command(&command));
-        result.get().map_or_else(
-            |err| Err(CommandFailed(err.to_string())),
-            Ok)
+        result.get()
     }
 
     /// Returns a `ThreadSafeContext` object bound to the requested channel.
@@ -73,18 +68,19 @@ impl ThreadSafeHexchat {
     pub fn find_context(&self,
                         network : &str,
                         channel : &str)
-        -> Result<ThreadSafeContext, ContextError>
+        -> Result<ThreadSafeContext, HexchatError>
     {
-        use ContextError::*;
         let data = (network.to_string(), channel.to_string());
         main_thread(move |hc| {
             hc.find_context(&data.0, &data.1).map(ThreadSafeContext::new)
         }).get()
-        .map_or_else(
-            |err| Err(ThreadSafeOperationFailed(err.to_string())),
-            |res| res.map_or_else(
-                || Err(AcquisitionFailed(network.into(), channel.into())),
-                Ok))
+          .map_or_else(Err,
+                       |res| res.map_or_else(
+                           || {
+                                let msg = format!("{}, {}", network, channel);
+                                Err(ContextAcquisitionFailed(msg))
+                           },
+                            Ok))
     }
 
     /// This should be invoked from the main thread. The context object returned
@@ -99,14 +95,13 @@ impl ThreadSafeHexchat {
     /// * The `ThreadSafeContext` for the currently active context. This usually
     ///   means the channel window the user has visible in the GUI.
     ///
-    pub fn get_context(&self) -> Result<ThreadSafeContext, ContextError> {
-        use ContextError::*;
+    pub fn get_context(&self) -> Result<ThreadSafeContext, HexchatError> {
         main_thread(|hc| {
             hc.get_context().map(ThreadSafeContext::new)
         }).get().map_or_else(
-            |err| Err(ThreadSafeOperationFailed(err.to_string())),
+            Err,
             |res| res.map_or_else(
-                || Err(AcquisitionFailed("?".into(), "?".into())),
+                || Err(ContextAcquisitionFailed("?, ?".into())),
                 Ok))
     }
 
@@ -125,16 +120,13 @@ impl ThreadSafeHexchat {
     ///   problem occurred.
     ///
     pub fn get_info(&self, id: &str) -> Result<String, HexchatError> {
-        use HexchatError::*;
         let id = id.to_string();
         main_thread(move |hc| {
             hc.get_info(&id)
-        }).get()
-        .map_or_else(
-            |err| Err(CommandFailed(err.to_string())),
-            |res| res.map_or_else(
-                || Err(CommandFailed("No info found".into())),
-                Ok))
+        }).get().map_or_else(Err,
+                             |res| res.map_or_else(
+                                || Err(InfoNotFound("No info found".into())),
+                                Ok))
     }
 
     /// Creates an iterator for the requested Hexchat list. This is modeled
@@ -151,18 +143,15 @@ impl ThreadSafeHexchat {
     ///   an error is returned.
     ///
     pub fn list_get(&self, list: &str) 
-        -> Result<ThreadSafeListIterator, ListError> 
+        -> Result<ThreadSafeListIterator, HexchatError> 
     {
-        use ListError::*;
         let list = list.to_string();
         main_thread(move |hc| {
             hc.list_get(&list).map(ThreadSafeListIterator::create)
-        }).get()
-        .map_or_else(
-            |err| Err(ThreadSafeOperationFailed(err.to_string())),
-            |res| res.map_or_else(
-                || Err(UnknownList("List not found".into())),
-                Ok))
+        }).get().map_or_else(Err,
+                             |res| res.map_or_else(
+                                || Err(ListNotFound("List not found".into())),
+                                Ok))
     }
 }
 

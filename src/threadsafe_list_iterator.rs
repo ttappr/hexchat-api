@@ -10,10 +10,13 @@ use std::sync::RwLock;
 
 use send_wrapper::SendWrapper;
 
+use crate::HexchatError;
 use crate::list_item::*;
 use crate::list_iterator::*;
 use crate::thread_facilities::*;
 use crate::threadsafe_context::*;
+
+use HexchatError::*;
 
 /// A thread-safe wrapper class for the Hexchat `ListIterator`. The methods
 /// provided, internally execute on the Hexchat main thread without any
@@ -54,8 +57,7 @@ impl ThreadSafeListIterator {
     /// # Returns
     /// * A thread-safe object representing one of Hexchat's internal lists.
     ///
-    pub fn new(name: &str) -> Result<Self, ListError> {
-        use ListError::*;
+    pub fn new(name: &str) -> Result<Self, HexchatError> {
         let cname = name.to_string();
         main_thread(move |_| {
             ListIterator::new(&cname).map(|list|
@@ -65,15 +67,14 @@ impl ThreadSafeListIterator {
                 })}
         ).get()
         .map_or_else(
-            |err| Err(ThreadSafeOperationFailed(err.to_string())),
-            |res| res.map_or_else(|| Err(UnknownList(name.into())), Ok))
+            Err,
+            |res| res.map_or_else(|| Err(ListNotFound(name.into())), Ok))
     }
 
     /// Returns a vector of the names of the fields supported by the list
     /// the list iterator represents.
     ///
-    pub fn get_field_names(&self) -> Result<Vec<String>, ListError> {
-        use ListError::*;
+    pub fn get_field_names(&self) -> Result<Vec<String>, HexchatError> {
         let me = self.clone();
         main_thread(move |_| {
             Ok(me.list_iter.read().unwrap().as_ref()
@@ -81,16 +82,13 @@ impl ThreadSafeListIterator {
                     || ListIteratorDropped("ListIterator dropped from \
                                             threadsafe context.".into()))?
                  .get_field_names().to_vec())
-        }).get()
-        .map_or_else(|err| Err(ThreadSafeOperationFailed(err.to_string())),
-                     |res| res)
+        }).get().map_or_else(Err, |res| res)
     }
 
     /// Constructs a vector of list items on the main thread all at once. The
     /// iterator will be spent after the operation.
     ///
-    pub fn to_vec(&self) -> Result<Vec<ListItem>, ListError> {
-        use ListError::*;
+    pub fn to_vec(&self) -> Result<Vec<ListItem>, HexchatError> {
         let me = self.clone();
         main_thread(move |_| {
             Ok(me.list_iter.read().unwrap().as_ref()
@@ -98,16 +96,13 @@ impl ThreadSafeListIterator {
                     ||ListIteratorDropped("ListIterator dropped from \
                                            threadsafe context.".into()))?
                  .to_vec())
-        }).get()
-        .map_or_else(|err| Err(ThreadSafeOperationFailed(err.to_string())),
-                     |res| res)
+        }).get().map_or_else(Err, |res| res)
     }
 
     /// Creates a `ListItem` from the field data at the current position in the
     /// list.
     ///
-    pub fn get_item(&self) -> Result<ListItem, ListError> {
-        use ListError::*;
+    pub fn get_item(&self) -> Result<ListItem, HexchatError> {
         let me = self.clone();
         main_thread(move |_| {
             Ok(me.list_iter.read().unwrap().as_ref()
@@ -115,9 +110,7 @@ impl ThreadSafeListIterator {
                     ||ListIteratorDropped("ListIterator dropped from \
                                            threadsafe context.".into()))?
                  .get_item())
-        }).get()
-        .map_or_else(|err| Err(ThreadSafeOperationFailed(err.to_string())),
-                     |res| res)
+        }).get().map_or_else(Err, |res| res)
     }
 
     /// Returns the value for the field of the requested name.
@@ -133,9 +126,8 @@ impl ThreadSafeListIterator {
     ///
     pub fn get_field(&self,
                      name: &str
-                    ) -> Result<ThreadSafeFieldValue, ListError>
+                    ) -> Result<ThreadSafeFieldValue, HexchatError>
     {
-        use ListError::*;
         use FieldValue as FV;
         use ThreadSafeFieldValue as TSFV;
 
@@ -170,13 +162,11 @@ impl ThreadSafeListIterator {
                     },
                 }
             } else {
-                Err(ListError::ListIteratorDropped(
+                Err(ListIteratorDropped(
                     "ListIterator dropped from threadsafe context."
                     .to_string()))
             }
-        }).get()
-        .map_or_else(|err| Err(ThreadSafeOperationFailed(err.to_string())),
-                     |res| res)
+        }).get().map_or_else(Err, |res| res)
 
     }
 }

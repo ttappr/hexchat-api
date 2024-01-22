@@ -17,14 +17,12 @@
 //! has finished executing the callback.
 
 use std::collections::LinkedList;
-use std::error::Error;
-use std::fmt::{Display, self, Formatter};
 use std::sync::{Arc, Condvar, Mutex};
 use std::thread;
 
 use crate::hexchat::Hexchat;
 use crate::hexchat_entry_points::PHEXCHAT;
-use crate::user_data::*;
+use crate::{user_data::*, HexchatError};
 
 use UserData::*;
 
@@ -101,21 +99,6 @@ where
     R: Clone + Send,
 {}
 
-/// An error type that can be used to indicate that a task failed. Currently,
-/// this is only used when the task queue is being shut down. This happens
-/// when Hexchat is closing or the addon is being unloaded.
-///
-#[derive(Debug, Clone)]
-pub struct TaskError(pub(crate) String);
-
-impl Error for TaskError {}
-
-impl Display for TaskError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "TaskError({})", self.0)
-    }
-}
-
 /// A result object that allows callbacks operating on a thread to send their
 /// return value to a receiver calling `get()` from another thread. Whether
 /// return data needs to be transferred or not, this object can be used to wait
@@ -125,7 +108,7 @@ impl Display for TaskError {
 #[allow(clippy::type_complexity)]
 #[derive(Clone)]
 pub struct AsyncResult<T: Clone + Send> {
-    data: Arc<(Mutex<(Option<Result<T, TaskError>>, bool)>, Condvar)>,
+    data: Arc<(Mutex<(Option<Result<T, HexchatError>>, bool)>, Condvar)>,
 }
 
 unsafe impl<T: Clone + Send> Send for AsyncResult<T> {}
@@ -150,7 +133,7 @@ impl<T: Clone + Send> AsyncResult<T> {
     /// Blocking call to retrieve the return data from a callback on another
     /// thread.
     ///
-    pub fn get(&self) -> Result<T, TaskError> {
+    pub fn get(&self) -> Result<T, HexchatError> {
         let (mtx, cvar) = &*self.data;
         let mut guard   = mtx.lock().unwrap();
         while !guard.1 {
@@ -169,9 +152,10 @@ impl<T: Clone + Send> AsyncResult<T> {
         cvar.notify_all();
     }
     fn set_error(&self, error: &str) {
+        use HexchatError::ThreadSafeOperationFailed as Error;
         let (mtx, cvar) = &*self.data;
         let mut guard   = mtx.lock().unwrap();
-               *guard   = (Some(Err(TaskError(error.into()))), true);
+               *guard   = (Some(Err(Error(error.into()))), true);
         cvar.notify_all();
     }
 }

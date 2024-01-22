@@ -10,9 +10,12 @@ use std::sync::RwLock;
 
 use send_wrapper::SendWrapper;
 
+use crate::HexchatError;
 use crate::context::*;
 use crate::thread_facilities::*;
 use crate::threadsafe_list_iterator::*;
+
+use HexchatError::*;
 
 /// A thread-safe version of `Context`. Its methods automatically execute on
 /// the Hexchat main thread. The full set of methods of `Context` aren't
@@ -43,13 +46,12 @@ impl ThreadSafeContext {
     /// Gets the user's current `Context` wrapped in a `ThreadSafeContext` 
     /// object.
     ///
-    pub fn get() -> Result<Self, ContextError> {
-        use ContextError::*;
+    pub fn get() -> Result<Self, HexchatError> {
         main_thread(|_| Context::get().map(Self::new)).get()
             .map_or_else(
-                |err| Err(ThreadSafeOperationFailed(err.to_string())),
+                Err,
                 |res| res.map_or_else(
-                        || Err(AcquisitionFailed("?".into(), "?".into())),
+                        || Err(ContextAcquisitionFailed("?, ?".into())),
                         Ok))
     }
 
@@ -60,15 +62,17 @@ impl ThreadSafeContext {
     /// # Returns
     /// * `Ok(ThreadSafeContext)` on success, and `ContextError` on failure.
     ///
-    pub fn find(network: &str, channel: &str) -> Result<Self, ContextError> {
-        use ContextError::*;
+    pub fn find(network: &str, channel: &str) -> Result<Self, HexchatError> {
         let data = (network.to_string(), channel.to_string());
         main_thread(move |_| Context::find(&data.0, &data.1).map(Self::new))
         .get()
         .map_or_else(
-            |err| Err(ThreadSafeOperationFailed(err.to_string())),
+            Err,
             |res| res.map_or_else(
-                    || Err(AcquisitionFailed(network.into(), channel.into())),
+                    || {
+                        let msg = format!("({}, {})", network, channel);
+                        Err(ContextAcquisitionFailed(msg))
+                    },
                     Ok))
     }
 
@@ -76,8 +80,7 @@ impl ThreadSafeContext {
     /// This is how messages can be printed to Hexchat windows apart from the
     /// currently active one.
     ///
-    pub fn print(&self, message: &str) -> Result<(), ContextError> {
-        use ContextError::*;
+    pub fn print(&self, message: &str) -> Result<(), HexchatError> {
         let message = message.to_string();
         let me = self.clone();
         main_thread(move |_| {
@@ -85,8 +88,7 @@ impl ThreadSafeContext {
                   .ok_or_else(|| ContextDropped("Context dropped from \
                                                  threadsafe context.".into()))?
                   .print(&message)
-        }).get().unwrap_or_else(
-            |err| Err(ThreadSafeOperationFailed(err.to_string())))
+        }).get().unwrap_or_else(Err)
     }
 
     /// Prints without waiting for asynchronous completion. This will print
@@ -112,8 +114,7 @@ impl ThreadSafeContext {
 
     /// Issues a command in the context held by the `ThreadSafeContext` object.
     ///
-    pub fn command(&self, command: &str) -> Result<(), ContextError> {
-        use ContextError::*;
+    pub fn command(&self, command: &str) -> Result<(), HexchatError> {
         let command = command.to_string();
         let me = self.clone();
         main_thread(move |_| {
@@ -121,16 +122,13 @@ impl ThreadSafeContext {
                   .ok_or_else(|| ContextDropped("Context dropped from \
                                                  threadsafe context.".into()))?
                   .command(&command)
-        }).get()
-        .map_or_else(|err| Err(ThreadSafeOperationFailed(err.to_string())),
-                     |res| res)
+        }).get().map_or_else(Err, |res| res)
     }
 
     /// Gets information from the channel/window that the `ThreadSafeContext`
     /// object holds an internal pointer to.
     ///
-    pub fn get_info(&self, info: &str) -> Result<String, ContextError> {
-        use ContextError::*;
+    pub fn get_info(&self, info: &str) -> Result<String, HexchatError> {
         let info = info.to_string();
         let me = self.clone();
         main_thread(move |_| {
@@ -138,19 +136,15 @@ impl ThreadSafeContext {
                   .ok_or_else(||ContextDropped("Context dropped from \
                                                 threadsafe context.".into()))?
                   .get_info(&info)
-            }).get()
-            .map_or_else(
-                |err| Err(ThreadSafeOperationFailed(err.to_string())),
-                |res| res)
+            }).get().map_or_else(Err, |res| res)
     }
 
     /// Issues a print event to the context held by the `ThreadSafeContext`
     /// object.
     ///
     pub fn emit_print(&self, event_name: &str, var_args: &[&str])
-        -> Result<(), ContextError>
+        -> Result<(), HexchatError>
     {
-        use ContextError::*;
         let var_args: Vec<String> = var_args.iter()
                                             .map(|s| s.to_string())
                                             .collect();
@@ -164,8 +158,7 @@ impl ThreadSafeContext {
                   .ok_or_else(|| ContextDropped("Context dropped from \
                                                  threadsafe context.".into()))?
                   .emit_print(&data.0, var_args.as_slice())
-        }).get().unwrap_or_else(
-            |err| Err(ThreadSafeOperationFailed(err.to_string())))
+        }).get().unwrap_or_else(Err)
     }
 
     /// Gets a `ListIterator` from the context held by the `Context` object.
@@ -175,9 +168,8 @@ impl ThreadSafeContext {
     ///
     pub fn list_get(&self,
                     name: &str)
-        -> Result<ThreadSafeListIterator, ContextError>
+        -> Result<ThreadSafeListIterator, HexchatError>
     {
-        use ContextError::*;
         let name = name.to_string();
         let me = self.clone();
         main_thread(move |_| {
@@ -196,8 +188,7 @@ impl ThreadSafeContext {
     }
     /// Returns the network name associated with the context.
     /// 
-    pub fn network(&self) -> Result<String, ContextError> {
-        use ContextError::*;
+    pub fn network(&self) -> Result<String, HexchatError> {
         let me = self.clone();
         main_thread(move |_| {
             if let Some(ctx) = me.ctx.read().unwrap().as_ref() {
@@ -211,8 +202,7 @@ impl ThreadSafeContext {
 
     /// Returns the channel name associated with the context.
     /// 
-    pub fn channel(&self) -> Result<String, ContextError> {
-        use ContextError::*;
+    pub fn channel(&self) -> Result<String, HexchatError> {
         let me = self.clone();
         main_thread(move |_| {
             if let Some(ctx) = me.ctx.read().unwrap().as_ref() {

@@ -11,14 +11,15 @@ use libc::c_void;
 use libc::time_t;
 use core::panic;
 use std::cell::RefCell;
+use std::fmt;
 #[cfg(feature = "threadsafe")]
 use std::thread;
-use std::{fmt, error};
 use std::rc::Rc;
 
 #[cfg(feature = "threadsafe")]
 use crate::MAIN_THREAD_ID;
 use crate::context::*;
+use crate::errors::HexchatError;
 use crate::hexchat::Hexchat;
 use crate::hexchat_entry_points::PHEXCHAT;
 use crate::list_item::ListItem;
@@ -26,7 +27,7 @@ use crate::utils::*;
 
 // Local types.
 use FieldValue::*;
-use ListError::*;
+use HexchatError::*;
 
 /// The `ListIterator` wraps the list pointer and related functions of Hexchat.
 /// It provides are more Rust OO interface. The iterator returns clones of
@@ -127,7 +128,7 @@ impl ListIterator {
     ///   error types. The values are returned as `FieldValue` tuples that hold
     ///   the requested data.
     ///
-    pub fn get_field(&self, name: &str) -> Result<FieldValue, ListError> {
+    pub fn get_field(&self, name: &str) -> Result<FieldValue, HexchatError> {
         let cell = &*self.data;
         let data = &*cell.borrow();
         if data.started {
@@ -135,11 +136,12 @@ impl ListIterator {
             if let Some(field_type) = field_type_opt {
                 self.get_field_pvt(data, name, field_type)
             } else {
-                Err(UnknownField(name.to_owned()))
+                Err(ListFieldNotFound(name.to_owned()))
             }
         } else {
-            Err(NotStarted("The iterator must have `.next()` invoked \
-                            before fields can be accessed.".to_string()))
+            Err(ListIteratorNotStarted("The iterator must have `.next()` \
+                                       invoked before fields can be accessed."
+                                       .to_string()))
         }
     }
 
@@ -180,7 +182,7 @@ impl ListIterator {
     /// is invoked by `traverse()` and `get_field()`.
     ///
     fn get_field_pvt(&self, data: &ListIteratorData, name: &str, field_type: i8)
-        -> Result<FieldValue, ListError>
+        -> Result<FieldValue, HexchatError>
     {
         let c_name = str2cstring(name);
         unsafe {
@@ -216,8 +218,8 @@ impl ListIterator {
                         {
                             Ok(ContextVal(c))
                         } else {
-                            Err(NotAvailable("Context unavailable."
-                                             .to_string()))
+                            Err(ContextAcquisitionFailed("Context unavailable."
+                                                         .to_string()))
                         }
                     } else {
                         let ptr = (data.hc.c_list_str)(data.hc,
@@ -234,7 +236,7 @@ impl ListIterator {
                 },
                 _ => {
                     // This should never happen.
-                    Err(UnknownType(field_type))
+                    Err(UnknownType(field_type.to_string()))
                 },
             }
         }
@@ -410,44 +412,3 @@ impl fmt::Display for FieldValue {
         }
     }
 }
-
-/// # Errors
-/// * `UnknownField` - indicates a field was asked for that the current list
-///                    items don't have. This value is a tuple holding the name
-///                    of the requested field.
-/// * `UnknownType`  - indicates Hexchat reported a data type that it shouldn't
-///                    have - this should never happen, unless Hexchat is
-///                    bugging out, or there's been a modification to Hexchat's
-///                    API - which is unlikely. This tuple holds the type that
-///                    Hexchat returned as the type of the requested field.
-/// * `NotStarted`   - This indicates field names were accessed before the
-///                    iterator had been. started. `next()` needs to be invoked
-///                    before the fields of the current item can be accessed.
-/// * `NotAvailable` - This indicates a requested item is not available.
-/// * `ListIteratorDropped` 
-///                  - This indicates the list iterator has been dropped.
-/// * `ThreadSafeOperationFailed`
-///                 - This indicates a thread safe operation failed.
-/// 
-#[derive(Debug, Clone)]
-pub enum ListError {
-    UnknownList(String),
-    UnknownField(String),
-    UnknownType(i8),
-    NotStarted(String),
-    NotAvailable(String),
-    ListIteratorDropped(String),
-    ThreadSafeOperationFailed(String),
-}
-
-impl error::Error for ListError {}
-
-impl fmt::Display for ListError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut s = format!("{:?}", self);
-        s.retain(|c| c != '"');
-        write!(f, "{}", s)
-    }
-}
-
-

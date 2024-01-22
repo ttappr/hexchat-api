@@ -11,7 +11,6 @@
 //! ensure the `Context` is still valid. If that fails a `AcquisitionFailed`
 //! error is returned with the network/channel strings as data.
 
-use std::error;
 use std::fmt;
 use std::ffi::CString;
 use std::rc::Rc;
@@ -20,13 +19,16 @@ use std::thread;
 
 #[cfg(feature = "threadsafe")]
 use crate::MAIN_THREAD_ID;
-use crate::hexchat::{Hexchat, hexchat_context, HexchatError};
+use crate::errors::HexchatError;
+use crate::hexchat::{Hexchat, hexchat_context};
 use crate::hexchat_entry_points::PHEXCHAT;
 use crate::list_iterator::ListIterator;
 use crate::utils::*;
 
-use ContextError::*;
-use HexchatError::*;
+//use ContextError::*;
+//use HexchatError::*;
+use HexchatError::ContextAcquisitionFailed; 
+use HexchatError::ContextOperationFailed;
 
 #[derive(Debug)]
 struct ContextData {
@@ -128,7 +130,7 @@ impl Context {
     /// `AcquisitionFailed(network, channel)` otherwise.
     /// 
     #[inline]
-    fn acquire(&self) -> Result<*const hexchat_context, ContextError> {
+    fn acquire(&self) -> Result<*const hexchat_context, HexchatError> {
         let data = &*self.data;
         let ptr = unsafe {
             (data.hc.c_find_context)(data.hc,
@@ -138,21 +140,23 @@ impl Context {
         if !ptr.is_null() {
             Ok(ptr)
         } else {
-            Err(AcquisitionFailed(cstring2string(&data.network),
-                                  cstring2string(&data.channel)))
+            let msg = format!("{}, {}", 
+                              cstring2string(&data.network),
+                              cstring2string(&data.channel));
+            Err(ContextAcquisitionFailed(msg))
         }
     }
 
     /// Sets the currently active context to the context the `Context` object
     /// points to internally.
     ///
-    pub fn set(&self) -> Result<(), ContextError> {
+    pub fn set(&self) -> Result<(), HexchatError> {
         let data = &*self.data;
         unsafe {
             let ptr = self.acquire()?;
             if (data.hc.c_set_context)(data.hc, ptr) > 0 {
                 Ok(())
-            } else { Err(OperationFailed(".set() failed.".to_string())) }
+            } else { Err(ContextOperationFailed(".set() failed.".to_string())) }
         }
     }
 
@@ -160,7 +164,7 @@ impl Context {
     /// how messages can be printed to Hexchat windows apart from the currently
     /// active one.
     ///
-    pub fn print(&self, message: &str) -> Result<(), ContextError> {
+    pub fn print(&self, message: &str) -> Result<(), HexchatError> {
         let data = &*self.data;
         unsafe {
             let ptr = self.acquire()?;
@@ -175,7 +179,7 @@ impl Context {
     /// Issues a print event to the context held by the `Context` object.
     ///
     pub fn emit_print(&self, event_name: &str, var_args: &[&str])
-        -> Result<(), ContextError>
+        -> Result<(), HexchatError>
     {
         let data = &*self.data;
         unsafe {
@@ -184,17 +188,14 @@ impl Context {
             (data.hc.c_set_context)(data.hc, ptr);
             let result = data.hc.emit_print(event_name, var_args);
             (data.hc.c_set_context)(data.hc, prior);
-            if let Err(CommandFailed(msg)) = result {
-                Err(OperationFailed(msg))
-            } else {
-                Ok(())
-            }
+            result?;
+            Ok(())
         }
     }
 
     /// Issues a command in the context held by the `Context` object.
     ///
-    pub fn command(&self, command: &str) -> Result<(), ContextError> {
+    pub fn command(&self, command: &str) -> Result<(), HexchatError> {
         let data = &*self.data;
         unsafe {
             let ptr = self.acquire()?;
@@ -209,8 +210,8 @@ impl Context {
     /// Gets information from the channel/window that the `Context` object
     /// holds an internal pointer to.
     ///
-    pub fn get_info(&self, list: &str) -> Result<String, ContextError> {
-        use ContextError::*;
+    pub fn get_info(&self, list: &str) -> Result<String, HexchatError> {
+        use HexchatError::*;
         let data = &*self.data;
         unsafe {
             let ptr = self.acquire()?;
@@ -225,8 +226,9 @@ impl Context {
     /// Gets a `ListIterator` from the context held by the `Context` object.
     ///
     pub fn list_get(&self, list: &str)
-        -> Result<ListIterator, ContextError>
+        -> Result<ListIterator, HexchatError>
     {
+        use HexchatError::ListNotFound;
         let data = &*self.data;
         unsafe {
             let ptr = self.acquire()?;
@@ -266,59 +268,3 @@ impl fmt::Debug for Context {
         write!(f, "Context(\"{}\", \"{}\")", network, channel)
     }
 }
-
-/// The `Context` functions may encounter an error when invoked depending on
-/// whether the network name and channel name they're bound to are currently
-/// valid.
-/// # Variants
-/// * `AcquisitionFailed`   - The function was unable to acquire the desired
-///                           context associated with its network and channel
-///                           names.
-/// * `OperationFailed`     - The context acquisition succeeded, but there is
-///                           some problem with the action being performed,
-///                           for instance the requested list for
-///                           `ctx.get_listiter("foo")` doesn't exist.
-/// * `ContextDropped`      - The context object was dropped.
-/// * `ThreadSafeOperationFailed` 
-///                         - This can happen when a `ThreadSafeContext` or 
-///                          `ThreadSafeListIterator` object is used while 
-///                          the plugin is unloading.
-/// * `ListNotFound`        - The requested list doesn't exist.
-/// * `InfoNotFound`        - The requested info doesn't exist.
-/// 
-#[derive(Debug, Clone)]
-pub enum ContextError {
-    AcquisitionFailed(String, String),
-    OperationFailed(String),
-    ContextDropped(String),
-    ThreadSafeOperationFailed(String),
-    ListNotFound(String),
-    InfoNotFound(String),
-}
-
-impl error::Error for ContextError {}
-
-impl fmt::Display for ContextError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut s = format!("{:?}", self);
-        s.retain(|c| c != '"');
-        write!(f, "{}", s)
-    }
-}
-/*
-// See the following for the methods to implement:
-//  https://doc.rust-lang.org/src/std/error.rs.html#48-153
-impl error::Error for ContextError {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        Option::from(match self {
-            AcquisitionFailed(network, channel, err) => {
-                match err {
-                    Some(err) => { err },
-                    None => { None },
-                }
-            },
-            OperationFailed(msg) => { None },
-        })
-    }
-}
-*/

@@ -36,6 +36,8 @@ pub enum UserData {
     NoData,
 }
 
+unsafe impl Send for UserData {}
+
 use UserData::*;
 
 impl UserData {

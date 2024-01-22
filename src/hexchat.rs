@@ -6,7 +6,7 @@
 //! this Hexchat interface.
 
 use libc::{c_int, c_char, c_void, time_t};
-use std::{error, ptr};
+use std::ptr;
 use std::ffi::CString;
 use std::fmt;
 use std::fmt::Debug;
@@ -16,8 +16,7 @@ use std::str;
 
 use crate::callback_data::{CallbackData, TimerCallbackOnce};
 use crate::context::Context;
-use crate::context::ContextError;
-use crate::hexchat_callbacks::*;
+use crate::{hexchat_callbacks::*, HexchatError};
 #[cfg(feature = "threadsafe")]
 use crate::hexchat_entry_points::PHEXCHAT;
 use crate::hook::Hook;
@@ -591,7 +590,7 @@ impl Hexchat {
     /// * A result (`Result<(), ContextError`) where `Ok(())` indicates
     ///   the context has been switched, and a `ContextError` if it didn't.
     ///
-    pub fn set_context(&self, context: &Context) -> Result<(), ContextError> {
+    pub fn set_context(&self, context: &Context) -> Result<(), HexchatError> {
         context.set()
     }
 
@@ -939,30 +938,6 @@ impl fmt::Debug for Hexchat {
             .finish()
     }
 }
-
-/// Errors generated directly from the main Object, `Hexchat`.
-#[derive(Debug)]
-pub enum HexchatError {
-    CommandFailed(String),
-}
-
-impl error::Error for HexchatError {}
-
-impl fmt::Display for HexchatError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut s = format!("{:?}", self);
-        s.retain(|c| c != '"');
-        write!(f, "{}", s)
-    }
-}
-/*
-impl Error for HexchatError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        Some(&self.side)
-    }
-}
-*/
-
 
 /// This struct mirrors the C Hexchat struct passed to the plugin from
 /// Hexchat when the plugin is loaded. Hexchat's API is implemented as a struct
