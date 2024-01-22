@@ -31,7 +31,8 @@ use std::fmt::{self, Display, Formatter};
 ///                           next() be called at least once before its fields 
 ///                           are accessible.
 /// * `ListIteratorDropped` - The list iterator object was dropped. This might
-///                           happen if the plugin is unloading.
+///                           happen if the plugin is unloading while another
+///                           thread is still running and using the iterator.
 #[derive(Debug, Clone)]
 pub enum HexchatError {
     CommandFailed(String),
