@@ -66,10 +66,7 @@ impl ThreadSafeListIterator {
                     list_iter:
                         Arc::new(RwLock::new(Some(SendWrapper::new(list))))
                 })}
-        ).get()
-        .map_or_else(
-            Err,
-            |res| res.map_or_else(|| Err(ListNotFound(name.into())), Ok))
+        ).get().and_then(|res| res.ok_or_else(|| ListNotFound(name.into())))
     }
 
     /// Returns a vector of the names of the fields supported by the list
@@ -83,7 +80,7 @@ impl ThreadSafeListIterator {
                     || ListIteratorDropped("ListIterator dropped from \
                                             threadsafe context.".into()))?
                  .get_field_names().to_vec())
-        }).get().map_or_else(Err, |res| res)
+        }).get().and_then(|r| r)
     }
 
     /// Constructs a vector of list items on the main thread all at once. The
@@ -97,7 +94,7 @@ impl ThreadSafeListIterator {
                     ||ListIteratorDropped("ListIterator dropped from \
                                            threadsafe context.".into()))?
                  .to_vec())
-        }).get().map_or_else(Err, |res| res)
+        }).get().and_then(|r| r)
     }
 
     /// Creates a `ListItem` from the field data at the current position in the
@@ -111,7 +108,7 @@ impl ThreadSafeListIterator {
                     ||ListIteratorDropped("ListIterator dropped from \
                                            threadsafe context.".into()))?
                  .get_item())
-        }).get().map_or_else(Err, |res| res)
+        }).get().and_then(|r| r)
     }
 
     /// Returns the value for the field of the requested name.
@@ -167,7 +164,7 @@ impl ThreadSafeListIterator {
                     "ListIterator dropped from threadsafe context."
                     .to_string()))
             }
-        }).get().map_or_else(Err, |res| res)
+        }).get().and_then(|r| r)
 
     }
 }

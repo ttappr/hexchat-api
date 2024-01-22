@@ -73,14 +73,9 @@ impl ThreadSafeHexchat {
         let data = (network.to_string(), channel.to_string());
         main_thread(move |hc| {
             hc.find_context(&data.0, &data.1).map(ThreadSafeContext::new)
-        }).get()
-          .map_or_else(Err,
-                       |res| res.map_or_else(
-                           || {
-                                let msg = format!("{}, {}", network, channel);
-                                Err(ContextAcquisitionFailed(msg))
-                           },
-                            Ok))
+        }).get().and_then(|r| {
+            let msg = format!("{}, {}", network, channel);
+            r.ok_or_else(|| ContextAcquisitionFailed(msg)) })
     }
 
     /// This should be invoked from the main thread. The context object returned
@@ -98,11 +93,9 @@ impl ThreadSafeHexchat {
     pub fn get_context(&self) -> Result<ThreadSafeContext, HexchatError> {
         main_thread(|hc| {
             hc.get_context().map(ThreadSafeContext::new)
-        }).get().map_or_else(
-            Err,
-            |res| res.map_or_else(
-                || Err(ContextAcquisitionFailed("?, ?".into())),
-                Ok))
+        })
+        .get()
+        .and_then(|r| r.ok_or_else(|| ContextAcquisitionFailed("?, ?".into())))
     }
 
     /// Retrieves the info data with the given `id`. It returns None on failure
@@ -123,10 +116,7 @@ impl ThreadSafeHexchat {
         let sid = id.to_string();
         main_thread(move |hc| {
             hc.get_info(&sid)
-        }).get().map_or_else(Err,
-                             |res| res.map_or_else(
-                                || Err(InfoNotFound(id.into())),
-                                Ok))
+        }).get().and_then(|r| r.ok_or_else(|| InfoNotFound(id.into())))
     }
 
     /// Creates an iterator for the requested Hexchat list. This is modeled
@@ -148,10 +138,7 @@ impl ThreadSafeHexchat {
         let slist = list.to_string();
         main_thread(move |hc| {
             hc.list_get(&slist).map(ThreadSafeListIterator::create)
-        }).get().map_or_else(Err,
-                             |res| res.map_or_else(
-                                || Err(ListNotFound(list.into())),
-                                Ok))
+        }).get().and_then(|r| r.ok_or_else(|| ListNotFound(list.into())))
     }
 }
 

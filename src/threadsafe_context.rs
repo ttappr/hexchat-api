@@ -48,11 +48,7 @@ impl ThreadSafeContext {
     ///
     pub fn get() -> Result<Self, HexchatError> {
         main_thread(|_| Context::get().map(Self::new)).get()
-            .map_or_else(
-                Err,
-                |res| res.map_or_else(
-                        || Err(ContextAcquisitionFailed("?, ?".into())),
-                        Ok))
+        .and_then(|r| r.ok_or_else(|| ContextAcquisitionFailed("?, ?".into())))
     }
 
     /// Gets a `ThreadSafeContext` object associated with the given channel.
@@ -66,14 +62,9 @@ impl ThreadSafeContext {
         let data = (network.to_string(), channel.to_string());
         main_thread(move |_| Context::find(&data.0, &data.1).map(Self::new))
         .get()
-        .map_or_else(
-            Err,
-            |res| res.map_or_else(
-                    || {
-                        let msg = format!("({}, {})", network, channel);
-                        Err(ContextAcquisitionFailed(msg))
-                    },
-                    Ok))
+        .and_then(|r| {
+            let msg = format!("{}, {}", network, channel);
+            r.ok_or_else(|| ContextAcquisitionFailed(msg)) })
     }
 
     /// Prints the message to the `ThreadSafeContext` object's Hexchat context.
@@ -88,7 +79,7 @@ impl ThreadSafeContext {
                   .ok_or_else(|| ContextDropped("Context dropped from \
                                                  threadsafe context.".into()))?
                   .print(&message)
-        }).get().unwrap_or_else(Err)
+        }).get().and_then(|r| r)
     }
 
     /// Prints without waiting for asynchronous completion. This will print
@@ -122,7 +113,7 @@ impl ThreadSafeContext {
                   .ok_or_else(|| ContextDropped("Context dropped from \
                                                  threadsafe context.".into()))?
                   .command(&command)
-        }).get().map_or_else(Err, |res| res)
+        }).get().and_then(|r| r)
     }
 
     /// Gets information from the channel/window that the `ThreadSafeContext`
@@ -136,7 +127,7 @@ impl ThreadSafeContext {
                   .ok_or_else(||ContextDropped("Context dropped from \
                                                 threadsafe context.".into()))?
                   .get_info(&info)
-            }).get().map_or_else(Err, |res| res)
+            }).get().and_then(|r| r)
     }
 
     /// Issues a print event to the context held by the `ThreadSafeContext`
@@ -158,7 +149,7 @@ impl ThreadSafeContext {
                   .ok_or_else(|| ContextDropped("Context dropped from \
                                                  threadsafe context.".into()))?
                   .emit_print(&data.0, var_args.as_slice())
-        }).get().unwrap_or_else(Err)
+        }).get().and_then(|r| r)
     }
 
     /// Gets a `ThreadSafeListIterator` from the context.  If the list doesn't 
@@ -182,7 +173,7 @@ impl ThreadSafeContext {
                 Err(ContextDropped("Context dropped from threadsafe \
                                     context.".to_string()))
             }
-        }).get().unwrap()
+        }).get().and_then(|r| r)
     }
     /// Returns the network name associated with the context.
     /// 
@@ -195,7 +186,7 @@ impl ThreadSafeContext {
                 Err(ContextDropped("Context dropped from threadsafe \
                                     context.".to_string()))
             }
-        }).get().unwrap()
+        }).get().and_then(|r| r)
     }
 
     /// Returns the channel name associated with the context.
@@ -209,7 +200,7 @@ impl ThreadSafeContext {
                 Err(ContextDropped("Context dropped from threadsafe \
                                     context.".to_string()))
             }
-        }).get().unwrap()
+        }).get().and_then(|r| r)
     }
 }
 
