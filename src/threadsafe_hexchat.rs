@@ -73,9 +73,11 @@ impl ThreadSafeHexchat {
         let data = (network.to_string(), channel.to_string());
         main_thread(move |hc| {
             hc.find_context(&data.0, &data.1).map(ThreadSafeContext::new)
-        }).get().and_then(|r| {
-            let msg = format!("{}, {}", network, channel);
-            r.ok_or_else(|| ContextAcquisitionFailed(msg)) })
+        }).get().and_then(|r| 
+            r.ok_or_else(||{ 
+                let msg = format!("{}, {}", network, channel); 
+                ContextAcquisitionFailed(msg) 
+            }))
     }
 
     /// This should be invoked from the main thread. The context object returned

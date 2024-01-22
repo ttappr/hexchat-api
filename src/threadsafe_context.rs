@@ -62,9 +62,10 @@ impl ThreadSafeContext {
         let data = (network.to_string(), channel.to_string());
         main_thread(move |_| Context::find(&data.0, &data.1).map(Self::new))
         .get()
-        .and_then(|r| {
-            let msg = format!("{}, {}", network, channel);
-            r.ok_or_else(|| ContextAcquisitionFailed(msg)) })
+        .and_then(|r| r.ok_or_else(|| {
+                    let msg = format!("{}, {}", network, channel);
+                    ContextAcquisitionFailed(msg) 
+                }))
     }
 
     /// Prints the message to the `ThreadSafeContext` object's Hexchat context.
