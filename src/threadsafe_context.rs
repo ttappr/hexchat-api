@@ -96,11 +96,9 @@ impl ThreadSafeContext {
         main_thread(move |hc| {
             if let Err(err)
                 = me.ctx.read().unwrap().as_ref().unwrap().print(&message) {
-                hc.print(
-                    &format!("\x0313Context.aprint() failed to acquire \
-                              context: {}", err));
-                hc.print(
-                    &format!("\x0313{}", message));
+                hc.print(&format!("\x0313Context.aprint() failed to acquire \
+                                  context: {}", err));
+                hc.print(&format!("\x0313{}", message));
             }
         });
     }

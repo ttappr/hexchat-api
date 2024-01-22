@@ -53,8 +53,8 @@ impl CallbackData {
     pub (crate)
     fn new_command_data(callback : Box<Callback>,
                         data     : UserData,
-                        hook     : Hook
-                       ) -> Self
+                        hook     : Hook) 
+        -> Self
     {
         let callback = Command(callback);
         CallbackData { callback, data, hook  }
@@ -64,8 +64,8 @@ impl CallbackData {
     pub (crate)
     fn new_print_data(callback  : Box<PrintCallback>,
                       data      : UserData,
-                      hook      : Hook
-                     ) -> Self
+                      hook      : Hook) 
+        -> Self
     {
         let callback = Print(callback);
         CallbackData { callback, data, hook }
@@ -75,8 +75,8 @@ impl CallbackData {
     pub (crate)
     fn new_print_attrs_data(callback : Box<PrintAttrsCallback>,
                             data     : UserData,
-                            hook     : Hook
-                           ) -> Self
+                            hook     : Hook) 
+        -> Self
     {
         let callback = PrintAttrs(callback);
         CallbackData { callback, data, hook }
@@ -86,8 +86,8 @@ impl CallbackData {
     pub (crate)
     fn new_timer_data(callback : Box<TimerCallback>,
                       data     : UserData,
-                      hook     : Hook
-                     ) -> Self
+                      hook     : Hook) 
+        -> Self
     {
         let callback = Timer(callback);
         CallbackData { callback, data, hook }
@@ -97,8 +97,8 @@ impl CallbackData {
     pub (crate)
     fn new_timer_once_data(callback : Box<TimerCallbackOnce>,
                            data     : UserData,
-                           hook     : Hook
-                          ) -> Self
+                           hook     : Hook) 
+        -> Self
     {
         let callback = TimerOnce(callback);
         CallbackData { callback, data, hook }
@@ -109,8 +109,8 @@ impl CallbackData {
     pub (crate)
     fn new_fd_data(callback : Box<FdCallback>,
                    data     : UserData,
-                   hook     : Hook
-                  ) -> Self
+                   hook     : Hook) 
+        -> Self
     {
         let callback = FD(callback);
         CallbackData { callback, data, hook }
@@ -141,8 +141,8 @@ impl CallbackData {
                          hc       : &Hexchat,
                          word     : &[String],
                          word_eol : &[String],
-                         ud       : &UserData
-                        ) -> Eat
+                         ud       : &UserData) 
+        -> Eat
     {
         if let Command(callback) = &mut self.callback {
             (*callback)(hc, word, word_eol, ud)
@@ -159,8 +159,8 @@ impl CallbackData {
     unsafe fn print_cb(&mut self,
                        hc       : &Hexchat,
                        word     : &[String],
-                       ud       : &UserData
-                      ) -> Eat
+                       ud       : &UserData) 
+        -> Eat
     {
         if let Print(callback) = &mut self.callback {
             (*callback)(hc, word, ud)
@@ -177,8 +177,8 @@ impl CallbackData {
                              hc    : &Hexchat,
                              word  : &[String],
                              attrs : &EventAttrs,
-                             ud    : &UserData
-                            ) -> Eat
+                             ud    : &UserData) 
+        -> Eat
     {
         if let PrintAttrs(callback) = &mut self.callback {
             (*callback)(hc, word, attrs, ud)
@@ -238,7 +238,8 @@ impl CallbackData {
                     hc    : &Hexchat,
                     fd    : i32,
                     flags : i32,
-                    ud    : &UserData) -> Eat
+                    ud    : &UserData) 
+        -> Eat
     {
         if let FD(callback) = &mut self.callback {
             (*callback)(hc, fd, flags, ud)

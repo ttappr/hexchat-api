@@ -155,7 +155,7 @@ impl Context {
             let ptr = self.acquire()?;
             if (data.hc.c_set_context)(data.hc, ptr) > 0 {
                 Ok(())
-            } else { Err(ContextOperationFailed(".set() failed.".to_string())) }
+            } else { Err(ContextOperationFailed(".set() failed.".into())) }
         }
     }
 

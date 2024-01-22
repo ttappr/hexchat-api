@@ -90,7 +90,7 @@ impl ThreadSafeListIterator {
         let me = self.clone();
         main_thread(move |_| {
             Ok(me.list_iter.read().unwrap().as_ref()
-                 .ok_or_else(||ListIteratorDropped(DROPPED_ERR.into()))?
+                 .ok_or_else(|| ListIteratorDropped(DROPPED_ERR.into()))?
                  .to_vec())
         }).get().and_then(|r| r)
     }
@@ -102,7 +102,7 @@ impl ThreadSafeListIterator {
         let me = self.clone();
         main_thread(move |_| {
             Ok(me.list_iter.read().unwrap().as_ref()
-                 .ok_or_else(||ListIteratorDropped(DROPPED_ERR.into()))?
+                 .ok_or_else(|| ListIteratorDropped(DROPPED_ERR.into()))?
                  .get_item())
         }).get().and_then(|r| r)
     }
@@ -118,9 +118,8 @@ impl ThreadSafeListIterator {
     ///   error types. The values are returned as `FieldValue` tuples that hold
     ///   the requested data.
     ///
-    pub fn get_field(&self,
-                     name: &str
-                    ) -> Result<ThreadSafeFieldValue, HexchatError>
+    pub fn get_field(&self, name: &str) 
+        -> Result<ThreadSafeFieldValue, HexchatError>
     {
         use FieldValue as FV;
         use ThreadSafeFieldValue as TSFV;
