@@ -9,7 +9,10 @@ use std::fmt::{self, Display, Formatter};
 /// * `InfoNotFound`        - The requested info wasn't found or doesn't exist.
 /// * `ThreadSafeOperationFailed` 
 ///                         - This can happen when a `ThreadSafeContext` or 
-///                          `ThreadSafeListIterator` object is used while 
+///                          `ThreadSafeListIterator` object is used while the
+///                           plugin is unloading.
+/// * `UnknownType`         - The list iterator may return this if the Hexchat
+///                           API changes. Currently this won't get thrown.
 /// * `ContextAcquisitionFailed`   
 ///                         - The function was unable to acquire the desired
 ///                           context associated with its network and channel
@@ -23,7 +26,12 @@ use std::fmt::{self, Display, Formatter};
 ///                           the plugin is unloading.
 /// * `ListNotFound`        - The requested list doesn't exist.
 /// * `ListFieldNotFound`   - The requested field doesn't exist.
-/// 
+/// * `ListIteratorNotStarted`
+///                         - The list iterator type for Hexchat requires that
+///                           next() be called at least once before its fields 
+///                           are accessible.
+/// * `ListIteratorDropped` - The list iterator object was dropped. This might
+///                           happen if the plugin is unloading.
 #[derive(Debug, Clone)]
 pub enum HexchatError {
     CommandFailed(String),
