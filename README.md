@@ -118,7 +118,8 @@ fn plugin_init(hc: &Hexchat) -> i32 {
     hc.print("Plugin template loaded");
 
     // Example user data to pass to a callback.
-    let udata = UserData::boxed("Some data to pass to a callback.");
+    let udata = UserData::boxed("Some data to pass \
+                                 to a callback.");
 
     // Register a simple command using a function.
     hc.hook_command("HELLOWORLD",
