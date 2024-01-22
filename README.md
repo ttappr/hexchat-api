@@ -40,7 +40,7 @@ hexchat.hook_command(
         let hcx = hc.threadsafe();
 
         // Spawn a new thread.
-        thread::spawn(|| -> Result<(), HexchatError> {
+        thread::spawn(move || -> Result<(), HexchatError> {
             // Send a task to the main thread to have executed and
             // get its `AsyncResult` object.
             let ares = main_thread(|hc| {
