@@ -303,6 +303,7 @@
 <a href="#303" id="303">303</a>
 <a href="#304" id="304">304</a>
 <a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
 </pre></div><pre class="rust"><code>
 <span class="doccomment">//! The `CallbackData` object holds all the information about a callback
 //! needed to manage the `user_data` and  invoke it safely and correctly.
@@ -358,8 +359,8 @@
     </span><span class="kw">pub </span>(<span class="kw">crate</span>)
     <span class="kw">fn </span>new_command_data(callback : Box&lt;Callback&gt;,
                         data     : UserData,
-                        hook     : Hook
-                       ) -&gt; <span class="self">Self
+                        hook     : Hook) 
+        -&gt; <span class="self">Self
     </span>{
         <span class="kw">let </span>callback = Command(callback);
         CallbackData { callback, data, hook  }
@@ -369,8 +370,8 @@
     </span><span class="kw">pub </span>(<span class="kw">crate</span>)
     <span class="kw">fn </span>new_print_data(callback  : Box&lt;PrintCallback&gt;,
                       data      : UserData,
-                      hook      : Hook
-                     ) -&gt; <span class="self">Self
+                      hook      : Hook) 
+        -&gt; <span class="self">Self
     </span>{
         <span class="kw">let </span>callback = Print(callback);
         CallbackData { callback, data, hook }
@@ -380,8 +381,8 @@
     </span><span class="kw">pub </span>(<span class="kw">crate</span>)
     <span class="kw">fn </span>new_print_attrs_data(callback : Box&lt;PrintAttrsCallback&gt;,
                             data     : UserData,
-                            hook     : Hook
-                           ) -&gt; <span class="self">Self
+                            hook     : Hook) 
+        -&gt; <span class="self">Self
     </span>{
         <span class="kw">let </span>callback = PrintAttrs(callback);
         CallbackData { callback, data, hook }
@@ -391,8 +392,8 @@
     </span><span class="kw">pub </span>(<span class="kw">crate</span>)
     <span class="kw">fn </span>new_timer_data(callback : Box&lt;TimerCallback&gt;,
                       data     : UserData,
-                      hook     : Hook
-                     ) -&gt; <span class="self">Self
+                      hook     : Hook) 
+        -&gt; <span class="self">Self
     </span>{
         <span class="kw">let </span>callback = Timer(callback);
         CallbackData { callback, data, hook }
@@ -402,8 +403,8 @@
     </span><span class="kw">pub </span>(<span class="kw">crate</span>)
     <span class="kw">fn </span>new_timer_once_data(callback : Box&lt;TimerCallbackOnce&gt;,
                            data     : UserData,
-                           hook     : Hook
-                          ) -&gt; <span class="self">Self
+                           hook     : Hook) 
+        -&gt; <span class="self">Self
     </span>{
         <span class="kw">let </span>callback = TimerOnce(callback);
         CallbackData { callback, data, hook }
@@ -414,8 +415,8 @@
     </span><span class="kw">pub </span>(<span class="kw">crate</span>)
     <span class="kw">fn </span>new_fd_data(callback : Box&lt;FdCallback&gt;,
                    data     : UserData,
-                   hook     : Hook
-                  ) -&gt; <span class="self">Self
+                   hook     : Hook) 
+        -&gt; <span class="self">Self
     </span>{
         <span class="kw">let </span>callback = FD(callback);
         CallbackData { callback, data, hook }
@@ -446,8 +447,8 @@
                          hc       : <span class="kw-2">&amp;</span>Hexchat,
                          word     : <span class="kw-2">&amp;</span>[String],
                          word_eol : <span class="kw-2">&amp;</span>[String],
-                         ud       : <span class="kw-2">&amp;</span>UserData
-                        ) -&gt; Eat
+                         ud       : <span class="kw-2">&amp;</span>UserData) 
+        -&gt; Eat
     {
         <span class="kw">if let </span>Command(callback) = <span class="kw-2">&amp;mut </span><span class="self">self</span>.callback {
             (<span class="kw-2">*</span>callback)(hc, word, word_eol, ud)
@@ -464,8 +465,8 @@
     <span class="kw">unsafe fn </span>print_cb(<span class="kw-2">&amp;mut </span><span class="self">self</span>,
                        hc       : <span class="kw-2">&amp;</span>Hexchat,
                        word     : <span class="kw-2">&amp;</span>[String],
-                       ud       : <span class="kw-2">&amp;</span>UserData
-                      ) -&gt; Eat
+                       ud       : <span class="kw-2">&amp;</span>UserData) 
+        -&gt; Eat
     {
         <span class="kw">if let </span>Print(callback) = <span class="kw-2">&amp;mut </span><span class="self">self</span>.callback {
             (<span class="kw-2">*</span>callback)(hc, word, ud)
@@ -482,8 +483,8 @@
                              hc    : <span class="kw-2">&amp;</span>Hexchat,
                              word  : <span class="kw-2">&amp;</span>[String],
                              attrs : <span class="kw-2">&amp;</span>EventAttrs,
-                             ud    : <span class="kw-2">&amp;</span>UserData
-                            ) -&gt; Eat
+                             ud    : <span class="kw-2">&amp;</span>UserData) 
+        -&gt; Eat
     {
         <span class="kw">if let </span>PrintAttrs(callback) = <span class="kw-2">&amp;mut </span><span class="self">self</span>.callback {
             (<span class="kw-2">*</span>callback)(hc, word, attrs, ud)
@@ -543,7 +544,8 @@
                     hc    : <span class="kw-2">&amp;</span>Hexchat,
                     fd    : i32,
                     flags : i32,
-                    ud    : <span class="kw-2">&amp;</span>UserData) -&gt; Eat
+                    ud    : <span class="kw-2">&amp;</span>UserData) 
+        -&gt; Eat
     {
         <span class="kw">if let </span>FD(callback) = <span class="kw-2">&amp;mut </span><span class="self">self</span>.callback {
             (<span class="kw-2">*</span>callback)(hc, fd, flags, ud)

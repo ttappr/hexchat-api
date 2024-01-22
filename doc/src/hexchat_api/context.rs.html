@@ -424,7 +424,7 @@
             <span class="kw">let </span>ptr = <span class="self">self</span>.acquire()<span class="question-mark">?</span>;
             <span class="kw">if </span>(data.hc.c_set_context)(data.hc, ptr) &gt; <span class="number">0 </span>{
                 <span class="prelude-val">Ok</span>(())
-            } <span class="kw">else </span>{ <span class="prelude-val">Err</span>(ContextOperationFailed(<span class="string">&quot;.set() failed.&quot;</span>.to_string())) }
+            } <span class="kw">else </span>{ <span class="prelude-val">Err</span>(ContextOperationFailed(<span class="string">&quot;.set() failed.&quot;</span>.into())) }
         }
     }
 

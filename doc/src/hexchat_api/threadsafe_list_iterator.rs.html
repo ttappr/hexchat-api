@@ -324,7 +324,6 @@
 <a href="#324" id="324">324</a>
 <a href="#325" id="325">325</a>
 <a href="#326" id="326">326</a>
-<a href="#327" id="327">327</a>
 </pre></div><pre class="rust"><code><span class="attr">#![cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
 
 </span><span class="doccomment">//! This module provides a thread-safe wrapper class for the Hexchat
@@ -417,7 +416,7 @@
         <span class="kw">let </span>me = <span class="self">self</span>.clone();
         main_thread(<span class="kw">move </span>|<span class="kw">_</span>| {
             <span class="prelude-val">Ok</span>(me.list_iter.read().unwrap().as_ref()
-                 .ok_or_else(||ListIteratorDropped(DROPPED_ERR.into()))<span class="question-mark">?
+                 .ok_or_else(|| ListIteratorDropped(DROPPED_ERR.into()))<span class="question-mark">?
                  </span>.to_vec())
         }).get().and_then(|r| r)
     }
@@ -429,7 +428,7 @@
         <span class="kw">let </span>me = <span class="self">self</span>.clone();
         main_thread(<span class="kw">move </span>|<span class="kw">_</span>| {
             <span class="prelude-val">Ok</span>(me.list_iter.read().unwrap().as_ref()
-                 .ok_or_else(||ListIteratorDropped(DROPPED_ERR.into()))<span class="question-mark">?
+                 .ok_or_else(|| ListIteratorDropped(DROPPED_ERR.into()))<span class="question-mark">?
                  </span>.get_item())
         }).get().and_then(|r| r)
     }
@@ -445,9 +444,8 @@
     ///   error types. The values are returned as `FieldValue` tuples that hold
     ///   the requested data.
     ///
-    </span><span class="kw">pub fn </span>get_field(<span class="kw-2">&amp;</span><span class="self">self</span>,
-                     name: <span class="kw-2">&amp;</span>str
-                    ) -&gt; <span class="prelude-ty">Result</span>&lt;ThreadSafeFieldValue, HexchatError&gt;
+    </span><span class="kw">pub fn </span>get_field(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) 
+        -&gt; <span class="prelude-ty">Result</span>&lt;ThreadSafeFieldValue, HexchatError&gt;
     {
         <span class="kw">use </span>FieldValue <span class="kw">as </span>FV;
         <span class="kw">use </span>ThreadSafeFieldValue <span class="kw">as </span>TSFV;
