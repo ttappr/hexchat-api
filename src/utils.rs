@@ -1,7 +1,7 @@
 use libc::c_char;
 use std::ffi::{CString, CStr};
 
-use crate::{Context, PHEXCHAT};
+use crate::PHEXCHAT;
 
 /// ```&str -> CString``` (provides a C compatible character buffer)
 ///
@@ -34,32 +34,9 @@ fn str2cstring(s: &str) -> CString {
 ///
 #[macro_export]
 macro_rules! hc_print {
-    ( ctx = ($network:expr, $channel:expr), $( $arg:tt )* ) => {
-        hexchat_api::
-        print_with_ctx_inner(&$network, &$channel, &format!( $( $arg )* ));
-    };
     ( $( $arg:tt )* ) => {
         hexchat_api::print_inner(&format!( $( $arg )* ))
     };
-}
-
-/// Used by `hc_print!()` to print to a specific context. This function is
-/// not intended to be used directly.
-///
-#[doc(hidden)]
-pub fn print_with_ctx_inner(network: &str, channel: &str, msg: &str) {
-    let hc = unsafe { &*PHEXCHAT };
-    if let Some(orig_ctx) = hc.get_context() {
-        if let Some(ctx) = Context::find(network, channel) {
-            let _ = ctx.set();
-            hc.print(msg);
-            let _ = orig_ctx.set();
-        } else {
-            panic!("Can't find context for ({}, {})", network, channel);
-        }
-    } else {
-        panic!("Unable to acquire local context.");
-    }
 }
 
 /// Used by `hc_print!()` to print to the active Hexchat window. This function
@@ -89,15 +66,6 @@ pub fn print_inner(msg: &str) {
 #[cfg(feature = "threadsafe")]
 #[macro_export]
 macro_rules! hc_print_th {
-    (  ctx = ($network:expr, $channel:expr), $( $arg:tt )* ) => {
-        let fm_msg = format!( $( $arg )* );
-        let data   = ($fm_msg.to_string(),
-                      $network.to_string(),
-                      $channel.to_string());
-        hexchat_api::main_thread(move |_| {
-            hexchat_api::print_with_ctx_inner(&data.1, &data.2, &data.0);
-        });
-    };
     ( $( $arg:tt )* ) => {
         let rc_msg = format!( $( $arg )* );
         hexchat_api::main_thread(move |_| hexchat_api::print_inner(&rc_msg));
