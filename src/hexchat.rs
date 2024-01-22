@@ -822,6 +822,33 @@ pub enum PrefValue {
 use PrefValue::*;
 
 impl PrefValue {
+    pub fn str(&self) -> String {
+        match self {
+            StringVal(s) => { s.clone() },
+            IntegerVal(i) => { i.to_string() },
+            BoolVal(b) => { b.to_string() },
+        }
+    }
+    pub fn int(&self) -> i32 {
+        match self {
+            StringVal(s) => {
+                if let Ok(v) = s.parse::<i32>() { v } else { 0 }
+            },
+            IntegerVal(i) => { *i },
+            BoolVal(b) => { if *b { 1 } else { 0 } },
+        }
+    }
+
+    pub fn bool(&self) -> bool {
+        match self {
+            StringVal(s) => {
+                if let Ok(v) = s.parse::<bool>() { v } else { false }
+            },
+            IntegerVal(i) => { *i != 0 },
+            BoolVal(b) => { *b },
+        }
+    }
+
     /// Simple config file value serialization into string.
     /// The string produced can be written to the config file Hexchat maintains.
     /// A type character is prepended ('s', 'i', or 'b').
@@ -871,6 +898,24 @@ impl PrefValue {
         } else {
             StringVal(s.to_string())
         }
+    }
+}
+
+impl From<PrefValue> for String {
+    fn from(pv: PrefValue) -> String {
+        pv.str()
+    }
+}
+
+impl From<PrefValue> for i32 {
+    fn from(pv: PrefValue) -> i32 {
+        pv.int()
+    }
+}
+
+impl From<PrefValue> for bool {
+    fn from(pv: PrefValue) -> bool {
+        pv.bool()
     }
 }
 
