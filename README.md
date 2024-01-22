@@ -164,13 +164,14 @@ fn plugin_deinit(hc: &Hexchat) -> i32 {
 /// * `user_data` - The user data to be passed back to the command
 ///                 when invoked by Hexchat.
 /// # Returns
-/// * One of `Eat::All`, `Eat::Hexchat`, `Eat::Plugin`, `Eat::None`.
+/// * One of `Eat::All`, `Eat::Hexchat`, `Eat::Plugin`, or
+///   `Eat::None`.
 ///
 fn hello_world(hc        : &Hexchat,
                word      : &[String],
                word_eol  : &[String],
-               user_data : &UserData
-              ) -> Eat
+               user_data : &UserData) 
+    -> Eat
 {
     hc.print("Hello, world!");
     Eat::All
