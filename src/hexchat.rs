@@ -919,6 +919,24 @@ impl From<PrefValue> for bool {
     }
 }
 
+impl From<String> for PrefValue {
+    fn from(s: String) -> PrefValue {
+        StringVal(s)
+    }
+}
+
+impl From<i32> for PrefValue {
+    fn from(i: i32) -> PrefValue {
+        IntegerVal(i)
+    }
+}
+
+impl From<bool> for PrefValue {
+    fn from(b: bool) -> PrefValue {
+        BoolVal(b)
+    }
+}
+
 // Apply the same attribute to all items in the block, but don't compile it as
 // an actual block.
 macro_rules! apply_attrib {
