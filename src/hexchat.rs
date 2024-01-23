@@ -711,7 +711,7 @@ impl Hexchat {
     /// # Returns
     /// * `true` if the operation succeeds, `false` otherwise.
     ///
-    pub fn pluginpref_set(&self, name: &str, value: &PrefValue) -> bool {
+    pub fn pluginpref_set(&self, name: &str, value: PrefValue) -> bool {
         let sval = value.simple_ser();
         let namecstr = str2cstring(name);
         let svalcstr = CString::new(sval.clone()).unwrap();
