@@ -20,9 +20,9 @@ fn str2cstring(s: &str) -> CString {
 /// Using the macro, this becomes
 /// `hc_print!("<format_string>", arg1, arg2, ...)`. To print from another
 /// thread `hc_print_th!()` can be used.
-/// ```
+/// ``` no_test
 /// use hexchat_api::hc_print;
-/// hc_print!(fmt, argv, ...);
+/// hc_print!(fmt, argv, ..);
 /// hc_print!(arg);
 /// ```
 ///
@@ -45,11 +45,11 @@ pub fn print_inner(msg: &str) {
 /// Similar to `hc_print!()`, that can be used from spawned threads to print to
 /// the active Hexchat window. Use `hc_print()` if printing from the main 
 /// thread.
-/// ```
+/// ``` no_test
 /// use hexchat_api::hc_print_th;
-/// hc_print_th!(fmt, argv, ...);
+/// hc_print_th!(fmt, argv, ..);
 /// hc_print_th!(arg);
-/// ```
+/// ```c
 /// # Arguments
 /// * `ctx=(network, channel)` - Sets the context to print in.
 /// * `fmt`     - The format string.
