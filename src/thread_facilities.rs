@@ -220,7 +220,7 @@ fn main_thread_init() {
 
                         while let Some(mut task)
                             = arc.lock().unwrap().as_mut()
-                                .and_then(|q| q.pop_front()) {
+                                 .and_then(|q| q.pop_front()) {
                             task.execute(hex);
                             count += 1;
                             if count > TASK_SPURT_SIZE {
