@@ -12,6 +12,7 @@
 #[cfg(debug_assertions)]
 use backtrace::Backtrace;
 use libc::c_char;
+use send_wrapper::SendWrapper;
 use std::ffi::CString;
 use std::marker::PhantomPinned;
 use std::panic;
@@ -19,6 +20,7 @@ use std::panic::{catch_unwind, UnwindSafe};
 use std::pin::Pin;
 use std::ptr::null;
 use std::ptr::NonNull;
+use std::sync::RwLock;
 
 //use crate::{plugin_get_info, plugin_init, plugin_deinit};
 use crate::hexchat::Hexchat;
@@ -40,7 +42,7 @@ pub type DeinitFn = dyn FnOnce(&'static Hexchat) -> i32 + UnwindSafe;
 pub type InfoFn   = dyn FnOnce() -> PluginInfo + UnwindSafe;
 
 /// Holds persistent client plugin info strings.
-static mut PLUGIN_INFO: Option<PluginInfo> = None;
+static PLUGIN_INFO: RwLock<Option<SendWrapper<PluginInfo>>> = RwLock::new(None);
 
 /// The global Hexchat pointer obtained from `hexchat_plugin_init()`.
 pub(crate) static mut PHEXCHAT: *const Hexchat = null::<Hexchat>();
@@ -251,7 +253,7 @@ pub fn lib_hexchat_plugin_deinit(hexchat  : &'static Hexchat,
         Hook::deinit();
 
         // Destruct the info struct.
-        unsafe { PLUGIN_INFO = None; }
+        PLUGIN_INFO.write().unwrap().take();
 
         retval
     }).unwrap_or(0);
@@ -275,11 +277,11 @@ pub fn lib_get_info(name     : *mut *const c_char,
                     callback : Box<InfoFn>)
 {
     unsafe {
-        if PLUGIN_INFO.is_none() {
+        if PLUGIN_INFO.read().unwrap().is_none() {
             let pi = callback();
-            PLUGIN_INFO = Some(pi);
+            *PLUGIN_INFO.write().unwrap() = Some(SendWrapper::new(pi));
         }
-        if let Some(info) = &PLUGIN_INFO {
+        if let Some(info) = PLUGIN_INFO.read().unwrap().as_ref() {
             *name = info.data.pname.as_ref().as_ptr();
             *vers = info.data.pversion.as_ref().as_ptr();
             *desc = info.data.description.as_ref().as_ptr();
@@ -295,12 +297,10 @@ fn set_panic_hook(hexchat: &'static Hexchat) {
         #[cfg(debug_assertions)]
         let mut loc = String::new();
         let plugin_name;
-        unsafe {
-            if let Some(plugin_info) = &PLUGIN_INFO {
-                plugin_name = plugin_info.data.name.to_str().unwrap();
-            } else {
-                plugin_name = "a Rust plugin";
-            }
+        if let Some(pi) = PLUGIN_INFO.read().unwrap().as_ref() {
+            plugin_name = pi.data.name.to_str().unwrap().to_string();
+        } else {
+            plugin_name = "a Rust plugin".to_string();
         }
         if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
             hexchat.print(&format!("\x0304<<Panicked!>>\t{:?}", s));

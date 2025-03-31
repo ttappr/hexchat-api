@@ -29,7 +29,7 @@ use crate::user_data::*;
 /// plugin is loaded from within the `lib_hexchat_plugin_init()` function
 /// before the plugin author's registered init function is invoked.
 ///
-static mut HOOK_LIST: Option<RwLock<Vec<Hook>>> = None;
+static HOOK_LIST: RwLock<Option<Vec<Hook>>> = RwLock::new(None);
 
 use UserData::*;
 
@@ -66,11 +66,7 @@ impl Hook {
                         })))),
         };
 
-        if let Some(hook_list_rwlock) = unsafe { &HOOK_LIST } {
-            // Acquire global hook list write lock.
-            let wlock     = hook_list_rwlock.write();
-            let hook_list = &mut *wlock.unwrap();
-
+        if let Some(hook_list) = HOOK_LIST.write().unwrap().as_mut() {
             // Clean up dead hooks.
             hook_list.retain(|h|
                 !h.data.read().unwrap().as_ref().unwrap().hook_ptr.is_null()
@@ -87,9 +83,8 @@ impl Hook {
     /// functions in hexchat.rs.
     ///
     pub (crate) fn set(&self, ptr: *const c_void) {
-        if let Some(hl_rwlock) = unsafe { &HOOK_LIST } {
+        if let Some(_hook_list_locked) = HOOK_LIST.read().unwrap().as_ref() {
             // Lock the global list, and set the internal pointer.
-            let _rlock = hl_rwlock.read();
             self.data.write().unwrap().as_mut().unwrap().hook_ptr = ptr;
         }
     }
@@ -101,9 +96,8 @@ impl Hook {
     /// but it doesn't seem to be doing that.
     ///
     pub (crate) fn set_cbd(&self, ptr: *const c_void) {
-        if let Some(hl_rwlock) = unsafe { &HOOK_LIST } {
+        if let Some(_hook_list_locked) = HOOK_LIST.read().unwrap().as_ref() {
             // Lock the global list, and set the internal pointer.
-            let _rlock = hl_rwlock.read();
             self.data.write().unwrap().as_mut().unwrap().cbd_box_ptr = ptr;
         }
     }
@@ -118,9 +112,7 @@ impl Hook {
     ///
     pub fn unhook(&self) -> UserData {
         unsafe {
-            if let Some(hl_rwlock) = &HOOK_LIST {
-                let _rlock = hl_rwlock.read();
-
+            if let Some(_hook_list) = HOOK_LIST.read().unwrap().as_ref() {
                 let ptr_data = &mut self.data.write().unwrap();
 
                 // Determine if the Hook is still alive (non-null ptr).
@@ -156,8 +148,8 @@ impl Hook {
     /// loaded. This initializes the synchronized global static hook list.
     ///
     pub (crate) fn init() {
-        unsafe {
-            HOOK_LIST = Some(RwLock::new(Vec::new()));
+        if let Ok(mut wlock) = HOOK_LIST.write() {
+            *wlock = Some(Vec::new());
         }
     }
 
@@ -170,19 +162,17 @@ impl Hook {
     /// are called.
     ///
     pub (crate) fn deinit() {
-        if let Some(hl_rwlock) = unsafe { &HOOK_LIST } {
-            let rlock = hl_rwlock.read();
-            let hook_list = &*rlock.unwrap();
+        if let Some(hook_list) = HOOK_LIST.read().unwrap().as_ref() {
             for hook in hook_list {
                 hook.unhook();
             }
         }
-        unsafe {
-            // This causes the `RwLock` and hook vector to be dropped.
-            // plugin authors need to ensure that no threads are running when
-            // their plugins are unloading - or one may try to access the lock
-            // and hook vector after they've been destroyed.
-            let _ = HOOK_LIST.take();
+        // This causes the `RwLock` and hook vector to be dropped.
+        // plugin authors need to ensure that no threads are running when
+        // their plugins are unloading - or one may try to access the lock
+        // and hook vector after they've been destroyed.
+        if let Ok(mut hook_list_opt) = HOOK_LIST.write() {
+            hook_list_opt.take();
         }
     }
 }

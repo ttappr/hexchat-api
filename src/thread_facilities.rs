@@ -36,7 +36,7 @@ type TaskQueue = LinkedList<Box<dyn Task>>;
 /// The task queue that other threads use to schedule tasks to run on the
 /// main thread. It is guarded by a `Mutex`.
 ///
-static mut TASK_QUEUE: Option<Arc<Mutex<Option<TaskQueue>>>> = None;
+static TASK_QUEUE: Mutex<Option<TaskQueue>> = Mutex::new(None);
 
 /// The main thread's ID is captured and used by `main_thread()` to determine
 /// whether it is being called from the main thread or not. If not, the
@@ -181,15 +181,11 @@ where
     } else {
         let res = AsyncResult::new();
         let cln = res.clone();
-        if let Some(arc) = unsafe { TASK_QUEUE.as_ref() } {
-            if let Some(queue) = arc.lock().unwrap().as_mut() {
-                let task = Box::new(ConcreteTask::new(callback, cln));
-                queue.push_back(task);
-            }
-            else {
-                res.set_error("Task queue has been shut down.");
-            }
-        } else {
+        if let Some(queue) = TASK_QUEUE.lock().unwrap().as_mut() {
+            let task = Box::new(ConcreteTask::new(callback, cln));
+            queue.push_back(task);
+        }
+        else {
             res.set_error("Task queue has been shut down.");
         }
         res
@@ -205,32 +201,25 @@ where
 pub (crate)
 fn main_thread_init() {
     unsafe { MAIN_THREAD_ID = Some(thread::current().id()) }
-    if unsafe { TASK_QUEUE.is_none() } {
-        unsafe {
-            TASK_QUEUE = Some(Arc::new(Mutex::new(Some(LinkedList::new()))));
-        }
+
+    if TASK_QUEUE.lock().unwrap().is_none() {
+        *TASK_QUEUE.lock().unwrap() = Some(LinkedList::new());
         let hex = unsafe { &*PHEXCHAT };
 
         hex.hook_timer(
             TASK_REST_MSECS,
             move |_hc, _ud| {
-                if let Some(arc) = unsafe { TASK_QUEUE.as_ref() } {
-                    if arc.lock().unwrap().is_some() {
-                        let mut count = 1;
+                if let Some(task_queue) = TASK_QUEUE.lock().unwrap().as_mut() {
+                    let mut count = 1;
 
-                        while let Some(mut task)
-                            = arc.lock().unwrap().as_mut()
-                                 .and_then(|q| q.pop_front()) {
-                            task.execute(hex);
-                            count += 1;
-                            if count > TASK_SPURT_SIZE {
-                                break
-                            }
+                    while let Some(mut task) = task_queue.pop_front() {
+                        task.execute(hex);
+                        count += 1;
+                        if count > TASK_SPURT_SIZE {
+                            break
                         }
-                        1 // Keep going.
-                    } else {
-                        0 // Task queue is gone, remove timer callback.
                     }
+                    1 // Keep going.
                 } else {
                     0 // Task queue is gone, remove timer callback.
                 }
@@ -247,14 +236,11 @@ fn main_thread_init() {
 ///
 pub (crate)
 fn main_thread_deinit() {
-    if let Some(queue) = unsafe { &TASK_QUEUE } {
-        if let Some(mut queue ) = queue.lock().unwrap().take() {
-            while let Some(mut task) = queue.pop_front() {
-                task.set_error("Task queue is being shut down.");
-            }
+    if let Some(mut queue) = TASK_QUEUE.lock().unwrap().take() {
+        while let Some(mut task) = queue.pop_front() {
+            task.set_error("Task queue is being shut down.");
         }
     }
-    unsafe { TASK_QUEUE = None; }
 }
 
 /// Stops and removes the main thread task queue handler. Otherwise it will
