@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src\threadsafe_list_iterator.rs`."><title>threadsafe_list_iterator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="hexchat_api" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21) (Rev1, Built by MSYS2 project)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src\threadsafe_list_iterator.rs`."><title>threadsafe_list_iterator.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="hexchat_api" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.1 (4eb161250 2025-03-15)" data-channel="1.85.1" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">hexchat_api/</div>threadsafe_list_iterator.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -323,8 +324,7 @@
 <a href="#323" id="323">323</a>
 <a href="#324" id="324">324</a>
 <a href="#325" id="325">325</a>
-<a href="#326" id="326">326</a>
-</pre></div><pre class="rust"><code><span class="attr">#![cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
+<a href="#326" id="326">326</a></pre></div><pre class="rust"><code><span class="attr">#![cfg(feature = <span class="string">"threadsafe"</span>)]
 
 </span><span class="doccomment">//! This module provides a thread-safe wrapper class for the Hexchat
 //! `ListIterator`. The methods it provides can be invoked from threads other
@@ -345,18 +345,18 @@
 
 <span class="kw">use </span>HexchatError::<span class="kw-2">*</span>;
 
-<span class="kw">const </span>DROPPED_ERR: <span class="kw-2">&amp;</span>str = <span class="string">&quot;ListIterator dropped from threadsafe context.&quot;</span>;
+<span class="kw">const </span>DROPPED_ERR: <span class="kw-2">&amp;</span>str = <span class="string">"ListIterator dropped from threadsafe context."</span>;
 
 <span class="doccomment">/// A thread-safe wrapper class for the Hexchat `ListIterator`. The methods
 /// provided, internally execute on the Hexchat main thread without any
 /// additional code necessary to make that happen in the client code.
 ///
-/// Objects of this struct can iterate over Hexchat&#39;s lists from other threads.
+/// Objects of this struct can iterate over Hexchat's lists from other threads.
 /// Because each operation is delegated to the main thread from the current
 /// thread, they are not going to be as fast as the methods of `ListIterator`
 /// used exclusively in the main thread without switching to other threads.
 /// The plus to objects of this struct iterating and printing long lists is they
-/// won&#39;t halt or lag the Hexchat UI. The list can print item by item, while
+/// won't halt or lag the Hexchat UI. The list can print item by item, while
 /// while Hexchat is able to handle its traffic, printing chat messages, and
 /// other tasks.
 ///
@@ -384,7 +384,7 @@
     /// # Arguments
     /// * `name` - The name of the list to get.
     /// # Returns
-    /// * A thread-safe object representing one of Hexchat&#39;s internal lists.
+    /// * A thread-safe object representing one of Hexchat's internal lists.
     ///
     </span><span class="kw">pub fn </span>new(name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, HexchatError&gt; {
         <span class="kw">let </span>cname = name.to_string();
@@ -440,7 +440,7 @@
     ///
     /// # Returns
     /// * A `Result` where `Ok` holds the field data, and `Err` indicates the
-    ///   field doesn&#39;t exist or some other problem. See `ListError` for the
+    ///   field doesn't exist or some other problem. See `ListError` for the
     ///   error types. The values are returned as `FieldValue` tuples that hold
     ///   the requested data.
     ///
@@ -507,7 +507,7 @@
         <span class="kw">let </span>me = <span class="self">self</span>.clone();
         <span class="kw">let </span>has_more = main_thread(<span class="kw">move </span>|<span class="kw">_</span>| {
             me.list_iter.write().unwrap().as_mut()
-                        .map_or(<span class="bool-val">false</span>, |it| it.next().is_some())
+                        .is_some_and(|it| it.next().is_some())
         }).get().unwrap_or(<span class="bool-val">false</span>);
         <span class="kw">if </span>has_more {
             <span class="prelude-val">Some</span>(<span class="self">self</span>)
@@ -556,11 +556,11 @@
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
         <span class="kw">use </span>ThreadSafeFieldValue::<span class="kw-2">*</span>;
         <span class="kw">match </span><span class="self">self </span>{
-            StringVal(s)   =&gt; { <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>,   s) },
-            IntVal(i)      =&gt; { <span class="macro">write!</span>(f, <span class="string">&quot;{:?}&quot;</span>, i) },
-            PointerVal(p)  =&gt; { <span class="macro">write!</span>(f, <span class="string">&quot;{:?}&quot;</span>, p) },
-            TimeVal(t)     =&gt; { <span class="macro">write!</span>(f, <span class="string">&quot;{:?}&quot;</span>, t) },
-            ContextVal(c)  =&gt; { <span class="macro">write!</span>(f, <span class="string">&quot;ContextVal({})&quot;</span>, c) },
+            StringVal(s)   =&gt; { <span class="macro">write!</span>(f, <span class="string">"{}"</span>,   s) },
+            IntVal(i)      =&gt; { <span class="macro">write!</span>(f, <span class="string">"{:?}"</span>, i) },
+            PointerVal(p)  =&gt; { <span class="macro">write!</span>(f, <span class="string">"{:?}"</span>, p) },
+            TimeVal(t)     =&gt; { <span class="macro">write!</span>(f, <span class="string">"{:?}"</span>, t) },
+            ContextVal(c)  =&gt; { <span class="macro">write!</span>(f, <span class="string">"ContextVal({})"</span>, c) },
         }
     }
 }
@@ -575,7 +575,7 @@
     </span><span class="kw">pub fn </span>str(<span class="self">self</span>) -&gt; String {
         <span class="kw">match </span><span class="self">self </span>{
             StringVal(s) =&gt; s,
-            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Can&#39;t convert {:?} to String.&quot;</span>, <span class="self">self</span>),
+            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Can't convert {:?} to String."</span>, <span class="self">self</span>),
         }
     }
     <span class="doccomment">/// Convert an IntVal variant to an i32. FieldValue also implements
@@ -585,7 +585,7 @@
     </span><span class="kw">pub fn </span>int(<span class="self">self</span>) -&gt; i32 {
         <span class="kw">match </span><span class="self">self </span>{
             IntVal(i) =&gt; i,
-            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Can&#39;t convert {:?} to i32.&quot;</span>, <span class="self">self</span>),
+            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Can't convert {:?} to i32."</span>, <span class="self">self</span>),
         }
     }
     <span class="doccomment">/// Convert a PointerVal variant to a u64. FieldValue also implements
@@ -595,7 +595,7 @@
     </span><span class="kw">pub fn </span>ptr(<span class="self">self</span>) -&gt; u64 {
         <span class="kw">match </span><span class="self">self </span>{
             PointerVal(p) =&gt; p,
-            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Can&#39;t convert {:?} to u64.&quot;</span>, <span class="self">self</span>),
+            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Can't convert {:?} to u64."</span>, <span class="self">self</span>),
         }
     }
     <span class="doccomment">/// Convert a TimeVal variant to a time_t (i64). FieldValue also implements
@@ -605,7 +605,7 @@
     </span><span class="kw">pub fn </span>time(<span class="self">self</span>) -&gt; time_t {
         <span class="kw">match </span><span class="self">self </span>{
             TimeVal(t) =&gt; t,
-            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Can&#39;t convert {:?} to time_t.&quot;</span>, <span class="self">self</span>),
+            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Can't convert {:?} to time_t."</span>, <span class="self">self</span>),
         }
     }
     <span class="doccomment">/// Convert a ContextVal variant to a Context. FieldValue also implements
@@ -615,7 +615,7 @@
     </span><span class="kw">pub fn </span>ctx(<span class="self">self</span>) -&gt; ThreadSafeContext {
         <span class="kw">match </span><span class="self">self </span>{
             ContextVal(c) =&gt; c,
-            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Can&#39;t convert {:?} to Context.&quot;</span>, <span class="self">self</span>),
+            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Can't convert {:?} to Context."</span>, <span class="self">self</span>),
         }
     }
 }

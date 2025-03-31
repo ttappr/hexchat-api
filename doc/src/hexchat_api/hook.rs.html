@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src\hook.rs`."><title>hook.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="hexchat_api" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21) (Rev1, Built by MSYS2 project)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src\hook.rs`."><title>hook.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="hexchat_api" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.1 (4eb161250 2025-03-15)" data-channel="1.85.1" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">hexchat_api/</div>hook.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -178,18 +179,7 @@
 <a href="#178" id="178">178</a>
 <a href="#179" id="179">179</a>
 <a href="#180" id="180">180</a>
-<a href="#181" id="181">181</a>
-<a href="#182" id="182">182</a>
-<a href="#183" id="183">183</a>
-<a href="#184" id="184">184</a>
-<a href="#185" id="185">185</a>
-<a href="#186" id="186">186</a>
-<a href="#187" id="187">187</a>
-<a href="#188" id="188">188</a>
-<a href="#189" id="189">189</a>
-<a href="#190" id="190">190</a>
-<a href="#191" id="191">191</a>
-</pre></div><pre class="rust"><code>
+<a href="#181" id="181">181</a></pre></div><pre class="rust"><code>
 <span class="doccomment">//! This object wraps hook pointers returned when callbacks are registered
 //! with Hexchat. The Rust-style hook can be used to unhook commands directly
 //! via its `unhook()` function. This object protects against attempts to
@@ -218,9 +208,9 @@
 
 <span class="doccomment">/// A synchronized global list of the hooks. This gets initialized when a
 /// plugin is loaded from within the `lib_hexchat_plugin_init()` function
-/// before the plugin author&#39;s registered init function is invoked.
+/// before the plugin author's registered init function is invoked.
 ///
-</span><span class="kw">static </span><span class="kw-2">mut </span>HOOK_LIST: <span class="prelude-ty">Option</span>&lt;RwLock&lt;Vec&lt;Hook&gt;&gt;&gt; = <span class="prelude-val">None</span>;
+</span><span class="kw">static </span>HOOK_LIST: RwLock&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;Hook&gt;&gt;&gt; = RwLock::new(<span class="prelude-val">None</span>);
 
 <span class="kw">use </span>UserData::<span class="kw-2">*</span>;
 
@@ -257,11 +247,7 @@
                         })))),
         };
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(hook_list_rwlock) = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;</span>HOOK_LIST } {
-            <span class="comment">// Acquire global hook list write lock.
-            </span><span class="kw">let </span>wlock     = hook_list_rwlock.write();
-            <span class="kw">let </span>hook_list = <span class="kw-2">&amp;mut *</span>wlock.unwrap();
-
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(hook_list) = HOOK_LIST.write().unwrap().as_mut() {
             <span class="comment">// Clean up dead hooks.
             </span>hook_list.retain(|h|
                 !h.data.read().unwrap().as_ref().unwrap().hook_ptr.is_null()
@@ -278,24 +264,22 @@
     /// functions in hexchat.rs.
     ///
     </span><span class="kw">pub </span>(<span class="kw">crate</span>) <span class="kw">fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>, ptr: <span class="kw-2">*const </span>c_void) {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(hl_rwlock) = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;</span>HOOK_LIST } {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(_hook_list_locked) = HOOK_LIST.read().unwrap().as_ref() {
             <span class="comment">// Lock the global list, and set the internal pointer.
-            </span><span class="kw">let </span>_rlock = hl_rwlock.read();
-            <span class="self">self</span>.data.write().unwrap().as_mut().unwrap().hook_ptr = ptr;
+            </span><span class="self">self</span>.data.write().unwrap().as_mut().unwrap().hook_ptr = ptr;
         }
     }
 
-    <span class="doccomment">/// Sets the Hook&#39;s internal pointer to the raw Box pointer that references
+    <span class="doccomment">/// Sets the Hook's internal pointer to the raw Box pointer that references
     /// the `CallbackData`. We have to keep our own reference to any `user_data`
-    /// passed to Hexchat, because it doesn&#39;t seem to be playing nice during
+    /// passed to Hexchat, because it doesn't seem to be playing nice during
     /// unload, where it should be returning our user data on `unhook()` -
-    /// but it doesn&#39;t seem to be doing that.
+    /// but it doesn't seem to be doing that.
     ///
     </span><span class="kw">pub </span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_cbd(<span class="kw-2">&amp;</span><span class="self">self</span>, ptr: <span class="kw-2">*const </span>c_void) {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(hl_rwlock) = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;</span>HOOK_LIST } {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(_hook_list_locked) = HOOK_LIST.read().unwrap().as_ref() {
             <span class="comment">// Lock the global list, and set the internal pointer.
-            </span><span class="kw">let </span>_rlock = hl_rwlock.read();
-            <span class="self">self</span>.data.write().unwrap().as_mut().unwrap().cbd_box_ptr = ptr;
+            </span><span class="self">self</span>.data.write().unwrap().as_mut().unwrap().cbd_box_ptr = ptr;
         }
     }
 
@@ -309,9 +293,7 @@
     ///
     </span><span class="kw">pub fn </span>unhook(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; UserData {
         <span class="kw">unsafe </span>{
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(hl_rwlock) = <span class="kw-2">&amp;</span>HOOK_LIST {
-                <span class="kw">let </span>_rlock = hl_rwlock.read();
-
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(_hook_list) = HOOK_LIST.read().unwrap().as_ref() {
                 <span class="kw">let </span>ptr_data = <span class="kw-2">&amp;mut </span><span class="self">self</span>.data.write().unwrap();
 
                 <span class="comment">// Determine if the Hook is still alive (non-null ptr).
@@ -322,7 +304,7 @@
                     <span class="kw">let </span>hp = ptr_data.as_ref().unwrap().hook_ptr;
                     <span class="kw">let _  </span>= (hc.c_unhook)(hc, hp);
 
-                    <span class="comment">// ^ _ should be our user_data, but we can&#39;t rely on Hexchat
+                    <span class="comment">// ^ _ should be our user_data, but we can't rely on Hexchat
                     // to return a valid user_data pointer on unload, so we have
                     // to maintain it ourselves.
 
@@ -347,33 +329,31 @@
     /// loaded. This initializes the synchronized global static hook list.
     ///
     </span><span class="kw">pub </span>(<span class="kw">crate</span>) <span class="kw">fn </span>init() {
-        <span class="kw">unsafe </span>{
-            HOOK_LIST = <span class="prelude-val">Some</span>(RwLock::new(Vec::new()));
+        <span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="kw-2">mut </span>wlock) = HOOK_LIST.write() {
+            <span class="kw-2">*</span>wlock = <span class="prelude-val">Some</span>(Vec::new());
         }
     }
 
     <span class="doccomment">/// Called when a plugin is unloaded by Hexchat. This happens when the user
-    /// opens the &quot;Plugins and Scripts&quot; dialog and unloads/reloads the plugin,
-    /// or the user issues one of the slash &quot;/&quot; commands to perform the same
+    /// opens the "Plugins and Scripts" dialog and unloads/reloads the plugin,
+    /// or the user issues one of the slash "/" commands to perform the same
     /// operation. This function iterates over each hook, calling their
     /// `unhook()` method which grabs ownership of the `CallbackData` objects
     /// and drops them as they go out of scope ensuring their destructors
     /// are called.
     ///
     </span><span class="kw">pub </span>(<span class="kw">crate</span>) <span class="kw">fn </span>deinit() {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(hl_rwlock) = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;</span>HOOK_LIST } {
-            <span class="kw">let </span>rlock = hl_rwlock.read();
-            <span class="kw">let </span>hook_list = <span class="kw-2">&amp;*</span>rlock.unwrap();
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(hook_list) = HOOK_LIST.read().unwrap().as_ref() {
             <span class="kw">for </span>hook <span class="kw">in </span>hook_list {
                 hook.unhook();
             }
         }
-        <span class="kw">unsafe </span>{
-            <span class="comment">// This causes the `RwLock` and hook vector to be dropped.
-            // plugin authors need to ensure that no threads are running when
-            // their plugins are unloading - or one may try to access the lock
-            // and hook vector after they&#39;ve been destroyed.
-            </span><span class="kw">let _ </span>= HOOK_LIST.take();
+        <span class="comment">// This causes the `RwLock` and hook vector to be dropped.
+        // plugin authors need to ensure that no threads are running when
+        // their plugins are unloading - or one may try to access the lock
+        // and hook vector after they've been destroyed.
+        </span><span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="kw-2">mut </span>hook_list_opt) = HOOK_LIST.write() {
+            hook_list_opt.take();
         }
     }
 }

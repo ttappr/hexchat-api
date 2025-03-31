@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src\hexchat.rs`."><title>hexchat.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="hexchat_api" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21) (Rev1, Built by MSYS2 project)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src\hexchat.rs`."><title>hexchat.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="hexchat_api" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.1 (4eb161250 2025-03-15)" data-channel="1.85.1" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">hexchat_api/</div>hexchat.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1255,11 +1256,7 @@
 <a href="#1255" id="1255">1255</a>
 <a href="#1256" id="1256">1256</a>
 <a href="#1257" id="1257">1257</a>
-<a href="#1258" id="1258">1258</a>
-<a href="#1259" id="1259">1259</a>
-<a href="#1260" id="1260">1260</a>
-<a href="#1261" id="1261">1261</a>
-</pre></div><pre class="rust"><code><span class="doccomment">//! This file holds the Hexchat struct used to interface with Hexchat. Its
+<a href="#1258" id="1258">1258</a></pre></div><pre class="rust"><code><span class="doccomment">//! This file holds the Hexchat struct used to interface with Hexchat. Its
 //! fields are the actual callbacks provided by Hexchat. When Hexchat
 //! loads this library, the Hexchat pointer is stored and used by casting it
 //! to the struct contained in this file. These native function pointers are
@@ -1278,14 +1275,14 @@
 <span class="kw">use </span><span class="kw">crate</span>::callback_data::{CallbackData, TimerCallbackOnce};
 <span class="kw">use </span><span class="kw">crate</span>::context::Context;
 <span class="kw">use crate</span>::{hexchat_callbacks::<span class="kw-2">*</span>, HexchatError};
-<span class="attr">#[cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"threadsafe"</span>)]
 </span><span class="kw">use </span><span class="kw">crate</span>::hexchat_entry_points::PHEXCHAT;
 <span class="kw">use </span><span class="kw">crate</span>::hook::Hook;
 <span class="kw">use </span><span class="kw">crate</span>::list_iterator::ListIterator;
 <span class="kw">use </span><span class="kw">crate</span>::plugin::Plugin;
 <span class="kw">use </span><span class="kw">crate</span>::user_data::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::utils::<span class="kw-2">*</span>;
-<span class="attr">#[cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"threadsafe"</span>)]
 </span><span class="kw">use </span><span class="kw">crate</span>::threadsafe_hexchat::<span class="kw-2">*</span>;
 
 <span class="doccomment">/// Value used in example from the Hexchat Plugin Interface doc web page.
@@ -1338,7 +1335,7 @@
     <span class="doccomment">/// Returns a thread-safe wrapper for `Hexchat` that exposes thread-safe
     /// methods wrapping several of `Hexchat`s methods.
     ///
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;threadsafe&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"threadsafe"</span>)]
     </span><span class="kw">pub fn </span>threadsafe(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ThreadSafeHexchat {
         ThreadSafeHexchat::new(<span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>PHEXCHAT })
     }
@@ -1362,14 +1359,13 @@
     }
 
     <span class="doccomment">/// Registeres a command callback with Hexchat. This will add a user
-    /// invocable slash &quot;/&quot; command that can be seen when listing `/help`.
+    /// invocable slash "/" command that can be seen when listing `/help`.
     /// The callback can be a static function, or a closure, that has the form:
-    /// ```
-    ///     FnMut(&amp;Hexchat, &amp;[String], &amp;[String], &amp;UserData)
-    ///     -&gt; Eat
+    /// ``` no_test
+    ///     FnMut(&amp;Hexchat, &amp;[String], &amp;[String], &amp;UserData) -&gt; Eat
     /// ```
     /// Note that the callback parameters include a reference to the `Hexchat`
-    /// object as a convenience. This differs from the C interface which doesn&#39;t
+    /// object as a convenience. This differs from the C interface which doesn't
     /// include it.
     ///
     /// # Arguments
@@ -1382,17 +1378,17 @@
     /// # Returns
     /// A `Hook` object associated with the callback.
     ///
-    </span><span class="kw">pub fn </span>hook_command&lt;F: <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>,
-                                    name        : <span class="kw-2">&amp;</span>str,
-                                    pri         : Priority,
-                                    callback    : F,
-                                    help        : <span class="kw-2">&amp;</span>str,
-                                    user_data   : UserData)
+    </span><span class="kw">pub fn </span>hook_command&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>,
+                           name        : <span class="kw-2">&amp;</span>str,
+                           pri         : Priority,
+                           callback    : F,
+                           help        : <span class="kw-2">&amp;</span>str,
+                           user_data   : UserData)
         -&gt; Hook
     <span class="kw">where
         </span>F: FnMut(<span class="kw-2">&amp;</span>Hexchat, <span class="kw-2">&amp;</span>[String], <span class="kw-2">&amp;</span>[String], <span class="kw-2">&amp;</span>UserData)
-           -&gt; Eat
-    {
+           -&gt; Eat + <span class="lifetime">'static
+    </span>{
         <span class="kw">let </span>hook = Hook::new();
         <span class="kw">let </span>ud   = Box::new(
                     CallbackData::new_command_data(
@@ -1407,13 +1403,13 @@
         <span class="kw">let </span>help = <span class="kw">if </span>!help.is_empty() {
             help
         } <span class="kw">else </span>{
-            <span class="string">&quot;No help available for this command.&quot;
+            <span class="string">"No help available for this command."
         </span>};
         <span class="kw">let </span>name = str2cstring(name);
         <span class="kw">let </span>help = str2cstring(help);
         <span class="kw">unsafe </span>{
             <span class="comment">// TODO - Consider making an empty help string cause a NULL to be
-            //        used as hook_command()&#39;s 5th argument.
+            //        used as hook_command()'s 5th argument.
             </span>hook.set((<span class="self">self</span>.c_hook_command)(<span class="self">self</span>,
                                            name.as_ptr(),
                                            pri <span class="kw">as </span>i32,
@@ -1428,30 +1424,29 @@
     /// For any of these functions, more information can be found at
     /// [Hexchat Plugin Interface](https://hexchat.readthedocs.io/en/latest/plugins.html)
     /// The callback needs to be compatible with this signature:
-    ///  ```
-    ///  FnMut(&amp;Hexchat, &amp;[String], &amp;[String], &amp;UserData)
-    ///  -&gt; Eat
+    ///  ``` no_test
+    ///  FnMut(&amp;Hexchat, &amp;[String], &amp;[String], &amp;UserData) -&gt; Eat
     ///  ```
     /// # Arguments
     /// * `name`        - The name of the event to listen for.
     /// * `pri`         - The priority of the callback.
     /// * `callback`    - The callback to invoke when the event occurs.
     /// * `user_data`   - The user data that gets passed back to the callback
-    ///                   when it&#39;s invoked.
+    ///                   when it's invoked.
     /// # Returns
     /// * A `Hook` object that can be used to deregister the callback. It
-    ///   doesn&#39;t need to be retained if not needed.
+    ///   doesn't need to be retained if not needed.
     ///
-    </span><span class="kw">pub fn </span>hook_server&lt;F: <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>,
-                                   name        : <span class="kw-2">&amp;</span>str,
-                                   pri         : Priority,
-                                   callback    : F,
-                                   user_data   : UserData)
+    </span><span class="kw">pub fn </span>hook_server&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>,
+                          name        : <span class="kw-2">&amp;</span>str,
+                          pri         : Priority,
+                          callback    : F,
+                          user_data   : UserData)
         -&gt; Hook
     <span class="kw">where
         </span>F: FnMut(<span class="kw-2">&amp;</span>Hexchat, <span class="kw-2">&amp;</span>[String], <span class="kw-2">&amp;</span>[String], <span class="kw-2">&amp;</span>UserData)
-           -&gt; Eat
-    {
+           -&gt; Eat + <span class="lifetime">'static
+    </span>{
         <span class="kw">let </span>hook = Hook::new();
         <span class="kw">let </span>ud   = Box::new(
                     CallbackData::new_command_data(
@@ -1476,7 +1471,7 @@
     <span class="doccomment">/// Registers a callback to be called when a given print event occurs. This
     /// can be any of the text events listed under Settings &gt; Text Events.
     /// Callback needs to be compatible with this signature:
-    /// ```
+    /// ``` no_test
     /// FnMut(&amp;Hexchat, &amp;[String], &amp;UserData) -&gt; Eat
     /// ```
     /// # Arguments
@@ -1484,20 +1479,20 @@
     /// * `pri`         - The priority of the callback.
     /// * `callback`    - The callback to invoke when the event occurs.
     /// * `user_data`   - The user data that gets passed back to the callback
-    ///                   when it&#39;s invoked.
+    ///                   when it's invoked.
     /// # Returns
     /// * A `Hook` object that can be used to deregister the callback. It
-    ///   doesn&#39;t need to be retained if not needed.
+    ///   doesn't need to be retained if not needed.
     ///
-    </span><span class="kw">pub fn </span>hook_print&lt;F: <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>,
-                                  event_name  : <span class="kw-2">&amp;</span>str,
-                                  pri         : Priority,
-                                  callback    : F,
-                                  user_data   : UserData)
+    </span><span class="kw">pub fn </span>hook_print&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>,
+                         event_name  : <span class="kw-2">&amp;</span>str,
+                         pri         : Priority,
+                         callback    : F,
+                         user_data   : UserData)
         -&gt; Hook
     <span class="kw">where
-        </span>F: FnMut(<span class="kw-2">&amp;</span>Hexchat, <span class="kw-2">&amp;</span>[String], <span class="kw-2">&amp;</span>UserData) -&gt; Eat
-    {
+        </span>F: FnMut(<span class="kw-2">&amp;</span>Hexchat, <span class="kw-2">&amp;</span>[String], <span class="kw-2">&amp;</span>UserData) -&gt; Eat + <span class="lifetime">'static
+    </span>{
         <span class="kw">let </span>hook = Hook::new();
         <span class="kw">let </span>ud   = Box::new(
                     CallbackData::new_print_data(
@@ -1523,30 +1518,29 @@
     /// The callback will be invoked with an `EventAttrs` object containing
     /// a `time_t` value for the event. The callback needs to be compatible
     /// with this signature:
-    /// ```
-    /// FnMut(&amp;Hexchat, &amp;[String], &amp;EventAttrs, &amp;UserData)
-    /// -&gt; Eat
+    /// ``` no_test
+    /// FnMut(&amp;Hexchat, &amp;[String], &amp;EventAttrs, &amp;UserData) -&gt; Eat
     /// ```
     /// # Arguments
     /// * `name`        - The name of the event to listen for.
     /// * `pri`         - The priority of the callback.
     /// * `callback`    - The callback to invoke when the event occurs.
     /// * `user_data`   - The user data that gets passed back to the callback
-    ///                   when it&#39;s invoked.
+    ///                   when it's invoked.
     /// # Returns
     /// * A `Hook` object that can be used to deregister the callback. It
-    ///   doesn&#39;t need to be retained if not needed.
+    ///   doesn't need to be retained if not needed.
     ///
-    </span><span class="kw">pub fn </span>hook_print_attrs&lt;F: <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>,
-                                        name        : <span class="kw-2">&amp;</span>str,
-                                        pri         : Priority,
-                                        callback    : F,
-                                        user_data   : UserData)
+    </span><span class="kw">pub fn </span>hook_print_attrs&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>,
+                               name        : <span class="kw-2">&amp;</span>str,
+                               pri         : Priority,
+                               callback    : F,
+                               user_data   : UserData)
         -&gt; Hook
     <span class="kw">where
         </span>F: FnMut(<span class="kw-2">&amp;</span>Hexchat, <span class="kw-2">&amp;</span>[String], <span class="kw-2">&amp;</span>EventAttrs, <span class="kw-2">&amp;</span>UserData)
-           -&gt; Eat
-    {
+           -&gt; Eat + <span class="lifetime">'static
+    </span>{
         <span class="kw">let </span>hook = Hook::new();
         <span class="kw">let </span>ud   = Box::new(
                     CallbackData::new_print_attrs_data(
@@ -1571,7 +1565,7 @@
 
     <span class="doccomment">/// Sets up a callback to be invoked every `timeout` milliseconds. The
     /// callback needs to be compatible with:
-    /// ```
+    /// ``` no_test
     /// FnMut(&amp;Hexchat, &amp;UserData) -&gt; i32
     /// ```
     /// # Arguments
@@ -1582,14 +1576,14 @@
     /// # Returns
     /// * A `Hook` object that is can be used to deregister the callback.
     ///
-    </span><span class="kw">pub fn </span>hook_timer&lt;F: <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>,
-                                  timeout   : i64,
-                                  callback  : F,
-                                  user_data : UserData)
+    </span><span class="kw">pub fn </span>hook_timer&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>,
+                         timeout   : i64,
+                         callback  : F,
+                         user_data : UserData)
         -&gt; Hook
     <span class="kw">where
-        </span>F: FnMut(<span class="kw-2">&amp;</span>Hexchat, <span class="kw-2">&amp;</span>UserData) -&gt; i32
-    {
+        </span>F: FnMut(<span class="kw-2">&amp;</span>Hexchat, <span class="kw-2">&amp;</span>UserData) -&gt; i32 + <span class="lifetime">'static
+    </span>{
         <span class="kw">let </span>hook = Hook::new();
         <span class="kw">let </span>ud   = Box::new(CallbackData::new_timer_data(
                                             Box::new(callback),
@@ -1610,7 +1604,7 @@
     }
 
     <span class="doccomment">/// This is a special case feature, used internally to enable other threads
-    /// to invoke callbacks on the main thread. This function isn&#39;t exported
+    /// to invoke callbacks on the main thread. This function isn't exported
     /// with the rest of the functions of this class.
     /// # Arguments
     /// * `timeout`     - The timeout in milliseconds.
@@ -1618,7 +1612,7 @@
     /// * `user_data`   - User data included with the callback and passed back
     ///                   to the callback during invocation.
     /// # Returns
-    /// * A `Hook` object that is used to deregister the callback after it&#39;s
+    /// * A `Hook` object that is used to deregister the callback after it's
     ///   invoked.
     ///
     </span><span class="attr">#[allow(dead_code)]
@@ -1651,15 +1645,15 @@
     }
 
     <span class="doccomment">/// Registers a callback to be called after the given timeout.
-    </span><span class="kw">pub fn </span>hook_fd&lt;F: <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>,
-                               fd        : i32,
-                               flags     : i32,
-                               callback  : F,
-                               user_data : UserData)
+    </span><span class="kw">pub fn </span>hook_fd&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>,
+                      fd        : i32,
+                      flags     : i32,
+                      callback  : F,
+                      user_data : UserData)
         -&gt; Hook
     <span class="kw">where
-        </span>F: FnMut(<span class="kw-2">&amp;</span>Hexchat, i32, i32, <span class="kw-2">&amp;</span>UserData) -&gt; Eat
-    {
+        </span>F: FnMut(<span class="kw-2">&amp;</span>Hexchat, i32, i32, <span class="kw-2">&amp;</span>UserData) -&gt; Eat + <span class="lifetime">'static
+    </span>{
         <span class="kw">let </span>hook = Hook::new();
         <span class="kw">let </span>ud   = Box::new(CallbackData::new_fd_data(
                                             Box::new(callback),
@@ -1683,7 +1677,7 @@
     <span class="doccomment">/// Unhooks any Hook that was returned from a callback registration.
     /// Ownership of the user_data is transferred to the caller.
     /// Note: Hexchat unhooks all hooks automatically when a plugin is unloaded,
-    /// so the client plugin doesn&#39;t have to in that case.
+    /// so the client plugin doesn't have to in that case.
     /// # Arguments
     /// * `hook` - The callback hook to deregister with Hexchat.
     /// # Returns
@@ -1699,7 +1693,7 @@
     /// events listed in Settings &gt; Text Events dialog.
     /// # Arguments
     /// * `event_name`  - The name of the Hexchat text event to send.
-    /// * `var_args`    - A slice of `&amp;str`&#39;s containing the event&#39;s arguments.
+    /// * `var_args`    - A slice of `&amp;str`'s containing the event's arguments.
     /// # Returns
     /// * On success, `Ok(())` is returned; otherwise, `Err(&lt;HexchatError&gt;)`.
     ///
@@ -1716,7 +1710,7 @@
     /// # Arguments
     /// * `event_attrs` - A reference to an `EventAttrs` struct.
     /// * `event_name`  - The name of the Hexchat text event to send.
-    /// * `var_args`    - A slice of `&amp;str`&#39;s containing the event&#39;s arguments.
+    /// * `var_args`    - A slice of `&amp;str`'s containing the event's arguments.
     /// # Returns
     /// * On success, `Ok(())` is returned; otherwise, `Err(&lt;HexchatError&gt;)`.
     ///
@@ -1737,7 +1731,7 @@
     ///                   `hc.c_emit_print_attrs()`.
     /// * `event_attrs` - A reference to an `EventAttrs` struct.
     /// * `event_name`  - The name of the Hexchat text event to send.
-    /// * `var_args`    - A slice of `&amp;str`&#39;s containing the event&#39;s arguments.
+    /// * `var_args`    - A slice of `&amp;str`'s containing the event's arguments.
     /// # Returns
     /// * On success, `Ok(())` is returned; otherwise, `Err(&lt;HexchatError&gt;)`.
     ///
@@ -1752,14 +1746,14 @@
         <span class="kw">let     </span>name   = str2cstring(event_name);
         <span class="kw">let     </span>va_len = var_args.len();
 
-        <span class="comment">// We don&#39;t know if there are 6 items in var_args - so Clippy&#39;s
+        <span class="comment">// We don't know if there are 6 items in var_args - so Clippy's
         // suggestion would fail. This range loop is fine.
         </span><span class="attr">#[allow(clippy::needless_range_loop)]
         </span><span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">6 </span>{
-            args.push(str2cstring(<span class="kw">if </span>i &lt; va_len { var_args[i] } <span class="kw">else </span>{ <span class="string">&quot;&quot; </span>}));
+            args.push(str2cstring(<span class="kw">if </span>i &lt; va_len { var_args[i] } <span class="kw">else </span>{ <span class="string">"" </span>}));
         }
 
-        <span class="comment">// TODO - If empty strings don&#39;t suffice as a nop param, then construct
+        <span class="comment">// TODO - If empty strings don't suffice as a nop param, then construct
         //        another vector containing pointers and pad with nulls.
         </span><span class="kw">unsafe </span>{
             <span class="kw">use </span>HexchatError::<span class="kw-2">*</span>;
@@ -1774,9 +1768,9 @@
                 <span class="kw">if </span>result &gt; <span class="number">0 </span>{
                     <span class="prelude-val">Ok</span>(())
                 } <span class="kw">else </span>{
-                    <span class="prelude-val">Err</span>(CommandFailed(<span class="macro">format!</span>(<span class="string">&quot;`.emit_print(\&quot;{}\&quot;, {:?})` \
+                    <span class="prelude-val">Err</span>(CommandFailed(<span class="macro">format!</span>(<span class="string">"`.emit_print(\"{}\", {:?})` \
                                               failed. Check the event name \
-                                              and data for errors.&quot;</span>,
+                                              and data for errors."</span>,
                                               event_name, var_args)))
                 }
             } <span class="kw">else </span>{
@@ -1790,9 +1784,9 @@
                     <span class="prelude-val">Ok</span>(())
                 } <span class="kw">else </span>{
                     <span class="prelude-val">Err</span>(CommandFailed(<span class="macro">format!</span>(
-                                      <span class="string">&quot;`.emit_print_attrs(\&quot;{}\&quot;, {:?})` \
+                                      <span class="string">"`.emit_print_attrs(\"{}\", {:?})` \
                                       failed. Check the event name \
-                                      and data for errors.&quot;</span>,
+                                      and data for errors."</span>,
                                       event_name, var_args)))
                 }
             }
@@ -1800,13 +1794,13 @@
     }
 
     <span class="doccomment">/// Compares two nicknames, returning a similar value to `strcmp()`.
-    /// If they&#39;re equal (0), s1 &lt; s2 (&lt;0 - negative), or s1 &gt; s2 (&gt;0 positive).
+    /// If they're equal (0), s1 &lt; s2 (&lt;0 - negative), or s1 &gt; s2 (&gt;0 positive).
     /// # Arguments
     /// * `s1` - The first nickname to compare.
     /// * `s2` - The second.
     /// # Returns
     /// * If the first non-matching character is of lesser value for `s1`, a
-    ///   negative value is returned; if `s1`&#39;s char is greater, then a non-0
+    ///   negative value is returned; if `s1`'s char is greater, then a non-0
     ///   postive value is returned. 0 is returned if they match.
     ///
     </span><span class="kw">pub fn </span>nickcmp(<span class="kw-2">&amp;</span><span class="self">self</span>, s1: <span class="kw-2">&amp;</span>str, s2: <span class="kw-2">&amp;</span>str) -&gt; i32 {
@@ -1849,7 +1843,7 @@
     /// * `context` - The `Context` to make the currently active context.
     /// # Returns
     /// * A result (`Result&lt;(), HexchatError&gt;) where `Ok(())` indicates
-    ///   the context has been switched, and a `HexchatError` if it didn&#39;t.
+    ///   the context has been switched, and a `HexchatError` if it didn't.
     ///
     </span><span class="kw">pub fn </span>set_context(<span class="kw-2">&amp;</span><span class="self">self</span>, context: <span class="kw-2">&amp;</span>Context) -&gt; <span class="prelude-ty">Result</span>&lt;(), HexchatError&gt; {
         context.set()
@@ -1860,8 +1854,8 @@
     /// Hexchat print command in that tab/window related to the context.
     /// The `Context::find()` can also be invoked to find a context.
     /// # Arguments
-    /// * `network`  - The network (e.g. &quot;freenode&quot;) of the context.
-    /// * `channel`  - The channel name for the context (e.g. &quot;##rust&quot;).
+    /// * `network`  - The network (e.g. "freenode") of the context.
+    /// * `channel`  - The channel name for the context (e.g. "##rust").
     /// # Returns
     /// *  the context was found, i.e. if the user is joined to the channel
     ///    specified currently, a `Some(&lt;Context&gt;)` is returned with the
@@ -1887,13 +1881,13 @@
 
     <span class="doccomment">/// Retrieves the info data with the given `id`. It returns None on failure
     /// and `Some(String)` on success. All information is returned as String
-    /// data - even the &quot;win_ptr&quot;/&quot;gtkwin_ptr&quot; values, which can be parsed
+    /// data - even the "win_ptr"/"gtkwin_ptr" values, which can be parsed
     /// and cast to pointers.
     /// # Arguments
     /// * `id` - The name/identifier for the information needed. A list of
     ///          the names for some of these can be found on the Hexchat
     ///          Plugin Interface page under `hexchat_get_info()`. These include
-    ///          &quot;channel&quot;, &quot;network&quot;, &quot;topic&quot;, etc.
+    ///          "channel", "network", "topic", etc.
     /// # Returns
     /// * `Some(&lt;String&gt;)` is returned with the string value of the info
     ///   requested. `None` is returned if there is no info with the requested
@@ -1904,7 +1898,7 @@
         <span class="kw">let </span>info  = <span class="kw">unsafe </span>{ (<span class="self">self</span>.c_get_info)(<span class="self">self</span>, idstr.as_ptr()) };
         <span class="kw">if </span>!info.is_null() {
             <span class="kw">match </span>id {
-                <span class="string">&quot;win_ptr&quot;  </span>| <span class="string">&quot;gtkwin_ptr&quot;  </span>=&gt; {
+                <span class="string">"win_ptr"  </span>| <span class="string">"gtkwin_ptr"  </span>=&gt; {
                     <span class="prelude-val">Some</span>((info <span class="kw">as </span>u64).to_string())
                 },
                 <span class="kw">_ </span>=&gt; {
@@ -1914,10 +1908,10 @@
         } <span class="kw">else </span>{ <span class="prelude-val">None </span>}
     }
 
-    <span class="doccomment">/// Returns the requested pref value, or None if it doesn&#39;t exist. These
-    /// are settings specific to Hexchat itself. It&#39;s possible to get the
-    /// user&#39;s input box text cursor position via this command with
-    /// &quot;state_cursor&quot;, for instance. Other preferences can be listed with the
+    <span class="doccomment">/// Returns the requested pref value, or None if it doesn't exist. These
+    /// are settings specific to Hexchat itself. It's possible to get the
+    /// user's input box text cursor position via this command with
+    /// "state_cursor", for instance. Other preferences can be listed with the
     /// `/set` command.
     /// # Arguments
     /// * name - The name of the pref to read.
@@ -1946,7 +1940,7 @@
     /// after how Hexchat implements the listing feature: rather than load
     /// all the list items up front, an internal list pointer is advanced
     /// to the current item, and the fields of which are accessible through
-    /// the iterator&#39;s `.get_field()` function. List iterators can also be
+    /// the iterator's `.get_field()` function. List iterators can also be
     /// created by invoking `ListIterator::new(&lt;list-name&gt;)`. See the Hexchat
     /// Plugin Interface web page for more information on the related lists.
     /// # Arguments
@@ -1977,8 +1971,8 @@
         <span class="kw">let </span>namecstr = str2cstring(name);
         <span class="kw">let </span>svalcstr = CString::new(sval.clone()).unwrap();
         <span class="kw">if </span>sval.len() &gt; MAX_PREF_VALUE_SIZE {
-            <span class="macro">panic!</span>(<span class="string">&quot;`hexchat.pluginpref_set({}, &lt;overflow&gt;)`: the value \
-                    exceeds the max allowable size of {:?} bytes.&quot;</span>,
+            <span class="macro">panic!</span>(<span class="string">"`hexchat.pluginpref_set({}, &lt;overflow&gt;)`: the value \
+                    exceeds the max allowable size of {:?} bytes."</span>,
                    name, MAX_PREF_VALUE_SIZE);
         }
         <span class="kw">unsafe </span>{
@@ -2022,7 +2016,7 @@
             <span class="kw">let </span>s = pchar2string(buf.as_ptr());
             <span class="kw">if </span>!s.is_empty() {
                 <span class="kw">let </span><span class="kw-2">mut </span>v = <span class="macro">vec!</span>[];
-                <span class="kw">for </span>name <span class="kw">in </span>s.split(<span class="string">&#39;,&#39;</span>) {
+                <span class="kw">for </span>name <span class="kw">in </span>s.split(<span class="string">','</span>) {
                     <span class="kw">if </span>!name.is_empty() {
                         v.push(name.to_string());
                     }
@@ -2032,13 +2026,13 @@
         } <span class="kw">else </span>{ <span class="prelude-val">None </span>}
     }
 
-    <span class="doccomment">/// Adds a dummy entry in Hexchat&#39;s list of plugins. The &quot;plugin&quot; registered
-    /// using this command is visible in the &quot;Plugins and Scripts&quot; dialog and
-    /// using other slash &quot;/&quot; commands; however, that&#39;s all it does. This
+    <span class="doccomment">/// Adds a dummy entry in Hexchat's list of plugins. The "plugin" registered
+    /// using this command is visible in the "Plugins and Scripts" dialog and
+    /// using other slash "/" commands; however, that's all it does. This
     /// command is useful when embedding a script interpreter that loads
     /// scripts as plugin code. Each script thus loaded can be visible to the
-    /// user as a plugin. If writing a native plugin, you don&#39;t need to be
-    /// concerned with this command as your plugin&#39;s info is registered during
+    /// user as a plugin. If writing a native plugin, you don't need to be
+    /// concerned with this command as your plugin's info is registered during
     /// init from the `PluginInfo` object provided by your `plugin_get_info()`
     /// function.
     /// # Arguments
@@ -2093,7 +2087,7 @@
     <span class="kw">pub fn </span>int(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; i32 {
         <span class="kw">match </span><span class="self">self </span>{
             StringVal(s) =&gt; {
-                <span class="kw">if let </span><span class="prelude-val">Ok</span>(v) = s.parse::&lt;i32&gt;() { v } <span class="kw">else </span>{ <span class="number">0 </span>}
+                s.parse::&lt;i32&gt;().unwrap_or(<span class="number">0</span>)
             },
             IntegerVal(i) =&gt; { <span class="kw-2">*</span>i },
             BoolVal(b) =&gt; { <span class="kw">if </span><span class="kw-2">*</span>b { <span class="number">1 </span>} <span class="kw">else </span>{ <span class="number">0 </span>} },
@@ -2103,7 +2097,7 @@
     <span class="kw">pub fn </span>bool(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="kw">match </span><span class="self">self </span>{
             StringVal(s) =&gt; {
-                <span class="kw">if let </span><span class="prelude-val">Ok</span>(v) = s.parse::&lt;bool&gt;() { v } <span class="kw">else </span>{ <span class="bool-val">false </span>}
+                s.parse::&lt;bool&gt;().unwrap_or(<span class="bool-val">false</span>)
             },
             IntegerVal(i) =&gt; { <span class="kw-2">*</span>i != <span class="number">0 </span>},
             BoolVal(b) =&gt; { <span class="kw-2">*</span>b },
@@ -2112,23 +2106,23 @@
 
     <span class="doccomment">/// Simple config file value serialization into string.
     /// The string produced can be written to the config file Hexchat maintains.
-    /// A type character is prepended (&#39;s&#39;, &#39;i&#39;, or &#39;b&#39;).
+    /// A type character is prepended ('s', 'i', or 'b').
     ///
     </span><span class="kw">fn </span>simple_ser(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
         <span class="kw">match </span><span class="self">self </span>{
             StringVal(s) =&gt; {
                 <span class="kw">let </span><span class="kw-2">mut </span>sstr = s.clone();
-                sstr.insert(<span class="number">0</span>, <span class="string">&#39;s&#39;</span>);
+                sstr.insert(<span class="number">0</span>, <span class="string">'s'</span>);
                 sstr
             },
             IntegerVal(i) =&gt; {
                 <span class="kw">let </span><span class="kw-2">mut </span>istr = i.to_string();
-                istr.insert(<span class="number">0</span>, <span class="string">&#39;i&#39;</span>);
+                istr.insert(<span class="number">0</span>, <span class="string">'i'</span>);
                 istr
             },
             BoolVal(b) =&gt; {
                 <span class="kw">let </span><span class="kw-2">mut </span>bstr = b.to_string();
-                bstr.insert(<span class="number">0</span>, <span class="string">&#39;b&#39;</span>);
+                bstr.insert(<span class="number">0</span>, <span class="string">'b'</span>);
                 bstr
             },
         }
@@ -2141,15 +2135,15 @@
     </span><span class="kw">fn </span>simple_deser(s: <span class="kw-2">&amp;</span>str) -&gt; PrefValue {
         <span class="kw">if </span>s.len() &gt; <span class="number">1 </span>{
             <span class="kw">match </span><span class="kw-2">&amp;</span>s[<span class="number">0</span>..<span class="number">1</span>] {
-                <span class="string">&quot;s&quot; </span>=&gt; {
+                <span class="string">"s" </span>=&gt; {
                     StringVal(s.to_string())
                 },
-                <span class="string">&quot;i&quot; </span>=&gt; {
+                <span class="string">"i" </span>=&gt; {
                     <span class="kw">if let </span><span class="prelude-val">Ok</span>(v) = s[<span class="number">1</span>..].parse::&lt;i32&gt;() {
                         IntegerVal(v)
                     } <span class="kw">else </span>{ StringVal(s.to_string()) }
                 },
-                <span class="string">&quot;b&quot; </span>=&gt; {
+                <span class="string">"b" </span>=&gt; {
                     <span class="kw">if let </span><span class="prelude-val">Ok</span>(v) = s[<span class="number">1</span>..].parse::&lt;bool&gt;() {
                         BoolVal(v)
                     } <span class="kw">else </span>{ StringVal(s.to_string()) }
@@ -2198,13 +2192,13 @@
     }
 }
 
-<span class="comment">// Apply the same attribute to all items in the block, but don&#39;t compile it as
+<span class="comment">// Apply the same attribute to all items in the block, but don't compile it as
 // an actual block.
-</span><span class="macro">macro_rules! </span>apply_attrib {
+</span><span class="macro">macro_rules!</span> apply_attrib {
     (<span class="attr">#![<span class="macro-nonterminal">$attr</span>:meta] </span>$( <span class="macro-nonterminal">$it</span>:item )<span class="kw-2">*</span>) =&gt; { $( <span class="attr">#[<span class="macro-nonterminal">$attr</span>] </span><span class="macro-nonterminal">$it </span>)* }
 }
 
-<span class="macro">apply_attrib! </span>{
+<span class="macro">apply_attrib!</span> {
 <span class="attr">#![allow(non_camel_case_types)]
 
 </span><span class="doccomment">/// Some types used by the C struct below.
@@ -2215,32 +2209,32 @@
 </span><span class="kw">pub </span>(<span class="kw">crate</span>) <span class="kw">type </span>hexchat_event_attrs = c_void;
 
 <span class="doccomment">/// Mirrors the callback function pointer of Hexchat.
-</span><span class="kw">type </span>C_Callback      = <span class="kw">extern </span><span class="string">&quot;C&quot;
+</span><span class="kw">type </span>C_Callback      = <span class="kw">extern </span><span class="string">"C"
                        </span><span class="kw">fn</span>(word       : <span class="kw-2">*const *const </span>c_char,
                           word_eol   : <span class="kw-2">*const *const </span>c_char,
                           user_data  : <span class="kw-2">*mut </span>c_void
                          ) -&gt; c_int;
 
 <span class="doccomment">/// Mirrors the print callback function pointer of Hexchat.
-</span><span class="kw">type </span>C_PrintCallback = <span class="kw">extern </span><span class="string">&quot;C&quot;
+</span><span class="kw">type </span>C_PrintCallback = <span class="kw">extern </span><span class="string">"C"
                        </span><span class="kw">fn</span>(word       : <span class="kw-2">*const *const </span>c_char,
                           user_data  : <span class="kw-2">*mut </span>c_void
                          ) -&gt; c_int;
 
 <span class="doccomment">/// Mirrors the timer callback function pointer of Hexchat.
-</span><span class="kw">type </span>C_TimerCallback = <span class="kw">extern </span><span class="string">&quot;C&quot;
+</span><span class="kw">type </span>C_TimerCallback = <span class="kw">extern </span><span class="string">"C"
                        </span><span class="kw">fn</span>(user_data  : <span class="kw-2">*mut </span>c_void
                          ) -&gt; c_int;
 
 <span class="doccomment">/// Mirrors the print attr callback function pointer of Hexchat.
-</span><span class="kw">type </span>C_AttrCallback  = <span class="kw">extern </span><span class="string">&quot;C&quot;
+</span><span class="kw">type </span>C_AttrCallback  = <span class="kw">extern </span><span class="string">"C"
                        </span><span class="kw">fn</span>(word       : <span class="kw-2">*const *const </span>c_char,
                           attrs      : <span class="kw-2">*const </span>EventAttrs,
                           user_data  : <span class="kw-2">*mut </span>c_void
                          ) -&gt; c_int;
 
 <span class="doccomment">/// Mirrors the FD related callback function pointer of Hexchat.
-</span><span class="kw">type </span>C_FDCallback    = <span class="kw">extern </span><span class="string">&quot;C&quot;
+</span><span class="kw">type </span>C_FDCallback    = <span class="kw">extern </span><span class="string">"C"
                        </span><span class="kw">fn</span>(fd         : c_int,
                           flags      : c_int,
                           udata      : <span class="kw-2">*mut </span>c_void
@@ -2256,22 +2250,22 @@
 }
 
 <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>Hexchat {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        f.debug_struct(<span class="string">&quot;Hexchat&quot;</span>)
-            .field(<span class="string">&quot;raw_function_pointers&quot;</span>, <span class="kw-2">&amp;</span><span class="string">&quot;...&quot;</span>)
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        f.debug_struct(<span class="string">"Hexchat"</span>)
+            .field(<span class="string">"raw_function_pointers"</span>, <span class="kw-2">&amp;</span><span class="string">"..."</span>)
             .finish()
     }
 }
 
 <span class="doccomment">/// This struct mirrors the C Hexchat struct passed to the plugin from
-/// Hexchat when the plugin is loaded. Hexchat&#39;s API is implemented as a struct
-/// holding callbacks to its native functions. *Don&#39;t modify* this struct,
+/// Hexchat when the plugin is loaded. Hexchat's API is implemented as a struct
+/// holding callbacks to its native functions. *Don't modify* this struct,
 /// unless there has been a change to the layout of it in the Hexchat C code
 /// base.
 </span><span class="attr">#[repr(C)]
 </span><span class="kw">pub struct </span>Hexchat {
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_hook_command       : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_hook_command       : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               name   : <span class="kw-2">*const </span>c_char,
                               pri    : c_int,
@@ -2280,7 +2274,7 @@
                               udata  : <span class="kw-2">*mut </span>c_void
                              ) -&gt; <span class="kw-2">*const </span>hexchat_hook,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_hook_server        : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_hook_server        : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               name   : <span class="kw-2">*const </span>c_char,
                               pri    : c_int,
@@ -2288,7 +2282,7 @@
                               udata  : <span class="kw-2">*mut </span>c_void
                              ) -&gt; <span class="kw-2">*const </span>hexchat_hook,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_hook_print         : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_hook_print         : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               name   : <span class="kw-2">*const </span>c_char,
                               pri    : c_int,
@@ -2296,14 +2290,14 @@
                               udata  : <span class="kw-2">*mut </span>c_void
                              ) -&gt; <span class="kw-2">*const </span>hexchat_hook,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_hook_timer         : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_hook_timer         : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               timeout: c_int,
                               cb     : C_TimerCallback,
                               udata  : <span class="kw-2">*mut </span>c_void
                              ) -&gt; <span class="kw-2">*const </span>hexchat_hook,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_hook_fd            : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_hook_fd            : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               fd     : c_int,
                               flags  : c_int,
@@ -2311,95 +2305,95 @@
                               udata  : <span class="kw-2">*mut </span>c_void
                              ) -&gt; <span class="kw-2">*const </span>hexchat_hook,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_unhook             : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_unhook             : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               hook   : <span class="kw-2">*const </span>hexchat_hook,
                              ) -&gt; <span class="kw-2">*const </span>c_void,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_print              : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_print              : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               text   : <span class="kw-2">*const </span>c_char),
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_printf             : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_printf             : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               text   : <span class="kw-2">*const </span>c_char,
                               ...),
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_command            : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_command            : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               command: <span class="kw-2">*const </span>c_char),
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_commandf           : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_commandf           : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               command: <span class="kw-2">*const </span>c_char,
                               ...),
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_nickcmp            : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_nickcmp            : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               s1     : <span class="kw-2">*const </span>c_char,
                               s2     : <span class="kw-2">*const </span>c_char
                              ) -&gt; c_int,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_set_context        : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_set_context        : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               ctx    : <span class="kw-2">*const </span>hexchat_context
                              ) -&gt; c_int,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_find_context       : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_find_context       : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp         : <span class="kw-2">*const </span>Hexchat,
                               srv_name   : <span class="kw-2">*const </span>c_char,
                               channel    : <span class="kw-2">*const </span>c_char,
                              ) -&gt; <span class="kw-2">*const </span>hexchat_context,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_get_context        : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_get_context        : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp: <span class="kw-2">*const </span>Hexchat
                              ) -&gt; <span class="kw-2">*const </span>hexchat_context,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_get_info           : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_get_info           : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               id     : <span class="kw-2">*const </span>c_char,
                              ) -&gt; <span class="kw-2">*const </span>c_char,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_get_prefs          : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_get_prefs          : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               name   : <span class="kw-2">*const </span>c_char,
                               string : <span class="kw-2">*mut *const </span>c_char,
                               integer: <span class="kw-2">*mut </span>c_int
                              ) -&gt; c_int,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_list_get           : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_list_get           : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               name   : <span class="kw-2">*const </span>c_char
                              ) -&gt; <span class="kw-2">*const </span>hexchat_list,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_list_free          : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_list_free          : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               hclist : <span class="kw-2">*const </span>hexchat_list
                              ),
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_list_fields        : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_list_fields        : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               name   : <span class="kw-2">*const </span>c_char
                              ) -&gt; <span class="kw-2">*const *const </span>c_char,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_list_next          : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_list_next          : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               hclist : <span class="kw-2">*const </span>hexchat_list
                              ) -&gt; c_int,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_list_str           : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_list_str           : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               hclist : <span class="kw-2">*const </span>hexchat_list,
                               field  : <span class="kw-2">*const </span>c_char
                              ) -&gt; <span class="kw-2">*const </span>c_char,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_list_int           : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_list_int           : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               hclist : <span class="kw-2">*const </span>hexchat_list,
                               field  : <span class="kw-2">*const </span>c_char
                              ) -&gt; c_int,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_plugingui_add      : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_plugingui_add      : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp         : <span class="kw-2">*const </span>Hexchat,
                               filename   : <span class="kw-2">*const </span>c_char,
                               name       : <span class="kw-2">*const </span>c_char,
@@ -2408,34 +2402,34 @@
                               reserved   : <span class="kw-2">*const </span>c_char
                              ) -&gt; <span class="kw-2">*const </span>c_void,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_plugingui_remove   : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_plugingui_remove   : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp: <span class="kw-2">*const </span>Hexchat, handle: <span class="kw-2">*const </span>c_void),
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_emit_print         : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_emit_print         : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp         : <span class="kw-2">*const </span>Hexchat,
                               event_name : <span class="kw-2">*const </span>c_char,
                               ...
                              ) -&gt; c_int,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_read_fd            : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_read_fd            : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               src    : <span class="kw-2">*const </span>c_void,
                               buf    : <span class="kw-2">*mut </span>c_char,
                               len    : <span class="kw-2">*mut </span>c_int
                               ) -&gt; c_int,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_list_time          : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_list_time          : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               hclist : <span class="kw-2">*const </span>hexchat_list,
                               name   : <span class="kw-2">*const </span>c_char
                              ) -&gt; time_t,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_gettext            : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_gettext            : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               msgid  : <span class="kw-2">*const </span>c_char
                              ) -&gt; <span class="kw-2">*const </span>c_char,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_send_modes         : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_send_modes         : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp             : <span class="kw-2">*const </span>Hexchat,
                               targets        : <span class="kw-2">*const *const </span>c_char,
                               n_targets      : c_int,
@@ -2444,52 +2438,52 @@
                               mode           : c_char
                              ),
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_strip              : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_strip              : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               string : <span class="kw-2">*const </span>c_char,
                               len    : c_int,
                               flags  : c_int
                              ) -&gt; <span class="kw-2">*const </span>c_char,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_free               : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_free               : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               ptr    : <span class="kw-2">*const </span>c_void,
                              ),
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_pluginpref_set_str : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_pluginpref_set_str : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               var    : <span class="kw-2">*const </span>c_char,
                               value  : <span class="kw-2">*const </span>c_char
                              ) -&gt; c_int,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_pluginpref_get_str : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_pluginpref_get_str : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               var    : <span class="kw-2">*const </span>c_char,
                               dest   : <span class="kw-2">*mut </span>c_char
                              ) -&gt; c_int,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_pluginpref_set_int : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_pluginpref_set_int : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               var    : <span class="kw-2">*const </span>c_char,
                               value  : c_int
                              ) -&gt; c_int,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_pluginpref_get_int : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_pluginpref_get_int : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               var    : <span class="kw-2">*const </span>c_char
                              ) -&gt; c_int,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_pluginpref_delete  : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_pluginpref_delete  : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               var    : <span class="kw-2">*const </span>c_char
                              ) -&gt; c_int,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_pluginpref_list    : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_pluginpref_list    : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               dest   : <span class="kw-2">*mut </span>c_char
                              ) -&gt; c_int,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_hook_server_attrs  : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_hook_server_attrs  : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               name   : <span class="kw-2">*const </span>c_char,
                               pri    : c_int,
@@ -2497,7 +2491,7 @@
                               udata  : <span class="kw-2">*const </span>c_void
                              ) -&gt; <span class="kw-2">*const </span>hexchat_hook,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_hook_print_attrs   : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_hook_print_attrs   : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               name   : <span class="kw-2">*const </span>c_char,
                               pri    : c_int,
@@ -2505,17 +2499,17 @@
                               udata  : <span class="kw-2">*const </span>c_void
                              ) -&gt; <span class="kw-2">*const </span>hexchat_hook,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_emit_print_attrs   : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_emit_print_attrs   : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp         : <span class="kw-2">*const </span>Hexchat,
                               attrs      : <span class="kw-2">*const </span>EventAttrs,
                               event_name : <span class="kw-2">*const </span>c_char,
                               ...
                              ) -&gt; c_int,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_event_attrs_create : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_event_attrs_create : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp: <span class="kw-2">*const </span>Hexchat) -&gt; <span class="kw-2">*mut </span>EventAttrs,
     <span class="kw">pub </span>(<span class="kw">crate</span>)
-    c_event_attrs_free   : <span class="kw">unsafe extern </span><span class="string">&quot;C&quot;
+    c_event_attrs_free   : <span class="kw">unsafe extern </span><span class="string">"C"
                            </span><span class="kw">fn</span>(hp     : <span class="kw-2">*const </span>Hexchat,
                               attrs  : <span class="kw-2">*mut </span>EventAttrs
                              ),
