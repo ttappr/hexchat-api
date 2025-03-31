@@ -46,6 +46,9 @@ pub enum HexchatError {
     /// The list iterator object was dropped. This might happen if the plugin is
     /// unloading while another thread is still running and using the iterator.
     ListIteratorDropped(String),
+
+    /// The UserData cannot be cast to the specified type.
+    UserDataCastError(String),
 }
 
 unsafe impl Send for HexchatError {}
