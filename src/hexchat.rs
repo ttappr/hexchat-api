@@ -120,16 +120,16 @@ impl Hexchat {
     /// # Returns
     /// A `Hook` object associated with the callback.
     ///
-    pub fn hook_command<F: 'static>(&self,
-                                    name        : &str,
-                                    pri         : Priority,
-                                    callback    : F,
-                                    help        : &str,
-                                    user_data   : UserData)
+    pub fn hook_command<F>(&self,
+                           name        : &str,
+                           pri         : Priority,
+                           callback    : F,
+                           help        : &str,
+                           user_data   : UserData)
         -> Hook
     where
         F: FnMut(&Hexchat, &[String], &[String], &UserData)
-           -> Eat
+           -> Eat + 'static
     {
         let hook = Hook::new();
         let ud   = Box::new(
@@ -179,15 +179,15 @@ impl Hexchat {
     /// * A `Hook` object that can be used to deregister the callback. It
     ///   doesn't need to be retained if not needed.
     ///
-    pub fn hook_server<F: 'static>(&self,
-                                   name        : &str,
-                                   pri         : Priority,
-                                   callback    : F,
-                                   user_data   : UserData)
+    pub fn hook_server<F>(&self,
+                          name        : &str,
+                          pri         : Priority,
+                          callback    : F,
+                          user_data   : UserData)
         -> Hook
     where
         F: FnMut(&Hexchat, &[String], &[String], &UserData)
-           -> Eat
+           -> Eat + 'static
     {
         let hook = Hook::new();
         let ud   = Box::new(
@@ -226,14 +226,14 @@ impl Hexchat {
     /// * A `Hook` object that can be used to deregister the callback. It
     ///   doesn't need to be retained if not needed.
     ///
-    pub fn hook_print<F: 'static>(&self,
-                                  event_name  : &str,
-                                  pri         : Priority,
-                                  callback    : F,
-                                  user_data   : UserData)
+    pub fn hook_print<F>(&self,
+                         event_name  : &str,
+                         pri         : Priority,
+                         callback    : F,
+                         user_data   : UserData)
         -> Hook
     where
-        F: FnMut(&Hexchat, &[String], &UserData) -> Eat
+        F: FnMut(&Hexchat, &[String], &UserData) -> Eat + 'static
     {
         let hook = Hook::new();
         let ud   = Box::new(
@@ -273,15 +273,15 @@ impl Hexchat {
     /// * A `Hook` object that can be used to deregister the callback. It
     ///   doesn't need to be retained if not needed.
     ///
-    pub fn hook_print_attrs<F: 'static>(&self,
-                                        name        : &str,
-                                        pri         : Priority,
-                                        callback    : F,
-                                        user_data   : UserData)
+    pub fn hook_print_attrs<F>(&self,
+                               name        : &str,
+                               pri         : Priority,
+                               callback    : F,
+                               user_data   : UserData)
         -> Hook
     where
         F: FnMut(&Hexchat, &[String], &EventAttrs, &UserData)
-           -> Eat
+           -> Eat + 'static
     {
         let hook = Hook::new();
         let ud   = Box::new(
@@ -318,13 +318,13 @@ impl Hexchat {
     /// # Returns
     /// * A `Hook` object that is can be used to deregister the callback.
     ///
-    pub fn hook_timer<F: 'static>(&self,
-                                  timeout   : i64,
-                                  callback  : F,
-                                  user_data : UserData)
+    pub fn hook_timer<F>(&self,
+                         timeout   : i64,
+                         callback  : F,
+                         user_data : UserData)
         -> Hook
     where
-        F: FnMut(&Hexchat, &UserData) -> i32
+        F: FnMut(&Hexchat, &UserData) -> i32 + 'static
     {
         let hook = Hook::new();
         let ud   = Box::new(CallbackData::new_timer_data(
@@ -387,14 +387,14 @@ impl Hexchat {
     }
 
     /// Registers a callback to be called after the given timeout.
-    pub fn hook_fd<F: 'static>(&self,
-                               fd        : i32,
-                               flags     : i32,
-                               callback  : F,
-                               user_data : UserData)
+    pub fn hook_fd<F>(&self,
+                      fd        : i32,
+                      flags     : i32,
+                      callback  : F,
+                      user_data : UserData)
         -> Hook
     where
-        F: FnMut(&Hexchat, i32, i32, &UserData) -> Eat
+        F: FnMut(&Hexchat, i32, i32, &UserData) -> Eat + 'static
     {
         let hook = Hook::new();
         let ud   = Box::new(CallbackData::new_fd_data(
@@ -829,7 +829,7 @@ impl PrefValue {
     pub fn int(&self) -> i32 {
         match self {
             StringVal(s) => {
-                if let Ok(v) = s.parse::<i32>() { v } else { 0 }
+                s.parse::<i32>().unwrap_or(0)
             },
             IntegerVal(i) => { *i },
             BoolVal(b) => { if *b { 1 } else { 0 } },
@@ -839,7 +839,7 @@ impl PrefValue {
     pub fn bool(&self) -> bool {
         match self {
             StringVal(s) => {
-                if let Ok(v) = s.parse::<bool>() { v } else { false }
+                s.parse::<bool>().unwrap_or(false)
             },
             IntegerVal(i) => { *i != 0 },
             BoolVal(b) => { *b },
