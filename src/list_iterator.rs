@@ -398,7 +398,7 @@ impl From<FieldValue> for u64 {
     }
 }
 
-impl From<FieldValue> for time_t {
+impl From<FieldValue> for i64 {
     fn from(v: FieldValue) -> Self {
         v.time()
     }
