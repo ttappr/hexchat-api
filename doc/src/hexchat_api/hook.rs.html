@@ -178,8 +178,7 @@
 <a href="#177" id="177">177</a>
 <a href="#178" id="178">178</a>
 <a href="#179" id="179">179</a>
-<a href="#180" id="180">180</a>
-<a href="#181" id="181">181</a></pre></div><pre class="rust"><code>
+<a href="#180" id="180">180</a></pre></div><pre class="rust"><code>
 <span class="doccomment">//! This object wraps hook pointers returned when callbacks are registered
 //! with Hexchat. The Rust-style hook can be used to unhook commands directly
 //! via its `unhook()` function. This object protects against attempts to
@@ -204,7 +203,7 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::callback_data::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::hexchat_entry_points::PHEXCHAT;
-<span class="kw">use </span><span class="kw">crate</span>::user_data::<span class="kw-2">*</span>;
+<span class="kw">use </span><span class="kw">crate</span>::user_data::{<span class="kw-2">*</span>, UserData::<span class="kw-2">*</span>};
 
 <span class="doccomment">/// A synchronized global list of the hooks. This gets initialized when a
 /// plugin is loaded from within the `lib_hexchat_plugin_init()` function
@@ -212,7 +211,6 @@
 ///
 </span><span class="kw">static </span>HOOK_LIST: RwLock&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;Hook&gt;&gt;&gt; = RwLock::new(<span class="prelude-val">None</span>);
 
-<span class="kw">use </span>UserData::<span class="kw-2">*</span>;
 
 <span class="kw">struct </span>HookData {
     hook_ptr    : <span class="kw-2">*const </span>c_void,
