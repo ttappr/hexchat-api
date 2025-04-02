@@ -1,6 +1,11 @@
 #![allow(dead_code, non_camel_case_types)]
 
+use enumflags2::bitflags;
+
 /// Channel flags.
+#[bitflags]
+#[repr(u32)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum ChanFlag {
     CONNECTED           = 0x0001,
     CONNECTING          = 0x0002,
@@ -22,6 +27,8 @@ pub enum ChanFlag {
 }
 
 /// Channel types.
+#[repr(u32)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum ChanType {
     SERVER                   = 1,
     CHANNEL                  = 2,
@@ -31,6 +38,8 @@ pub enum ChanType {
 }
 
 /// DCC status values.
+#[repr(u32)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum DccStatus {
     QUEUED                  = 0,
     ACTIVE                  = 1,
@@ -41,6 +50,8 @@ pub enum DccStatus {
 }
 
 /// DCC action type.
+#[repr(u32)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum DccType {
     SEND                    = 0,
     RECIEVE                 = 1,
@@ -52,6 +63,9 @@ pub enum DccType {
 // I need to verify whether the online page is wrong, or my understanding
 // of what "flags" means wrt HexChat is wrong.
 
+#[bitflags]
+#[repr(u32)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum IgnFlag {
     PRIVATE              = 0x01,
     NOTICE               = 0x02,

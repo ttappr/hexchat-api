@@ -5,11 +5,12 @@
 //! type declarations for the Rust-facing callback signatures.
 
 use crate::hook::Hook;
-use crate::hexchat::{ Hexchat, Eat, EventAttrs };
+use crate::hexchat::{Hexchat, Eat, EventAttrs, FD};
 use crate::user_data::*;
 
 use core::mem;
 
+use enumflags2::BitFlags;
 use UCallback::*;
 
 /// Holds the Rust-implemented function, or closure, of a registered Hexchat
@@ -242,7 +243,10 @@ impl CallbackData {
         -> Eat
     {
         if let FD(callback) = &mut self.callback {
-            (*callback)(hc, fd, flags, ud)
+            (*callback)(hc, 
+                        fd, 
+                        BitFlags::from_bits_truncate(flags as u32), 
+                        ud)
         } else {
             panic!("Invoked wrong type in CallbackData.");
         }
@@ -302,5 +306,5 @@ type TimerCallbackOnce
 /// convenience.
 pub (crate)
 type FdCallback
-              = dyn FnMut(&Hexchat, i32, i32, &UserData) -> Eat;
+              = dyn FnMut(&Hexchat, i32, BitFlags<FD>, &UserData) -> Eat;
 

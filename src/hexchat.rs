@@ -13,6 +13,7 @@ use std::fmt::Debug;
 use std::ops::FnMut;
 use std::ptr::null;
 use std::str;
+use enumflags2::{bitflags, BitFlags};
 
 use crate::callback_data::{CallbackData, TimerCallbackOnce};
 use crate::context::Context;
@@ -54,6 +55,9 @@ pub enum Eat {
 }
 
 /// File descriptor types.
+#[bitflags]
+#[repr(u32)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum FD {
     Read        =    1,
     Write       =    2,
@@ -385,16 +389,17 @@ impl Hexchat {
         }
         hook
     }
-
-    /// Registers a callback to be called after the given timeout.
+    /// Hooks a socket or file descriptor. WIN32: Passing a pipe from MSVCR71, 
+    /// MSVCR80 or other variations is not supported at this time.
+    /// 
     pub fn hook_fd<F>(&self,
                       fd        : i32,
-                      flags     : i32,
+                      flags     : BitFlags<FD>,
                       callback  : F,
                       user_data : UserData)
         -> Hook
     where
-        F: FnMut(&Hexchat, i32, i32, &UserData) -> Eat + 'static
+        F: FnMut(&Hexchat, i32, BitFlags<FD>, &UserData) -> Eat + 'static
     {
         let hook = Hook::new();
         let ud   = Box::new(CallbackData::new_fd_data(
@@ -409,7 +414,7 @@ impl Hexchat {
         unsafe {
             hook.set((self.c_hook_fd)(self,
                                       fd as c_int,
-                                      flags as c_int,
+                                      flags.bits() as c_int,
                                       c_fd_callback,
                                       ud));
         }
