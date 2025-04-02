@@ -23,7 +23,7 @@ use send_wrapper::SendWrapper;
 
 use crate::callback_data::*;
 use crate::hexchat_entry_points::PHEXCHAT;
-use crate::user_data::*;
+use crate::user_data::{*, UserData::*};
 
 /// A synchronized global list of the hooks. This gets initialized when a
 /// plugin is loaded from within the `lib_hexchat_plugin_init()` function
@@ -31,7 +31,6 @@ use crate::user_data::*;
 ///
 static HOOK_LIST: RwLock<Option<Vec<Hook>>> = RwLock::new(None);
 
-use UserData::*;
 
 struct HookData {
     hook_ptr    : *const c_void,
