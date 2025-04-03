@@ -314,7 +314,7 @@ impl From<ThreadSafeFieldValue> for u64 {
 
 impl From<ThreadSafeFieldValue> for i64 {
     fn from(v: ThreadSafeFieldValue) -> Self {
-        v.time()
+        v.time().into()
     }
 }
 
