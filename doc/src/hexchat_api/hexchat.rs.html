@@ -1256,7 +1256,12 @@
 <a href="#1255" id="1255">1255</a>
 <a href="#1256" id="1256">1256</a>
 <a href="#1257" id="1257">1257</a>
-<a href="#1258" id="1258">1258</a></pre></div><pre class="rust"><code><span class="doccomment">//! This file holds the Hexchat struct used to interface with Hexchat. Its
+<a href="#1258" id="1258">1258</a>
+<a href="#1259" id="1259">1259</a>
+<a href="#1260" id="1260">1260</a>
+<a href="#1261" id="1261">1261</a>
+<a href="#1262" id="1262">1262</a>
+<a href="#1263" id="1263">1263</a></pre></div><pre class="rust"><code><span class="doccomment">//! This file holds the Hexchat struct used to interface with Hexchat. Its
 //! fields are the actual callbacks provided by Hexchat. When Hexchat
 //! loads this library, the Hexchat pointer is stored and used by casting it
 //! to the struct contained in this file. These native function pointers are
@@ -1271,6 +1276,7 @@
 <span class="kw">use </span>std::ops::FnMut;
 <span class="kw">use </span>std::ptr::null;
 <span class="kw">use </span>std::str;
+<span class="kw">use </span>enumflags2::{bitflags, BitFlags};
 
 <span class="kw">use </span><span class="kw">crate</span>::callback_data::{CallbackData, TimerCallbackOnce};
 <span class="kw">use </span><span class="kw">crate</span>::context::Context;
@@ -1312,6 +1318,9 @@
 }
 
 <span class="doccomment">/// File descriptor types.
+</span><span class="attr">#[bitflags]
+#[repr(u32)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 </span><span class="kw">pub enum </span>FD {
     Read        =    <span class="number">1</span>,
     Write       =    <span class="number">2</span>,
@@ -1643,16 +1652,17 @@
         }
         hook
     }
-
-    <span class="doccomment">/// Registers a callback to be called after the given timeout.
+    <span class="doccomment">/// Hooks a socket or file descriptor. WIN32: Passing a pipe from MSVCR71, 
+    /// MSVCR80 or other variations is not supported at this time.
+    /// 
     </span><span class="kw">pub fn </span>hook_fd&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>,
                       fd        : i32,
-                      flags     : i32,
+                      flags     : BitFlags&lt;FD&gt;,
                       callback  : F,
                       user_data : UserData)
         -&gt; Hook
     <span class="kw">where
-        </span>F: FnMut(<span class="kw-2">&amp;</span>Hexchat, i32, i32, <span class="kw-2">&amp;</span>UserData) -&gt; Eat + <span class="lifetime">'static
+        </span>F: FnMut(<span class="kw-2">&amp;</span>Hexchat, i32, BitFlags&lt;FD&gt;, <span class="kw-2">&amp;</span>UserData) -&gt; Eat + <span class="lifetime">'static
     </span>{
         <span class="kw">let </span>hook = Hook::new();
         <span class="kw">let </span>ud   = Box::new(CallbackData::new_fd_data(
@@ -1667,7 +1677,7 @@
         <span class="kw">unsafe </span>{
             hook.set((<span class="self">self</span>.c_hook_fd)(<span class="self">self</span>,
                                       fd <span class="kw">as </span>c_int,
-                                      flags <span class="kw">as </span>c_int,
+                                      flags.bits() <span class="kw">as </span>c_int,
                                       c_fd_callback,
                                       ud));
         }

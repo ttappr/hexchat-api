@@ -93,9 +93,28 @@
 <a href="#92" id="92">92</a>
 <a href="#93" id="93">93</a>
 <a href="#94" id="94">94</a>
-<a href="#95" id="95">95</a></pre></div><pre class="rust"><code><span class="attr">#![allow(dead_code, non_camel_case_types)]
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a></pre></div><pre class="rust"><code><span class="attr">#![allow(dead_code, non_camel_case_types)]
 
-</span><span class="doccomment">/// Channel flags.
+</span><span class="kw">use </span>enumflags2::bitflags;
+
+<span class="doccomment">/// Channel flags.
+</span><span class="attr">#[bitflags]
+#[repr(u32)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 </span><span class="kw">pub enum </span>ChanFlag {
     CONNECTED           = <span class="number">0x0001</span>,
     CONNECTING          = <span class="number">0x0002</span>,
@@ -117,6 +136,8 @@
 }
 
 <span class="doccomment">/// Channel types.
+</span><span class="attr">#[repr(u32)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 </span><span class="kw">pub enum </span>ChanType {
     SERVER                   = <span class="number">1</span>,
     CHANNEL                  = <span class="number">2</span>,
@@ -126,6 +147,8 @@
 }
 
 <span class="doccomment">/// DCC status values.
+</span><span class="attr">#[repr(u32)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 </span><span class="kw">pub enum </span>DccStatus {
     QUEUED                  = <span class="number">0</span>,
     ACTIVE                  = <span class="number">1</span>,
@@ -136,6 +159,8 @@
 }
 
 <span class="doccomment">/// DCC action type.
+</span><span class="attr">#[repr(u32)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 </span><span class="kw">pub enum </span>DccType {
     SEND                    = <span class="number">0</span>,
     RECIEVE                 = <span class="number">1</span>,
@@ -147,6 +172,9 @@
 // I need to verify whether the online page is wrong, or my understanding
 // of what "flags" means wrt HexChat is wrong.
 
+</span><span class="attr">#[bitflags]
+#[repr(u32)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 </span><span class="kw">pub enum </span>IgnFlag {
     PRIVATE              = <span class="number">0x01</span>,
     NOTICE               = <span class="number">0x02</span>,

@@ -304,18 +304,23 @@
 <a href="#303" id="303">303</a>
 <a href="#304" id="304">304</a>
 <a href="#305" id="305">305</a>
-<a href="#306" id="306">306</a></pre></div><pre class="rust"><code>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a></pre></div><pre class="rust"><code>
 <span class="doccomment">//! The `CallbackData` object holds all the information about a callback
 //! needed to manage the `user_data` and  invoke it safely and correctly.
 //! The objects of this module are used internally. This file also contains
 //! type declarations for the Rust-facing callback signatures.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::hook::Hook;
-<span class="kw">use </span><span class="kw">crate</span>::hexchat::{ Hexchat, Eat, EventAttrs };
+<span class="kw">use </span><span class="kw">crate</span>::hexchat::{Hexchat, Eat, EventAttrs, FD};
 <span class="kw">use </span><span class="kw">crate</span>::user_data::<span class="kw-2">*</span>;
 
 <span class="kw">use </span>core::mem;
 
+<span class="kw">use </span>enumflags2::BitFlags;
 <span class="kw">use </span>UCallback::<span class="kw-2">*</span>;
 
 <span class="doccomment">/// Holds the Rust-implemented function, or closure, of a registered Hexchat
@@ -548,7 +553,10 @@
         -&gt; Eat
     {
         <span class="kw">if let </span>FD(callback) = <span class="kw-2">&amp;mut </span><span class="self">self</span>.callback {
-            (<span class="kw-2">*</span>callback)(hc, fd, flags, ud)
+            (<span class="kw-2">*</span>callback)(hc, 
+                        fd, 
+                        BitFlags::from_bits_truncate(flags <span class="kw">as </span>u32), 
+                        ud)
         } <span class="kw">else </span>{
             <span class="macro">panic!</span>(<span class="string">"Invoked wrong type in CallbackData."</span>);
         }
@@ -608,6 +616,6 @@
 /// convenience.
 </span><span class="kw">pub </span>(<span class="kw">crate</span>)
 <span class="kw">type </span>FdCallback
-              = <span class="kw">dyn </span>FnMut(<span class="kw-2">&amp;</span>Hexchat, i32, i32, <span class="kw-2">&amp;</span>UserData) -&gt; Eat;
+              = <span class="kw">dyn </span>FnMut(<span class="kw-2">&amp;</span>Hexchat, i32, BitFlags&lt;FD&gt;, <span class="kw-2">&amp;</span>UserData) -&gt; Eat;
 
 </code></pre></div></section></main></body></html>
