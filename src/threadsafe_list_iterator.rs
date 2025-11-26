@@ -118,7 +118,7 @@ impl ThreadSafeListIterator {
     ///   error types. The values are returned as `FieldValue` tuples that hold
     ///   the requested data.
     ///
-    pub fn get_field(&self, name: &str) 
+    pub fn get_field(&self, name: &str)
         -> Result<ThreadSafeFieldValue, HexchatError>
     {
         use FieldValue as FV;
@@ -243,9 +243,9 @@ use ThreadSafeFieldValue::*;
 
 impl ThreadSafeFieldValue {
     /// Convert a StringVal variant to a String. FieldValue also implements
-    /// `From<String>` so you can also use `let s: String = fv.into();` 
+    /// `From<String>` so you can also use `let s: String = fv.into();`
     /// to convert.
-    /// 
+    ///
     pub fn str(self) -> String {
         match self {
             StringVal(s) => s,
@@ -255,7 +255,7 @@ impl ThreadSafeFieldValue {
     /// Convert an IntVal variant to an i32. FieldValue also implements
     /// `From<i32>` so you can also use `let i: i32 = fv.into();`
     /// to convert.
-    /// 
+    ///
     pub fn int(self) -> i32 {
         match self {
             IntVal(i) => i,
@@ -265,7 +265,7 @@ impl ThreadSafeFieldValue {
     /// Convert a PointerVal variant to a u64. FieldValue also implements
     /// `From<u64>` so you can also use `let p: u64 = fv.into();`
     /// to convert.
-    /// 
+    ///
     pub fn ptr(self) -> u64 {
         match self {
             PointerVal(p) => p,
@@ -275,7 +275,7 @@ impl ThreadSafeFieldValue {
     /// Convert a TimeVal variant to a time_t (i64). FieldValue also implements
     /// `From<time_t>` so you can also use `let t: time_t = fv.into();`
     /// to convert.
-    /// 
+    ///
     pub fn time(self) -> time_t {
         match self {
             TimeVal(t) => t,
@@ -285,7 +285,7 @@ impl ThreadSafeFieldValue {
     /// Convert a ContextVal variant to a Context. FieldValue also implements
     /// `From<Context>` so you can also use `let c: Context = fv.into();`
     /// to convert.
-    /// 
+    ///
     pub fn ctx(self) -> ThreadSafeContext {
         match self {
             ContextVal(c) => c,

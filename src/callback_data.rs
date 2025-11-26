@@ -54,7 +54,7 @@ impl CallbackData {
     pub (crate)
     fn new_command_data(callback : Box<Callback>,
                         data     : UserData,
-                        hook     : Hook) 
+                        hook     : Hook)
         -> Self
     {
         let callback = Command(callback);
@@ -65,7 +65,7 @@ impl CallbackData {
     pub (crate)
     fn new_print_data(callback  : Box<PrintCallback>,
                       data      : UserData,
-                      hook      : Hook) 
+                      hook      : Hook)
         -> Self
     {
         let callback = Print(callback);
@@ -76,7 +76,7 @@ impl CallbackData {
     pub (crate)
     fn new_print_attrs_data(callback : Box<PrintAttrsCallback>,
                             data     : UserData,
-                            hook     : Hook) 
+                            hook     : Hook)
         -> Self
     {
         let callback = PrintAttrs(callback);
@@ -87,7 +87,7 @@ impl CallbackData {
     pub (crate)
     fn new_timer_data(callback : Box<TimerCallback>,
                       data     : UserData,
-                      hook     : Hook) 
+                      hook     : Hook)
         -> Self
     {
         let callback = Timer(callback);
@@ -98,7 +98,7 @@ impl CallbackData {
     pub (crate)
     fn new_timer_once_data(callback : Box<TimerCallbackOnce>,
                            data     : UserData,
-                           hook     : Hook) 
+                           hook     : Hook)
         -> Self
     {
         let callback = TimerOnce(callback);
@@ -110,7 +110,7 @@ impl CallbackData {
     pub (crate)
     fn new_fd_data(callback : Box<FdCallback>,
                    data     : UserData,
-                   hook     : Hook) 
+                   hook     : Hook)
         -> Self
     {
         let callback = FD(callback);
@@ -142,7 +142,7 @@ impl CallbackData {
                          hc       : &Hexchat,
                          word     : &[String],
                          word_eol : &[String],
-                         ud       : &UserData) 
+                         ud       : &UserData)
         -> Eat
     {
         if let Command(callback) = &mut self.callback {
@@ -160,7 +160,7 @@ impl CallbackData {
     unsafe fn print_cb(&mut self,
                        hc       : &Hexchat,
                        word     : &[String],
-                       ud       : &UserData) 
+                       ud       : &UserData)
         -> Eat
     {
         if let Print(callback) = &mut self.callback {
@@ -178,7 +178,7 @@ impl CallbackData {
                              hc    : &Hexchat,
                              word  : &[String],
                              attrs : &EventAttrs,
-                             ud    : &UserData) 
+                             ud    : &UserData)
         -> Eat
     {
         if let PrintAttrs(callback) = &mut self.callback {
@@ -239,13 +239,13 @@ impl CallbackData {
                     hc    : &Hexchat,
                     fd    : i32,
                     flags : i32,
-                    ud    : &UserData) 
+                    ud    : &UserData)
         -> Eat
     {
         if let FD(callback) = &mut self.callback {
-            (*callback)(hc, 
-                        fd, 
-                        BitFlags::from_bits_truncate(flags as u32), 
+            (*callback)(hc,
+                        fd,
+                        BitFlags::from_bits_truncate(flags as u32),
                         ud)
         } else {
             panic!("Invoked wrong type in CallbackData.");

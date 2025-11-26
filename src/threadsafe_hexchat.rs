@@ -27,7 +27,7 @@ unsafe impl Sync for ThreadSafeHexchat {}
 impl ThreadSafeHexchat {
     /// Constructs a `ThreadSafeHexchat` object that wraps `Hexchat`. Only to
     /// be called from the main thread internally.
-    /// 
+    ///
     pub (crate)
     fn new(_hc: &'static Hexchat) -> Self {
         ThreadSafeHexchat
@@ -73,10 +73,10 @@ impl ThreadSafeHexchat {
         let data = (network.to_string(), channel.to_string());
         main_thread(move |hc| {
             hc.find_context(&data.0, &data.1).map(ThreadSafeContext::new)
-        }).get().and_then(|r| 
-            r.ok_or_else(||{ 
-                let msg = format!("{}, {}", network, channel); 
-                ContextAcquisitionFailed(msg) 
+        }).get().and_then(|r|
+            r.ok_or_else(||{
+                let msg = format!("{}, {}", network, channel);
+                ContextAcquisitionFailed(msg)
             }))
     }
 
@@ -110,8 +110,8 @@ impl ThreadSafeHexchat {
     ///          Plugin Interface page under `hexchat_get_info()`. These include
     ///          "channel", "network", "topic", etc.
     /// # Returns
-    /// * The string is returned for the info requested. `HexchatError` is 
-    ///   returned if there is no info with the requested `id` or another 
+    /// * The string is returned for the info requested. `HexchatError` is
+    ///   returned if there is no info with the requested `id` or another
     ///   problem occurred.
     ///
     pub fn get_info(&self, id: &str) -> Result<String, HexchatError> {
@@ -134,8 +134,8 @@ impl ThreadSafeHexchat {
     /// * If the list exists, a `ThreadSafeListIterator` is returned otherwise,
     ///   an error is returned.
     ///
-    pub fn list_get(&self, list: &str) 
-        -> Result<ThreadSafeListIterator, HexchatError> 
+    pub fn list_get(&self, list: &str)
+        -> Result<ThreadSafeListIterator, HexchatError>
     {
         let slist = list.to_string();
         main_thread(move |hc| {

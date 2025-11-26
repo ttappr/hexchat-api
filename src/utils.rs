@@ -43,7 +43,7 @@ pub fn print_inner(msg: &str) {
 }
 
 /// Similar to `hc_print!()`, that can be used from spawned threads to print to
-/// the active Hexchat window. Use `hc_print()` if printing from the main 
+/// the active Hexchat window. Use `hc_print()` if printing from the main
 /// thread.
 /// ``` no_test
 /// use hexchat_api::hc_print_th;

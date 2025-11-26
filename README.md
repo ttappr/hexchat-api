@@ -171,7 +171,7 @@ fn plugin_deinit(hc: &Hexchat) -> i32 {
 fn hello_world(hc        : &Hexchat,
                word      : &[String],
                word_eol  : &[String],
-               user_data : &UserData) 
+               user_data : &UserData)
     -> Eat
 {
     hc.print("Hello, world!");

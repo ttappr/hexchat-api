@@ -389,9 +389,9 @@ impl Hexchat {
         }
         hook
     }
-    /// Hooks a socket or file descriptor. WIN32: Passing a pipe from MSVCR71, 
+    /// Hooks a socket or file descriptor. WIN32: Passing a pipe from MSVCR71,
     /// MSVCR80 or other variations is not supported at this time.
-    /// 
+    ///
     pub fn hook_fd<F>(&self,
                       fd        : i32,
                       flags     : BitFlags<FD>,

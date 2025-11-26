@@ -135,15 +135,15 @@ impl UserData {
     /// user data must be the same as the type of the `UserData` object, or
     /// the downcast will fail and return an error. The returned data is a
     /// clone of the original value.
-    /// 
+    ///
     /// # Generic Arguments
     /// * `D` - The type of the user data to retrieve.
-    /// 
+    ///
     /// # Returns
     /// * `Ok(user_data)` - The user data if the downcast is successful.
-    /// * `Err(HexchatError::UserDataCastError)` - The error if the downcast 
+    /// * `Err(HexchatError::UserDataCastError)` - The error if the downcast
     ///   fails.
-    /// 
+    ///
     pub fn get<D: 'static + Clone>(&self) -> Result<D, HexchatError> {
         use HexchatError::UserDataCastError;
         const ERRMSG: &str = "UserData::get() - Unable to downcast to \
@@ -160,14 +160,14 @@ impl UserData {
                  .downcast_ref::<D>()
                  .cloned()
                  .ok_or_else(|| UserDataCastError(ERRMSG.into()))
-            }, 
+            },
             SyncData(d) => {
                 d.read().unwrap()
                  .downcast_ref::<D>()
                  .cloned()
                  .ok_or_else(|| UserDataCastError(ERRMSG.into()))
             }
-            NoData => {  
+            NoData => {
                 Err(UserDataCastError("`UserData::NoData` can't be cast."
                                       .into()))
             }
@@ -177,18 +177,18 @@ impl UserData {
     /// Sets the user data in the `UserData` object. The type of the user data
     /// must be the same as the type of the `UserData` object, or the downcast
     /// will fail and return an error.
-    /// 
+    ///
     /// # Generic Arguments
     /// * `D` - The type of the user data to set.
-    /// 
+    ///
     /// # Arguments
     /// * `value` - The value to set the user data to.
-    /// 
+    ///
     /// # Returns
     /// * `Ok(())` - The user data if the downcast is successful.
     /// * `Err(HexchatError::UserDataCastError)` - The error if the downcast
     ///   fails.
-    /// 
+    ///
     pub fn set<D: 'static>(&self, value: D) -> Result<(), HexchatError> {
         use HexchatError::UserDataCastError;
         const ERRMSG: &str = "`UserData::set()` - Unable to downcast to \
@@ -206,14 +206,14 @@ impl UserData {
                     *d = value;
                     success = true;
                 }
-            }, 
+            },
             SyncData(d) => {
                 if let Some(d) = d.write().unwrap().downcast_mut::<D>() {
                     *d = value;
                     success = true;
                 }
             }
-            NoData => {  
+            NoData => {
                 return Err(UserDataCastError("`UserData::NoData` can't be cast"
                                              .into()));
             }

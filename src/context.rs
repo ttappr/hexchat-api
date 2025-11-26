@@ -27,7 +27,7 @@ use crate::utils::*;
 
 //use ContextError::*;
 //use HexchatError::*;
-use HexchatError::ContextAcquisitionFailed; 
+use HexchatError::ContextAcquisitionFailed;
 use HexchatError::ContextOperationFailed;
 
 #[derive(Debug)]
@@ -60,7 +60,7 @@ impl Context {
     /// the requested network/channel, if it exists. The object will be
     /// returned as a `Some<Context>` if the context is found, or `None` if
     /// not.
-    /// 
+    ///
     pub fn find(network: &str, channel: &str) -> Option<Self> {
         #[cfg(feature = "threadsafe")]
         assert!(thread::current().id() == unsafe { MAIN_THREAD_ID.unwrap() },
@@ -91,7 +91,7 @@ impl Context {
     /// This will create a new `Context` that represents the currently active
     /// context (window/tab, channel/network) open on the user's screen. An
     /// `Context` object is returned, or `None` if it couldn't be obtained.
-    /// 
+    ///
     pub fn get() -> Option<Self> {
         #[cfg(feature = "threadsafe")]
         assert!(thread::current().id() == unsafe { MAIN_THREAD_ID.unwrap() },
@@ -127,7 +127,7 @@ impl Context {
     /// So `Context` objects need to reacquire the pointer for each command
     /// invocation. If successful, `Ok(ptr)` is returned with the pointer value;
     /// `AcquisitionFailed(network, channel)` otherwise.
-    /// 
+    ///
     #[inline]
     fn acquire(&self) -> Result<*const hexchat_context, HexchatError> {
         let data = &*self.data;
@@ -139,7 +139,7 @@ impl Context {
         if !ptr.is_null() {
             Ok(ptr)
         } else {
-            let msg = format!("{}, {}", 
+            let msg = format!("{}, {}",
                               cstring2string(&data.network),
                               cstring2string(&data.channel));
             Err(ContextAcquisitionFailed(msg))
@@ -240,13 +240,13 @@ impl Context {
     }
 
     /// Returns the network name associated with the `Context` object.
-    /// 
+    ///
     pub fn network(&self) -> String {
         cstring2string(&self.data.network)
     }
 
     /// Returns the channel name associated with the `Context` object.
-    /// 
+    ///
     pub fn channel(&self) -> String {
         cstring2string(&self.data.channel)
     }

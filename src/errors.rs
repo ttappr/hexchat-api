@@ -3,7 +3,7 @@ use std::fmt::{self, Display, Formatter};
 
 /// Each of the various ways the API can fail is collected in this enumerated
 /// type.
-/// 
+///
 #[derive(Debug, Clone)]
 pub enum HexchatError {
     /// The command failed to execute.
@@ -26,7 +26,7 @@ pub enum HexchatError {
     ContextAcquisitionFailed(String),
 
     /// The context acquisition succeeded, but there is some problem with the
-    /// action being performed. For instance the requested list for 
+    /// action being performed. For instance the requested list for
     /// `ctx.get_listiter("foo")` doesn't exist.
     ContextOperationFailed(String),
 

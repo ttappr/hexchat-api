@@ -39,13 +39,13 @@ unsafe impl Sync for ThreadSafeContext {}
 impl ThreadSafeContext {
     /// Creates a new `ThreadSafeContext` object, which wraps a `Context` object
     /// internally. Only to be called from the main thread internally.
-    /// 
+    ///
     pub (crate)
     fn new(ctx: Context) -> Self {
         Self { ctx: Arc::new(RwLock::new(Some(SendWrapper::new(ctx)))) }
     }
 
-    /// Gets the user's current `Context` wrapped in a `ThreadSafeContext` 
+    /// Gets the user's current `Context` wrapped in a `ThreadSafeContext`
     /// object.
     ///
     pub fn get() -> Result<Self, HexchatError> {
@@ -66,7 +66,7 @@ impl ThreadSafeContext {
         .get()
         .and_then(|r| r.ok_or_else(|| {
                     let msg = format!("{}, {}", network, channel);
-                    ContextAcquisitionFailed(msg) 
+                    ContextAcquisitionFailed(msg)
                 }))
     }
 
@@ -149,7 +149,7 @@ impl ThreadSafeContext {
         }).get().and_then(|r| r)
     }
 
-    /// Gets a `ThreadSafeListIterator` from the context.  If the list doesn't 
+    /// Gets a `ThreadSafeListIterator` from the context.  If the list doesn't
     /// exist, or a problem occurs, an error will be returned.
     ///
     pub fn list_get(&self,
@@ -172,7 +172,7 @@ impl ThreadSafeContext {
         }).get().and_then(|r| r)
     }
     /// Returns the network name associated with the context.
-    /// 
+    ///
     pub fn network(&self) -> Result<String, HexchatError> {
         let me = self.clone();
         main_thread(move |_| {
@@ -185,7 +185,7 @@ impl ThreadSafeContext {
     }
 
     /// Returns the channel name associated with the context.
-    /// 
+    ///
     pub fn channel(&self) -> Result<String, HexchatError> {
         let me = self.clone();
         main_thread(move |_| {
