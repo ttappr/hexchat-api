@@ -1,3 +1,4 @@
+#![allow(clippy::doc_overindented_list_items)]
 
 //! This crate provides a Rust interface to the
 //! [Hexchat Plugin Interface](https://hexchat.readthedocs.io/en/latest/plugins.html)

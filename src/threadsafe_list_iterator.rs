@@ -314,6 +314,8 @@ impl From<ThreadSafeFieldValue> for u64 {
 
 impl From<ThreadSafeFieldValue> for i64 {
     fn from(v: ThreadSafeFieldValue) -> Self {
+        // Time is not i64 on all platforms.
+        #[allow(clippy::useless_conversion)] 
         v.time().into()
     }
 }

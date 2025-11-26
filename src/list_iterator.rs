@@ -400,6 +400,8 @@ impl From<FieldValue> for u64 {
 
 impl From<FieldValue> for i64 {
     fn from(v: FieldValue) -> Self {
+        // Time is not i64 on all platforms.
+        #[allow(clippy::useless_conversion)]
         v.time().into()
     }
 }
