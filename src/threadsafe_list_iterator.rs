@@ -326,3 +326,91 @@ impl From<ThreadSafeFieldValue> for ThreadSafeContext {
     }
 }
 
+#[cfg(test)]
+mod iterator_tests {
+    use super::*;
+
+    fn dropped_iter() -> ThreadSafeListIterator {
+        ThreadSafeListIterator {
+            list_iter: Arc::new(RwLock::new(None)),
+        }
+    }
+
+    #[test]
+    fn new_fails_without_task_queue() {
+        assert!(ThreadSafeListIterator::new("users").is_err());
+    }
+
+    #[test]
+    fn methods_on_dropped_iterator_are_err() {
+        let it = dropped_iter();
+        assert!(it.get_field_names().is_err());
+        assert!(it.to_vec().is_err());
+        assert!(it.get_item().is_err());
+        assert!(it.get_field("nick").is_err());
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn threadsafe_field_value_unwrap_helpers() {
+        assert_eq!(StringVal("s".into()).str(), "s");
+        assert_eq!(IntVal(11).int(), 11);
+        assert_eq!(PointerVal(99).ptr(), 99);
+        assert_eq!(TimeVal(12345).time(), 12345);
+    }
+
+    #[test]
+    #[should_panic]
+    fn str_panics_on_wrong_variant() {
+        let _ = IntVal(1).str();
+    }
+
+    #[test]
+    #[should_panic]
+    fn int_panics_on_wrong_variant() {
+        let _ = StringVal("x".into()).int();
+    }
+
+    #[test]
+    #[should_panic]
+    fn ptr_panics_on_wrong_variant() {
+        let _ = IntVal(1).ptr();
+    }
+
+    #[test]
+    #[should_panic]
+    fn time_panics_on_wrong_variant() {
+        let _ = IntVal(1).time();
+    }
+
+    #[test]
+    fn from_impls_convert() {
+        let s: String = StringVal("hi".into()).into();
+        assert_eq!(s, "hi");
+        let i: i32 = IntVal(4).into();
+        assert_eq!(i, 4);
+        let p: u64 = PointerVal(7).into();
+        assert_eq!(p, 7);
+        let t: i64 = TimeVal(8).into();
+        assert_eq!(t, 8);
+    }
+
+    #[test]
+    fn display_formats_scalar_variants() {
+        assert_eq!(format!("{}", StringVal("abc".into())), "abc");
+        assert_eq!(format!("{}", IntVal(5)), "5");
+        assert_eq!(format!("{}", PointerVal(6)), "6");
+        assert_eq!(format!("{}", TimeVal(7)), "7");
+    }
+
+    #[test]
+    fn is_send_sync() {
+        fn assert_send_sync<T: Send + Sync>() {}
+        assert_send_sync::<ThreadSafeFieldValue>();
+    }
+}
+

@@ -956,32 +956,32 @@ pub (crate) type hexchat_context     = c_void;
 pub (crate) type hexchat_event_attrs = c_void;
 
 /// Mirrors the callback function pointer of Hexchat.
-type C_Callback      = extern "C"
+pub (crate) type C_Callback      = extern "C"
                        fn(word       : *const *const c_char,
                           word_eol   : *const *const c_char,
                           user_data  : *mut c_void
                          ) -> c_int;
 
 /// Mirrors the print callback function pointer of Hexchat.
-type C_PrintCallback = extern "C"
+pub (crate) type C_PrintCallback = extern "C"
                        fn(word       : *const *const c_char,
                           user_data  : *mut c_void
                          ) -> c_int;
 
 /// Mirrors the timer callback function pointer of Hexchat.
-type C_TimerCallback = extern "C"
+pub (crate) type C_TimerCallback = extern "C"
                        fn(user_data  : *mut c_void
                          ) -> c_int;
 
 /// Mirrors the print attr callback function pointer of Hexchat.
-type C_AttrCallback  = extern "C"
+pub (crate) type C_AttrCallback  = extern "C"
                        fn(word       : *const *const c_char,
                           attrs      : *const EventAttrs,
                           user_data  : *mut c_void
                          ) -> c_int;
 
 /// Mirrors the FD related callback function pointer of Hexchat.
-type C_FDCallback    = extern "C"
+pub (crate) type C_FDCallback    = extern "C"
                        fn(fd         : c_int,
                           flags      : c_int,
                           udata      : *mut c_void
@@ -1257,7 +1257,132 @@ pub struct Hexchat {
                            fn(hp: *const Hexchat) -> *mut EventAttrs,
     pub (crate)
     c_event_attrs_free   : unsafe extern "C"
-                           fn(hp     : *const Hexchat,
-                              attrs  : *mut EventAttrs
-                             ),
+                            fn(hp     : *const Hexchat,
+                               attrs  : *mut EventAttrs
+                              ),
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn pref_value_str_conversions() {
+        assert_eq!(StringVal("hi".into()).str(), "hi");
+        assert_eq!(IntegerVal(42).str(), "42");
+        assert_eq!(BoolVal(true).str(), "true");
+        assert_eq!(BoolVal(false).str(), "false");
+    }
+
+    #[test]
+    fn pref_value_int_conversions() {
+        assert_eq!(IntegerVal(-7).int(), -7);
+        assert_eq!(BoolVal(true).int(), 1);
+        assert_eq!(BoolVal(false).int(), 0);
+        assert_eq!(StringVal("123".into()).int(), 123);
+        // Unparseable strings fall back to 0.
+        assert_eq!(StringVal("abc".into()).int(), 0);
+    }
+
+    #[test]
+    fn pref_value_bool_conversions() {
+        assert!(BoolVal(true).bool());
+        assert!(!BoolVal(false).bool());
+        assert!(IntegerVal(1).bool());
+        assert!(!IntegerVal(0).bool());
+        assert!(IntegerVal(-3).bool());
+        assert!(StringVal("true".into()).bool());
+        assert!(!StringVal("false".into()).bool());
+        // Anything unparseable as bool is false.
+        assert!(!StringVal("yes".into()).bool());
+    }
+
+    #[test]
+    fn pref_value_simple_ser_deser_round_trip() {
+        // Int and bool values round-trip exactly.
+        for original in [
+            IntegerVal(0),
+            IntegerVal(-12345),
+            BoolVal(true),
+            BoolVal(false),
+        ] {
+            let ser = original.simple_ser();
+            let back = PrefValue::simple_deser(&ser);
+            assert_eq!(format!("{original:?}"), format!("{back:?}"));
+        }
+        // String values keep the `s` type prefix on deserialization.
+        let back = PrefValue::simple_deser(&StringVal("hello".into()).simple_ser());
+        assert!(matches!(back, StringVal(s) if s == "shello"));
+    }
+
+    #[test]
+    fn pref_value_simple_ser_prefixes_type_char() {
+        assert_eq!(StringVal("x".into()).simple_ser(), "sx");
+        assert_eq!(IntegerVal(5).simple_ser(), "i5");
+        assert_eq!(BoolVal(true).simple_ser(), "btrue");
+    }
+
+    #[test]
+    fn pref_value_simple_deser_falls_back_to_string() {
+        // Too short to hold a type prefix + payload.
+        assert!(matches!(
+            PrefValue::simple_deser(""),
+            StringVal(_)
+        ));
+        assert!(matches!(
+            PrefValue::simple_deser("s"),
+            StringVal(_)
+        ));
+        // Bad payloads fall back to StringVal.
+        assert!(matches!(
+            PrefValue::simple_deser("inot-an-int"),
+            StringVal(_)
+        ));
+        assert!(matches!(
+            PrefValue::simple_deser("bnot-a-bool"),
+            StringVal(_)
+        ));
+        // Unknown prefix falls back to StringVal.
+        assert!(matches!(
+            PrefValue::simple_deser("zpayload"),
+            StringVal(_)
+        ));
+    }
+
+    #[test]
+    fn pref_value_from_impls() {
+        let s: String = StringVal("ab".into()).into();
+        assert_eq!(s, "ab");
+        let i: i32 = IntegerVal(9).into();
+        assert_eq!(i, 9);
+        let b: bool = BoolVal(true).into();
+        assert!(b);
+
+        assert!(matches!(PrefValue::from(String::from("x")), StringVal(_)));
+        assert!(matches!(PrefValue::from(3i32), IntegerVal(3)));
+        assert!(matches!(PrefValue::from(true), BoolVal(true)));
+    }
+
+    #[test]
+    fn enum_discriminants_match_hexchat_abi() {
+        assert_eq!(Priority::Highest as i32, 127);
+        assert_eq!(Priority::High as i32, 64);
+        assert_eq!(Priority::Norm as i32, 0);
+        assert_eq!(Priority::Low as i32, -64);
+        assert_eq!(Priority::Lowest as i32, -128);
+
+        assert_eq!(Eat::None as i32, 0);
+        assert_eq!(Eat::Hexchat as i32, 1);
+        assert_eq!(Eat::Plugin as i32, 2);
+        assert_eq!(Eat::All as i32, 3);
+
+        assert_eq!(FD::Read as u32, 1);
+        assert_eq!(FD::Write as u32, 2);
+        assert_eq!(FD::Exception as u32, 4);
+        assert_eq!(FD::NotSocket as u32, 8);
+
+        assert_eq!(StripFlags::StripMIrcColors as i32, 1);
+        assert_eq!(StripFlags::StripTextAttributes as i32, 2);
+        assert_eq!(StripFlags::StripBoth as i32, 3);
+    }
 }

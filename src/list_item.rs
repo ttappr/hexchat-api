@@ -81,3 +81,63 @@ impl From<&ListIterator> for ListItem {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::list_iterator::FieldValue;
+
+    fn sample_item() -> ListItem {
+        let mut item = ListItem::new();
+        item.add("nick", FieldValue::StringVal("alice".into()));
+        item.add("away", FieldValue::IntVal(0));
+        item
+    }
+
+    #[test]
+    fn get_returns_fields_and_none_for_missing() {
+        let item = sample_item();
+        assert!(matches!(
+            item.get("nick"),
+            Some(FieldValue::StringVal(_))
+        ));
+        assert!(matches!(item.get("away"), Some(FieldValue::IntVal(0))));
+        assert!(item.get("missing").is_none());
+    }
+
+    #[test]
+    fn index_returns_field() {
+        let item = sample_item();
+        assert_eq!(format!("{}", item["nick"]), "alice");
+        assert_eq!(format!("{}", item["away"]), "0");
+    }
+
+    #[test]
+    #[should_panic(expected = "Field doesn't exist")]
+    fn index_panics_on_missing_field() {
+        let item = sample_item();
+        let _ = &item["missing"];
+    }
+
+    #[test]
+    fn add_overwrites_existing_field() {
+        let mut item = ListItem::new();
+        item.add("nick", FieldValue::StringVal("a".into()));
+        item.add("nick", FieldValue::StringVal("b".into()));
+        assert_eq!(format!("{}", item["nick"]), "b");
+    }
+
+    #[test]
+    fn clone_is_independent() {
+        let item = sample_item();
+        let cloned = item.clone();
+        assert_eq!(format!("{}", cloned["nick"]), "alice");
+    }
+
+    #[test]
+    fn debug_formatting_works() {
+        let item = sample_item();
+        let s = format!("{item:?}");
+        assert!(s.contains("nick"));
+    }
+}
+

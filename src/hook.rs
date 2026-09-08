@@ -176,5 +176,50 @@ impl Hook {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Exercises the full hook lifecycle against the global hook list.
+    /// A single test is used (rather than several small ones) because the
+    /// hook list is global shared state; parallel tests mutating it would
+    /// race.
+    #[test]
+    fn hook_lifecycle_without_live_hexchat() {
+        // Start from a known state.
+        Hook::deinit();
+
+        // With no hook list, unhook is a no-op returning NoData and
+        // set/set_cbd do nothing.
+        let orphan = Hook {
+            data: Arc::new(RwLock::new(Some(SendWrapper::new(HookData {
+                hook_ptr: null::<c_void>(),
+                cbd_box_ptr: null::<c_void>(),
+            })))),
+        };
+        assert!(matches!(orphan.unhook(), NoData));
+
+        // Initialize the global list; new hooks are tracked.
+        Hook::init();
+        let hook = Hook::new();
+        // Null hook pointer means "already unhooked" -> NoData.
+        assert!(matches!(hook.unhook(), NoData));
+
+        // Clones share state; unhooking one nulls it for the other.
+        let clone = hook.clone();
+        assert!(matches!(clone.unhook(), NoData));
+
+        // deinit clears the global list; hooks created afterwards are
+        // untracked and unhook to NoData.
+        Hook::deinit();
+        let after = Hook::new();
+        assert!(matches!(after.unhook(), NoData));
+
+        // Leave the global in the deinitialized state so other tests
+        // observe the default (None) state.
+        Hook::deinit();
+    }
+}
+
 
 

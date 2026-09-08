@@ -106,4 +106,76 @@ pub const IRC_REVERSE_COLOR: &str      = "\x16"; //"\026";
 pub const IRC_BEEP: &str               = "\x07"; //"\007";
 pub const IRC_ITALICS: &str            = "\x1D"; //"\035";
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn enum_discriminants_match_hexchat_values() {
+        assert_eq!(ChanType::SERVER as u32, 1);
+        assert_eq!(ChanType::CHANNEL as u32, 2);
+        assert_eq!(ChanType::DIALOG as u32, 3);
+        assert_eq!(ChanType::NOTICE as u32, 4);
+        assert_eq!(ChanType::SNOTICE as u32, 5);
+
+        assert_eq!(DccStatus::QUEUED as u32, 0);
+        assert_eq!(DccStatus::ACTIVE as u32, 1);
+        assert_eq!(DccStatus::FAILED as u32, 2);
+        assert_eq!(DccStatus::DONE as u32, 3);
+        assert_eq!(DccStatus::CONNECTING as u32, 4);
+        assert_eq!(DccStatus::ABORTED as u32, 5);
+
+        assert_eq!(DccType::SEND as u32, 0);
+        assert_eq!(DccType::RECIEVE as u32, 1);
+        assert_eq!(DccType::CHATRECV as u32, 2);
+        assert_eq!(DccType::CHATSEND as u32, 3);
+    }
+
+    #[test]
+    fn chan_flag_bits_are_distinct_powers_of_two() {
+        use enumflags2::BitFlags;
+        let flags = BitFlags::<ChanFlag>::all();
+        // 17 distinct single-bit flags are defined.
+        assert_eq!(flags.bits().count_ones(), 17);
+        assert!(flags.contains(ChanFlag::CONNECTED));
+        assert!(flags.contains(ChanFlag::STRIP_COLORS_UNSET));
+    }
+
+    #[test]
+    fn ign_flags_cover_documented_bits() {
+        use enumflags2::BitFlags;
+        let flags = BitFlags::<IgnFlag>::all();
+        assert_eq!(flags.bits(), 0xFF);
+    }
+
+    #[test]
+    fn irc_control_codes_are_nonempty_and_distinct() {
+        let colors = [
+            IRC_WHITE,
+            IRC_BLACK,
+            IRC_NAVY,
+            IRC_GREEN,
+            IRC_RED,
+            IRC_MAROON,
+            IRC_PURPLE,
+            IRC_OLIVE,
+            IRC_YELLOW,
+            IRC_LIGHT_GREEN,
+            IRC_TEAL,
+            IRC_CYAN,
+            IRC_ROYAL_BLUE,
+            IRC_MAGENTA,
+            IRC_GRAY,
+            IRC_LIGHT_GRAY,
+        ];
+        for code in colors {
+            assert!(!code.is_empty());
+        }
+        assert!(!IRC_BOLD.is_empty());
+        assert!(!IRC_UNDERLINE.is_empty());
+        assert_ne!(IRC_BOLD, IRC_UNDERLINE);
+        assert_ne!(IRC_WHITE, IRC_BLACK);
+    }
+}
+
 

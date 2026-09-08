@@ -62,3 +62,54 @@ impl Display for HexchatError {
         write!(f, "{}", s)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::error::Error;
+
+    #[test]
+    fn display_strips_quotes_and_names_variant() {
+        let err = HexchatError::CommandFailed("oops".into());
+        let s = err.to_string();
+        assert!(!s.contains('"'));
+        assert!(s.contains("CommandFailed"));
+        assert!(s.contains("oops"));
+    }
+
+    #[test]
+    fn display_covers_all_variants() {
+        let cases = [
+            HexchatError::CommandFailed("a".into()),
+            HexchatError::InfoNotFound("a".into()),
+            HexchatError::ThreadSafeOperationFailed("a".into()),
+            HexchatError::UnknownType("a".into()),
+            HexchatError::ContextAcquisitionFailed("a".into()),
+            HexchatError::ContextOperationFailed("a".into()),
+            HexchatError::ContextDropped("a".into()),
+            HexchatError::ListNotFound("a".into()),
+            HexchatError::ListFieldNotFound("a".into()),
+            HexchatError::ListIteratorNotStarted("a".into()),
+            HexchatError::ListIteratorDropped("a".into()),
+            HexchatError::UserDataCastError("a".into()),
+        ];
+        for err in cases {
+            let s = err.to_string();
+            assert!(!s.contains('"'), "quotes should be stripped: {s}");
+            assert!(s.contains('a'));
+        }
+    }
+
+    #[test]
+    fn implements_std_error() {
+        let err: &dyn Error = &HexchatError::ListNotFound("x".into());
+        assert!(err.to_string().contains("ListNotFound"));
+    }
+
+    #[test]
+    fn is_clone_and_debug() {
+        let err = HexchatError::InfoNotFound("chan".into());
+        let cloned = err.clone();
+        assert_eq!(format!("{err:?}"), format!("{cloned:?}"));
+    }
+}

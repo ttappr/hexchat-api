@@ -269,3 +269,64 @@ fn main_thread_deinit() {
 pub unsafe fn turn_off_threadsafe_features() {
     main_thread_deinit();
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn async_result_set_and_get_round_trip() {
+        let res: AsyncResult<i32> = AsyncResult::new();
+        assert!(!res.is_done());
+        res.set(42);
+        assert!(res.is_done());
+        assert_eq!(res.get().unwrap(), 42);
+    }
+
+    #[test]
+    fn async_result_set_error_propagates() {
+        let res: AsyncResult<i32> = AsyncResult::new();
+        res.set_error("boom");
+        assert!(res.is_done());
+        let err = res.get().unwrap_err();
+        assert!(err.to_string().contains("boom"));
+    }
+
+    #[test]
+    fn async_result_get_blocks_until_set() {
+        let res: AsyncResult<String> = AsyncResult::new();
+        let waiter = res.clone();
+        let handle = std::thread::spawn(move || waiter.get().unwrap());
+        // Give the spawned thread a moment to block on `get()`.
+        std::thread::sleep(std::time::Duration::from_millis(20));
+        res.set("done".to_string());
+        assert_eq!(handle.join().unwrap(), "done");
+    }
+
+    #[test]
+    fn async_result_clone_shares_state() {
+        let res: AsyncResult<i32> = AsyncResult::new();
+        let clone = res.clone();
+        res.set(7);
+        assert_eq!(clone.get().unwrap(), 7);
+    }
+
+    #[test]
+    fn concrete_task_execute_sets_result() {
+        // SAFETY: the callback ignores the Hexchat reference, so the
+        // dangling pointer is never dereferenced.
+        let fake_hc: &Hexchat = unsafe { &*std::ptr::dangling::<Hexchat>() };
+        let res: AsyncResult<i32> = AsyncResult::new();
+        let mut task = ConcreteTask::new(|_: &Hexchat| 99, res.clone());
+        task.execute(fake_hc);
+        assert_eq!(res.get().unwrap(), 99);
+    }
+
+    #[test]
+    fn concrete_task_set_error_marks_result_failed() {
+        let res: AsyncResult<i32> = AsyncResult::new();
+        let mut task = ConcreteTask::new(|_: &Hexchat| 0, res.clone());
+        task.set_error("shutting down");
+        assert!(res.get().unwrap_err().to_string().contains("shutting down"));
+    }
+}

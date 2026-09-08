@@ -308,3 +308,156 @@ pub (crate)
 type FdCallback
               = dyn FnMut(&Hexchat, i32, BitFlags<FD>, &UserData) -> Eat;
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn fake_hc() -> &'static Hexchat {
+        // SAFETY: test callbacks ignore the Hexchat reference, so it is
+        // never dereferenced.
+        unsafe { &*std::ptr::dangling::<Hexchat>() }
+    }
+
+    #[test]
+    fn command_data_stores_and_takes_user_data() {
+        let hook = Hook::new();
+        let mut cd = CallbackData::new_command_data(
+            Box::new(|_, _, _, _| Eat::All),
+            UserData::boxed(1i32),
+            hook,
+        );
+        assert_eq!(cd.get_user_data().get::<i32>().unwrap(), 1);
+        let taken = cd.take_data();
+        assert_eq!(taken.get::<i32>().unwrap(), 1);
+        assert!(matches!(cd.get_user_data(), UserData::NoData));
+    }
+
+    #[test]
+    fn print_and_attrs_data_store_user_data() {
+        let hook = Hook::new();
+        let cd = CallbackData::new_print_data(
+            Box::new(|_, _, _| Eat::None),
+            UserData::boxed("pd".to_string()),
+            hook,
+        );
+        assert_eq!(
+            cd.get_user_data().get::<String>().unwrap(),
+            "pd".to_string()
+        );
+
+        let hook = Hook::new();
+        let cd = CallbackData::new_print_attrs_data(
+            Box::new(|_, _, _, _| Eat::None),
+            UserData::boxed(2i32),
+            hook,
+        );
+        assert_eq!(cd.get_user_data().get::<i32>().unwrap(), 2);
+    }
+
+    #[test]
+    fn timer_and_fd_data_store_user_data() {
+        let hook = Hook::new();
+        let cd = CallbackData::new_timer_data(
+            Box::new(|_, _| 1),
+            UserData::boxed(3i32),
+            hook,
+        );
+        assert_eq!(cd.get_user_data().get::<i32>().unwrap(), 3);
+
+        let hook = Hook::new();
+        let cd = CallbackData::new_fd_data(
+            Box::new(|_, _, _, _| Eat::None),
+            UserData::boxed(4i32),
+            hook,
+        );
+        assert_eq!(cd.get_user_data().get::<i32>().unwrap(), 4);
+    }
+
+    #[test]
+    fn command_cb_invokes_callback() {
+        let hook = Hook::new();
+        let mut cd = CallbackData::new_command_data(
+            Box::new(|_, word, word_eol, _| {
+                assert_eq!(word, &["a".to_string()]);
+                assert_eq!(word_eol, &["a b".to_string()]);
+                Eat::All
+            }),
+            UserData::NoData,
+            hook,
+        );
+        let ud = UserData::NoData;
+        let result = unsafe {
+            cd.command_cb(
+                fake_hc(),
+                &["a".to_string()],
+                &["a b".to_string()],
+                &ud,
+            )
+        };
+        assert!(matches!(result, Eat::All));
+    }
+
+    #[test]
+    fn print_cb_invokes_callback() {
+        let hook = Hook::new();
+        let mut cd = CallbackData::new_print_data(
+            Box::new(|_, word, _| {
+                assert_eq!(word, &["hello".to_string()]);
+                Eat::Plugin
+            }),
+            UserData::NoData,
+            hook,
+        );
+        let ud = UserData::NoData;
+        let result =
+            unsafe { cd.print_cb(fake_hc(), &["hello".to_string()], &ud) };
+        assert!(matches!(result, Eat::Plugin));
+    }
+
+    #[test]
+    fn timer_cb_returns_keep_going_mapping() {
+        // keep_going != 0 -> returns 1 and does not unhook.
+        let hook = Hook::new();
+        let mut cd = CallbackData::new_timer_data(
+            Box::new(|_, _| 1),
+            UserData::NoData,
+            hook,
+        );
+        let ud = UserData::NoData;
+        assert_eq!(unsafe { cd.timer_cb(fake_hc(), &ud) }, 1);
+
+        // keep_going == 0 -> unhooks (safe without a live Hexchat
+        // because the hook pointer is null) and returns 0.
+        let hook = Hook::new();
+        let mut cd = CallbackData::new_timer_data(
+            Box::new(|_, _| 0),
+            UserData::boxed(9i32),
+            hook,
+        );
+        let ud = UserData::NoData;
+        assert_eq!(unsafe { cd.timer_cb(fake_hc(), &ud) }, 0);
+    }
+
+    #[test]
+    fn timer_once_cb_runs_once_then_panics() {
+        let hook = Hook::new();
+        let mut cd = CallbackData::new_timer_once_data(
+            Box::new(|_, _| 0),
+            UserData::NoData,
+            hook,
+        );
+        let ud = UserData::NoData;
+        assert_eq!(unsafe { cd.timer_once_cb(fake_hc(), &ud) }, 0);
+        // Second invocation hits the `OnceDone` placeholder.
+        let panicked = std::panic::catch_unwind(std::panic::AssertUnwindSafe(
+            || unsafe { cd.timer_once_cb(fake_hc(), &ud) },
+        ));
+        assert!(panicked.is_err());
+    }
+
+    #[test]
+    fn ucallback_default_is_once_done() {
+        assert!(matches!(UCallback::default(), OnceDone));
+    }
+}
+

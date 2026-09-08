@@ -424,3 +424,84 @@ impl fmt::Display for FieldValue {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn field_value_unwrap_helpers() {
+        assert_eq!(StringVal("s".into()).str(), "s");
+        assert_eq!(IntVal(11).int(), 11);
+        assert_eq!(PointerVal(99).ptr(), 99);
+        assert_eq!(TimeVal(12345).time(), 12345);
+    }
+
+    #[test]
+    #[should_panic]
+    fn field_value_str_panics_on_wrong_variant() {
+        let _ = IntVal(1).str();
+    }
+
+    #[test]
+    #[should_panic]
+    fn field_value_int_panics_on_wrong_variant() {
+        let _ = StringVal("x".into()).int();
+    }
+
+    #[test]
+    #[should_panic]
+    fn field_value_ptr_panics_on_wrong_variant() {
+        let _ = IntVal(1).ptr();
+    }
+
+    #[test]
+    #[should_panic]
+    fn field_value_time_panics_on_wrong_variant() {
+        let _ = IntVal(1).time();
+    }
+
+    #[test]
+    fn field_value_from_impls() {
+        let s: String = StringVal("hi".into()).into();
+        assert_eq!(s, "hi");
+        let i: i32 = IntVal(4).into();
+        assert_eq!(i, 4);
+        let p: u64 = PointerVal(7).into();
+        assert_eq!(p, 7);
+        let t: i64 = TimeVal(8).into();
+        assert_eq!(t, 8);
+    }
+
+    #[test]
+    fn field_value_display() {
+        assert_eq!(format!("{}", StringVal("abc".into())), "abc");
+        assert_eq!(format!("{}", IntVal(5)), "5");
+        assert_eq!(format!("{}", PointerVal(6)), "6");
+        assert_eq!(format!("{}", TimeVal(7)), "7");
+    }
+
+    #[test]
+    fn list_iterator_data_get_type_finds_and_misses() {
+        // SAFETY: `hc` is never dereferenced in this test; only the
+        // pure `get_type` lookup is exercised.
+        let fake_hc: &'static Hexchat =
+            unsafe { &*std::ptr::dangling::<Hexchat>() };
+        let data = ListIteratorData {
+            list_name: "users".into(),
+            field_types: vec![
+                ("nick".into(), b's' as i8),
+                ("away".into(), b'i' as i8),
+            ],
+            hc: fake_hc,
+            list_ptr: std::ptr::null(),
+            started: false,
+        };
+        assert_eq!(data.get_type("nick"), Some(b's' as i8));
+        assert_eq!(data.get_type("away"), Some(b'i' as i8));
+        assert_eq!(data.get_type("missing"), None);
+        // Prevent `Drop` from running: it would call back into Hexchat
+        // through the fake `hc` pointer to free the (null) list.
+        std::mem::forget(data);
+    }
+}

@@ -177,3 +177,109 @@ pub (crate)
 fn cstring2string(cstring: &CString) -> String {
     cstring.to_string_lossy().into_owned()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::ffi::CString;
+    use std::ptr;
+
+    #[test]
+    fn str2cstring_round_trips() {
+        let cs = str2cstring("hello");
+        assert_eq!(cs.to_str().unwrap(), "hello");
+        // Empty string is valid.
+        assert_eq!(str2cstring("").to_str().unwrap(), "");
+        // Interior content is preserved.
+        assert_eq!(str2cstring("a b c").to_str().unwrap(), "a b c");
+    }
+
+    #[test]
+    #[should_panic]
+    fn str2cstring_panics_on_interior_nul() {
+        // CString::new fails on interior nul bytes.
+        let _ = str2cstring("a\0b");
+    }
+
+    #[test]
+    fn cstring2string_round_trips() {
+        let cs = CString::new("hello world").unwrap();
+        assert_eq!(cstring2string(&cs), "hello world");
+    }
+
+    #[test]
+    fn cstring2string_replaces_invalid_utf8() {
+        // 0xFF is never valid UTF-8; to_string_lossy replaces it.
+        let cs = CString::new(vec![0xFF, b'a']).unwrap();
+        let s = cstring2string(&cs);
+        assert!(s.contains('a'));
+        assert!(s.contains('\u{FFFD}'));
+    }
+
+    #[test]
+    fn pchar2string_handles_null_and_values() {
+        // Null pointer -> empty string.
+        assert_eq!(pchar2string(ptr::null()), "");
+        let cs = CString::new("nick").unwrap();
+        assert_eq!(pchar2string(cs.as_ptr()), "nick");
+    }
+
+    #[test]
+    fn pchar2string_is_lossy() {
+        let cs = CString::new(vec![0xFF, b'x']).unwrap();
+        let s = pchar2string(cs.as_ptr());
+        assert!(s.contains('x'));
+        assert!(s.contains('\u{FFFD}'));
+    }
+
+    #[test]
+    fn pchar2cstring_preserves_bytes() {
+        let cs = CString::new("some value").unwrap();
+        let owned = pchar2cstring(cs.as_ptr());
+        assert_eq!(owned.to_str().unwrap(), "some value");
+    }
+
+    #[test]
+    fn argv2svec_skips_first_element_and_stops_at_empty() {
+        // Hexchat word/word_eol arrays reserve index 0; conversion starts
+        // at `start`. The loop terminates on the first empty string.
+        let held = ["ignored", "one", "two", ""]
+                    .iter()
+                    .map(|s| CString::new(*s).unwrap())
+                    .collect::<Vec<_>>();
+        let mut ptrs: Vec<*const c_char> =
+            held.iter().map(|c| c.as_ptr()).collect();
+        ptrs.push(ptr::null());
+
+        let out = argv2svec(ptrs.as_ptr(), 1);
+        assert_eq!(out, vec!["one".to_string(), "two".to_string()]);
+    }
+
+    #[test]
+    fn argv2svec_with_start_zero_includes_first_element() {
+        let held = ["zero", "one", ""]
+                    .iter()
+                    .map(|s| CString::new(*s).unwrap())
+                    .collect::<Vec<_>>();
+        let mut ptrs: Vec<*const c_char> =
+            held.iter().map(|c| c.as_ptr()).collect();
+        ptrs.push(ptr::null());
+
+        let out = argv2svec(ptrs.as_ptr(), 0);
+        assert_eq!(out, vec!["zero".to_string(), "one".to_string()]);
+    }
+
+    #[test]
+    fn argv2svec_empty_tail_yields_empty_vec() {
+        let held = ["ignored", ""]
+                    .iter()
+                    .map(|s| CString::new(*s).unwrap())
+                    .collect::<Vec<_>>();
+        let mut ptrs: Vec<*const c_char> =
+            held.iter().map(|c| c.as_ptr()).collect();
+        ptrs.push(ptr::null());
+
+        let out = argv2svec(ptrs.as_ptr(), 1);
+        assert!(out.is_empty());
+    }
+}

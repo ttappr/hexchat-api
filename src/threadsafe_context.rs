@@ -235,3 +235,34 @@ impl fmt::Debug for ThreadSafeContext {
         write!(f, "{}", s)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn dropped_ctx() -> ThreadSafeContext {
+        ThreadSafeContext {
+            ctx: Arc::new(RwLock::new(None)),
+        }
+    }
+
+    #[test]
+    fn find_and_get_fail_without_task_queue() {
+        // Requires a live Hexchat queue; without it these fail instead of
+        // touching Hexchat.
+        assert!(ThreadSafeContext::find("net", "#chan").is_err());
+        assert!(ThreadSafeContext::get().is_err());
+    }
+
+    #[test]
+    fn methods_on_dropped_context_are_err() {
+        let ctx = dropped_ctx();
+        assert!(ctx.print("hi").is_err());
+        assert!(ctx.command("say hi").is_err());
+        assert!(ctx.get_info("channel").is_err());
+        assert!(ctx.emit_print("ev", &["a"]).is_err());
+        assert!(ctx.list_get("users").is_err());
+        assert!(ctx.network().is_err());
+        assert!(ctx.channel().is_err());
+    }
+}

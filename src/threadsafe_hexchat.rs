@@ -144,3 +144,35 @@ impl ThreadSafeHexchat {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn fake_hcx() -> ThreadSafeHexchat {
+        // SAFETY: `new` ignores the reference; it is never dereferenced.
+        let fake_hc: &'static Hexchat =
+            unsafe { &*std::ptr::dangling::<Hexchat>() };
+        ThreadSafeHexchat::new(fake_hc)
+    }
+
+    #[test]
+    fn methods_fail_when_task_queue_shut_down() {
+        // Without `main_thread_init()` (which requires a live Hexchat),
+        // the task queue is `None`, so every delegation fails with
+        // `ThreadSafeOperationFailed` instead of touching Hexchat.
+        let hcx = fake_hcx();
+        assert!(hcx.print("hi").is_err());
+        assert!(hcx.command("say hi").is_err());
+        assert!(hcx.get_info("channel").is_err());
+        assert!(hcx.list_get("users").is_err());
+        assert!(hcx.find_context("net", "#chan").is_err());
+        assert!(hcx.get_context().is_err());
+    }
+
+    #[test]
+    fn get_context_without_queue_is_err() {
+        let hcx = fake_hcx();
+        assert!(hcx.get_context().is_err());
+    }
+}
+

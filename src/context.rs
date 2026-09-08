@@ -267,3 +267,45 @@ impl fmt::Debug for Context {
         write!(f, "Context(\"{}\", \"{}\")", network, channel)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn test_context(network: &str, channel: &str) -> Context {
+        // SAFETY: only the pure accessors (`network`, `channel`, Debug /
+        // Display) are exercised; the Hexchat reference is never
+        // dereferenced.
+        let fake_hc: &'static Hexchat =
+            unsafe { &*std::ptr::dangling::<Hexchat>() };
+        Context {
+            data: Rc::new(ContextData {
+                hc: fake_hc,
+                network: str2cstring(network),
+                channel: str2cstring(channel),
+            }),
+        }
+    }
+
+    #[test]
+    fn network_and_channel_accessors() {
+        let ctx = test_context("freenode", "##rust");
+        assert_eq!(ctx.network(), "freenode");
+        assert_eq!(ctx.channel(), "##rust");
+    }
+
+    #[test]
+    fn debug_and_display_format() {
+        let ctx = test_context("net", "#chan");
+        assert_eq!(format!("{ctx:?}"), "Context(\"net\", \"#chan\")");
+        assert_eq!(format!("{ctx}"), "Context(\"net\", \"#chan\")");
+    }
+
+    #[test]
+    fn can_be_cloned() {
+        let ctx = test_context("net", "#chan");
+        let cloned = ctx.clone();
+        assert_eq!(cloned.network(), "net");
+        assert_eq!(cloned.channel(), "#chan");
+    }
+}

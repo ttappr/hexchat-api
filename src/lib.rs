@@ -25,6 +25,10 @@ mod threadsafe_list_iterator;
 mod user_data;
 mod utils;
 
+#[doc(hidden)]
+#[cfg(test)]
+pub mod test_utils;
+
 pub use hook::*;
 //pub use callback_data::*;
 pub use consts::*;

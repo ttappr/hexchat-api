@@ -256,4 +256,115 @@ impl Default for UserData {
     fn default() -> Self { NoData }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn boxed_apply_get_set_round_trip() {
+        let ud = UserData::boxed(42i32);
+        assert_eq!(ud.apply(|v: &i32| *v), 42);
+        assert_eq!(ud.get::<i32>().unwrap(), 42);
+
+        ud.set(7i32).unwrap();
+        assert_eq!(ud.get::<i32>().unwrap(), 7);
+
+        // Wrong-type set fails.
+        assert!(ud.set("not an i32").is_err());
+        // Wrong-type get fails.
+        assert!(ud.get::<String>().is_err());
+    }
+
+    #[test]
+    fn boxed_apply_mut_mutates_in_place() {
+        let ud = UserData::boxed(String::from("hi"));
+        ud.apply_mut(|s: &mut String| s.push('!'));
+        assert_eq!(ud.get::<String>().unwrap(), "hi!");
+    }
+
+    #[test]
+    fn shared_clone_shares_state() {
+        let ud = UserData::shared(10i32);
+        let clone = ud.clone();
+        clone.set(99i32).unwrap();
+        // Both handles observe the same interior value.
+        assert_eq!(ud.get::<i32>().unwrap(), 99);
+        assert_eq!(clone.apply(|v: &i32| *v), 99);
+    }
+
+    #[test]
+    fn shared_apply_mut_works() {
+        let ud = UserData::shared(vec![1i32]);
+        ud.apply_mut(|v: &mut Vec<i32>| v.push(2));
+        assert_eq!(ud.get::<Vec<i32>>().unwrap(), vec![1, 2]);
+    }
+
+    #[test]
+    fn sync_clone_shares_across_handles() {
+        let ud = UserData::sync(1u64);
+        let clone = ud.clone();
+        assert_eq!(ud.apply(|v: &u64| *v), 1);
+        clone.set(2u64).unwrap();
+        assert_eq!(ud.get::<u64>().unwrap(), 2);
+    }
+
+    #[test]
+    fn sync_send_across_threads() {
+        let ud = UserData::sync(0i32);
+        let other = ud.clone();
+        let handle = std::thread::spawn(move || {
+            other.set(5i32).unwrap();
+            other.get::<i32>().unwrap()
+        });
+        assert_eq!(handle.join().unwrap(), 5);
+        assert_eq!(ud.get::<i32>().unwrap(), 5);
+    }
+
+    #[test]
+    fn no_data_get_and_set_fail() {
+        let ud = UserData::NoData;
+        assert!(ud.get::<i32>().is_err());
+        assert!(ud.set(1i32).is_err());
+    }
+
+    #[test]
+    #[should_panic(expected = "Can't downcast `NoData`")]
+    fn no_data_apply_panics() {
+        let ud = UserData::NoData;
+        let _ = ud.apply(|_: &i32| 0);
+    }
+
+    #[test]
+    #[should_panic(expected = "Can't downcast `NoData`")]
+    fn no_data_apply_mut_panics() {
+        let ud = UserData::NoData;
+        let _ = ud.apply_mut(|_: &mut i32| 0);
+    }
+
+    #[test]
+    #[should_panic(expected = "Unable to downcast")]
+    fn apply_wrong_type_panics() {
+        let ud = UserData::boxed(1i32);
+        let _ = ud.apply(|_: &String| 0);
+    }
+
+    #[test]
+    #[should_panic(expected = "Can't clone `BoxedData`")]
+    fn boxed_clone_panics() {
+        let ud = UserData::boxed(1i32);
+        let _ = ud.clone();
+    }
+
+    #[test]
+    fn clone_no_data_gives_no_data() {
+        let ud = UserData::NoData;
+        assert!(matches!(ud.clone(), UserData::NoData));
+    }
+
+    #[test]
+    fn default_is_no_data() {
+        assert!(matches!(UserData::default(), UserData::NoData));
+    }
+}
+
 

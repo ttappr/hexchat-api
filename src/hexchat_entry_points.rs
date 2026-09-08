@@ -343,3 +343,74 @@ fn set_panic_hook(hexchat: &'static Hexchat) {
         }
     }));
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::ffi::CStr;
+
+    #[test]
+    fn plugin_info_pins_buffers() {
+        let info = PluginInfo::new("name", "1.0", "desc");
+        // SAFETY: pointers are derived from the pinned buffers owned by
+        // `info`, which outlives this use.
+        unsafe {
+            assert_eq!(
+                CStr::from_ptr(info.data.pname.as_ref().as_ptr())
+                    .to_str()
+                    .unwrap(),
+                "name"
+            );
+            assert_eq!(
+                CStr::from_ptr(info.data.pversion.as_ref().as_ptr())
+                    .to_str()
+                    .unwrap(),
+                "1.0"
+            );
+            assert_eq!(
+                CStr::from_ptr(info.data.pdescription.as_ref().as_ptr())
+                    .to_str()
+                    .unwrap(),
+                "desc"
+            );
+        }
+    }
+
+    #[test]
+    fn lib_get_info_publishes_pinned_pointers() {
+        // Reset global so this test controls the cached value.
+        PLUGIN_INFO.write().unwrap().take();
+
+        let mut name: *const c_char = null();
+        let mut desc: *const c_char = null();
+        let mut vers: *const c_char = null();
+        lib_get_info(
+            &mut name,
+            &mut desc,
+            &mut vers,
+            Box::new(|| PluginInfo::new("plug", "2.0", "a plugin")),
+        );
+
+        unsafe {
+            assert_eq!(CStr::from_ptr(name).to_str().unwrap(), "plug");
+            assert_eq!(CStr::from_ptr(vers).to_str().unwrap(), "2.0");
+            assert_eq!(CStr::from_ptr(desc).to_str().unwrap(), "a plugin");
+        }
+
+        // A second call reuses the cached info rather than the new callback.
+        let mut name2: *const c_char = null();
+        let mut desc2: *const c_char = null();
+        let mut vers2: *const c_char = null();
+        lib_get_info(
+            &mut name2,
+            &mut desc2,
+            &mut vers2,
+            Box::new(|| PluginInfo::new("other", "9.9", "other")),
+        );
+        unsafe {
+            assert_eq!(CStr::from_ptr(name2).to_str().unwrap(), "plug");
+        }
+
+        PLUGIN_INFO.write().unwrap().take();
+    }
+}
